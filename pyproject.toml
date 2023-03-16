@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "chess_ai"
+version = "0.1.0"
+description = "Chess Game with Neural Network AI"
+authors = ["Peyton Anderson <peyanders@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
