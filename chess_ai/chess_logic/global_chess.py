@@ -5,6 +5,21 @@
 """
 import yaml
 
+def get_piece_on_board(rank_i: int, file_i: int, env):
+    board_position = rank_i * env.chess.board_files + file_i
+    if board_position < len(env.chess.board):
+        return env.chess.board[board_position]
+    print("WARNING: Location on board is out of range.")
+    return 0
+
+def move_piece(rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, env):
+    board_position_old = rank_i_old * env.chess.board_files + file_i_old
+    board_position_new = rank_i_new * env.chess.board_files + file_i_new
+
+    if board_position_old < len(env.chess.board) and board_position_new < len(env.chess.board):
+        env.chess.board[board_position_new] = env.chess.board[board_position_old]
+        env.chess.board[board_position_old] = 0
+
 def get_piece_value(letter: str, piece_numbers: dict) -> int:
     
     #Black Pieces

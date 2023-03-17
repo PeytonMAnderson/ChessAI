@@ -16,6 +16,10 @@ class GlobalIO:
         self.zoom_speed = zoom_speed
         self.input_position = (0, 0)
 
+        #Changing Variables
+        self.selected_position = None
+        self.last_move = None
+
     def set_from_yaml(self, yaml_path: str) -> "GlobalIO":
         with open(yaml_path, "r") as f:
             yaml_settings = yaml.safe_load(f)

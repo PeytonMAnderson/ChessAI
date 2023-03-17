@@ -35,6 +35,8 @@ class GlobalVisual:
                 background: tuple = (0, 0, 0),
                 black_square: tuple = (0, 0, 0),
                 white_square: tuple = (0, 0, 0),
+                selected: tuple = (0, 0 ,0),
+                last_move: tuple = (0, 0, 0),
                 colors: dict = {},
     *args, **kwargs) -> None:
         
@@ -48,6 +50,8 @@ class GlobalVisual:
         self.background_color = background
         self.board_black_color = black_square
         self.board_white_color = white_square
+        self.board_selected_color = selected
+        self.board_last_move_color = last_move
         self.colors = colors
 
     
@@ -73,5 +77,7 @@ class GlobalVisual:
             self.background_color = get_color(settings['BACKGROUND_COLOR'], self.colors)
             self.board_black_color = get_color(settings['BOARD_BLACK_COLOR'], self.colors)
             self.board_white_color = get_color(settings['BOARD_WHITE_COLOR'], self.colors)
+            self.board_selected_color = get_color(settings['BOARD_SELECTED_COLOR'], self.colors)
+            self.board_last_move_color = get_color(settings['BOARD_LAST_MOVE_COLOR'], self.colors)
 
         return self
