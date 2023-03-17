@@ -29,12 +29,15 @@ class GlobalVisual:
                 w_width: int = 800,
                 w_height: int = 600,
                 zoom: int = 1.0,
+                fontsize: int = 18,
+                fontsize_title: int = 36,
                 board_square_size: int = 20,
                 world_origin: tuple = (0, 0),
                 board_origin: tuple = (0, 0),
                 background: tuple = (0, 0, 0),
                 black_square: tuple = (0, 0, 0),
                 white_square: tuple = (0, 0, 0),
+                fontcolor: tuple = (0, 0, 0),
                 selected: tuple = (0, 0 ,0),
                 last_move: tuple = (0, 0, 0),
                 colors: dict = {},
@@ -44,6 +47,9 @@ class GlobalVisual:
         self.w_width = w_width
         self.w_height = w_height
         self.zoom = zoom
+        self.fontsize = fontsize
+        self.fontsize_title = fontsize_title
+        self.fontcolor = fontcolor
         self.board_square_size = board_square_size
         self.world_origin = world_origin
         self.board_origin = board_origin
@@ -69,6 +75,8 @@ class GlobalVisual:
             self.w_width = settings['WIDTH']
             self.w_height = settings['HEIGHT']
             self.zoom = settings['ZOOM']
+            self.fontsize = settings['FONTSIZE']
+            self.fontsize_title = settings['FONTSIZE_TITLE']
             self.board_square_size = settings['BOARD_SQUARE_SIZE']
             self.world_origin = tuple(settings['WORLD_ORIGIN'])
             self.board_origin = tuple(settings['BOARD_ORIGIN'])
@@ -79,5 +87,6 @@ class GlobalVisual:
             self.board_white_color = get_color(settings['BOARD_WHITE_COLOR'], self.colors)
             self.board_selected_color = get_color(settings['BOARD_SELECTED_COLOR'], self.colors)
             self.board_last_move_color = get_color(settings['BOARD_LAST_MOVE_COLOR'], self.colors)
+            self.fontcolor = get_color(settings['FONT_COLOR'], self.colors)
 
         return self

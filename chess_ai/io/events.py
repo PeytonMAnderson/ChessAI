@@ -2,6 +2,7 @@ import pygame
 
 from ..environment import Environment
 from .mouse_events import mouse_events
+from .keyboard_events import keyboard_events
 
 def check_events(event, env: Environment):
     ## listening for the the X button at the top
@@ -27,3 +28,6 @@ def check_events(event, env: Environment):
 
     if event.type == pygame.MOUSEBUTTONDOWN:
         mouse_events(event, env)
+    
+    if event.type == pygame.KEYDOWN:
+        keyboard_events(event, env)
