@@ -11,22 +11,21 @@ from chess_ai import *
 
 #Constants
 FPS = 60
-PIECE_DIR = "./chess_ai/visuals/chess_pieces"
+PIECES_DIR = "./chess_ai/visuals/chess_pieces"
+CONFIG_FILE = "./chess_config.yaml"
 
 #Declare GlobalState and Global Colors and Pieces
-gs = GlobalState()
-gc = GlobalColors()
-pieces = ChessPieceImages(PIECE_DIR)
+env = Environment(CONFIG_FILE, PIECES_DIR)
 
 ## initialize pygame and create window
 pygame.init()
 pygame.mixer.init()  ## For sound
-screen = pygame.display.set_mode((gs.w_width, gs.w_height), pygame.RESIZABLE)
+screen = pygame.display.set_mode((env.visual.w_width, env.visual.w_height), pygame.RESIZABLE)
 pygame.display.set_caption("Chess")
 clock = pygame.time.Clock()     ## For syncing the FPS
 
 ## Game loop
-while gs.running:
+while env.io.running:
 
     #1 Process input/events
 
@@ -35,14 +34,15 @@ while gs.running:
 
     # gets all the events which have occured till now and keeps tab of them.
     for event in pygame.event.get():        
-        check_events(event, gs)
+        check_events(event, env)
 
     ########################
 
     ### Your code comes here
 
     ########################
-    draw_all_shapes(screen, gc, gs)
+    draw_all_shapes(screen, env)
+    
 
     ## Done after drawing everything to the screen
     pygame.display.flip()       
