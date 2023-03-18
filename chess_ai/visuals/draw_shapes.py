@@ -2,7 +2,7 @@ from pygame import Surface, Rect, draw, transform
 
 from ..environment import Environment
 from .images import get_image_from_number
-from ..chess_logic.global_chess import get_piece_on_board
+from ..chess_logic.chess_utils import get_piece_on_board
 
 def draw_background(surface: Surface, env: Environment):
     surface.fill(env.visual.background_color)
@@ -114,12 +114,33 @@ def grab_selected(surface: Surface, env: Environment):
                 img = transform.scale(img, (size, size))
                 surface.blit(img, (img_x, img_y))
 
+def draw_valid_moves(surface: Surface, env: Environment):
+    #Get Pieces Origin
+    x0, y0 = env.visual.world_origin
+    x_b, y_b = env.visual.board_origin
+    size = env.visual.board_square_size * env.visual.zoom
+    x_o, y_o = x0 + x_b, y0 + y_b
+
+    for valid_move in env.chess.valid_moves:
+        rank, file = valid_move
+        x, y = x_o + file * size, y_o + rank * size
+        rect = Rect(x, y, size, size)
+        draw.rect(surface, env.visual.board_valid_moves_color, rect)
+
 
 def draw_all_shapes(surface: Surface, env: Environment):
+    #Draw Background
     draw_background(surface, env)
+
+    #Draw Board and highlighting
     draw_board(surface, env)
     draw_selected(surface, env)
+    draw_valid_moves(surface, env)
+
+    #Draw pieces sprites
     draw_pieces(surface, env)
+
+    #Draw piece attached to mouse
     grab_selected(surface, env)
     
 

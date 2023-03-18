@@ -3,7 +3,8 @@ import pygame
 
 from ..environment import Environment
 from ..visuals.draw_shapes import check_bounds
-from ..chess_logic.global_chess import get_piece_on_board, move_piece
+from ..chess_logic.chess_utils import get_piece_on_board
+from ..chess_logic.chess_moves import get_valid_moves, move_piece
 
 
 def select_square(mouse_position: tuple, env: Environment) -> tuple | None:
@@ -19,15 +20,25 @@ def mouse_events(event, env: Environment):
     new_selected = select_square((ix, iy), env)
     if new_selected is None:
         env.io.selected_position = None
+        env.chess.valid_moves = []
     else:
         if env.io.selected_position is None:
             if get_piece_on_board(new_selected[0], new_selected[1], env) != 0:
+                env.chess.valid_moves = get_valid_moves(new_selected[0], new_selected[1], env)
                 env.io.selected_position = new_selected
         else:
             ro, fo = env.io.selected_position
             rf, ff = new_selected
-            if not (ro == rf and fo == ff):
-                move_piece(ro, fo, rf, ff, env)
-                env.io.last_move = new_selected
-            env.io.selected_position = None
+            #Make sure move is valid
+            if env.chess.valid_moves.count(new_selected) != 0:
+                if not (ro == rf and fo == ff):
+                    move_piece(ro, fo, rf, ff, env)
+                    env.io.last_move = new_selected
+                env.io.selected_position = None
+                env.chess.valid_moves = []
 
+            else:
+                #If move is not valid, if move is same as start location, reset move
+                if (ro == rf and fo == ff):
+                    env.io.selected_position = None
+                    env.chess.valid_moves = []

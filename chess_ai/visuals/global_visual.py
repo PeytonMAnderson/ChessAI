@@ -40,6 +40,7 @@ class GlobalVisual:
                 fontcolor: tuple = (0, 0, 0),
                 selected: tuple = (0, 0 ,0),
                 last_move: tuple = (0, 0, 0),
+                valid_moves: tuple = (0, 0 ,0),
                 colors: dict = {},
     *args, **kwargs) -> None:
         
@@ -58,6 +59,7 @@ class GlobalVisual:
         self.board_white_color = white_square
         self.board_selected_color = selected
         self.board_last_move_color = last_move
+        self.board_valid_moves_color = valid_moves
         self.colors = colors
 
     
@@ -87,6 +89,7 @@ class GlobalVisual:
             self.board_white_color = get_color(settings['BOARD_WHITE_COLOR'], self.colors)
             self.board_selected_color = get_color(settings['BOARD_SELECTED_COLOR'], self.colors)
             self.board_last_move_color = get_color(settings['BOARD_LAST_MOVE_COLOR'], self.colors)
+            self.board_valid_moves_color = get_color(settings['BOARD_VALID_MOVES_COLOR'], self.colors)
             self.fontcolor = get_color(settings['FONT_COLOR'], self.colors)
 
         return self

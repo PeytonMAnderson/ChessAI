@@ -1,7 +1,7 @@
 from pygame import Surface, Rect, draw, transform, font
 
 from ..environment import Environment
-from ..chess_logic.global_chess import get_file_from_number
+from ..chess_logic.chess_utils import get_file_from_number
 
 def draw_ranks_files(surface: Surface, env: Environment):
     #Get Board Origin
