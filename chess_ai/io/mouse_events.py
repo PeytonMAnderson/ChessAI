@@ -3,7 +3,7 @@ import pygame
 
 from ..environment import Environment
 from ..visuals.draw_shapes import check_bounds
-from ..chess_logic.chess_utils import get_piece_on_board
+from ..chess_logic.chess_utils import get_piece_on_board, get_is_white
 from ..chess_logic.chess_moves import get_valid_moves, move_piece
 
 
@@ -23,9 +23,11 @@ def mouse_events(event, env: Environment):
         env.chess.valid_moves = []
     else:
         if env.io.selected_position is None:
-            if get_piece_on_board(new_selected[0], new_selected[1], env) != 0:
-                env.chess.valid_moves = get_valid_moves(new_selected[0], new_selected[1], env)
-                env.io.selected_position = new_selected
+            piece = get_piece_on_board(new_selected[0], new_selected[1], env)
+            if piece != 0:
+                if get_is_white(piece, env.chess.piece_numbers) == env.chess.whites_turn:
+                    env.chess.valid_moves = get_valid_moves(new_selected[0], new_selected[1], env)
+                    env.io.selected_position = new_selected
         else:
             ro, fo = env.io.selected_position
             rf, ff = new_selected

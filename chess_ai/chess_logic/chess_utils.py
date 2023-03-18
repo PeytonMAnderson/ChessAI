@@ -41,6 +41,9 @@ def get_piece_value(letter: str, piece_numbers: dict) -> int:
     else:
         return 0
     
+def get_is_white(piece_value: int, piece_numbers: dict) -> bool:
+    return True if int(piece_value / 10) == piece_numbers['WHITE'] else False
+    
 def get_piece_type_str(piece_value: int, piece_numbers: dict, upper_case: bool) -> str | None:
     
     #Check piece type
@@ -108,12 +111,11 @@ def convert_fen_to_board(fen_string: str, file_dim: int, rank_dim: int, piece_nu
         rank_index += 1
     return board_array 
 
-def convert_board_to_fen(board: list, file_dim: int, rank_dim: int, piece_numbers: dict) -> str:
+def convert_board_to_fen(board: list, file_dim: int, rank_dim: int, piece_numbers: dict, env) -> str:
     rank_index = 0
     file_index = 0
 
     rank_str = ""
-
     #Go Through ranks
     while rank_index < rank_dim:
 
@@ -156,8 +158,11 @@ def convert_board_to_fen(board: list, file_dim: int, rank_dim: int, piece_number
 
         #Increment Rank
         rank_index += 1
+    
+    #Add Active color:
+    color_str = "w" if env.chess.whites_turn else "b"
 
-    return rank_str
+    return rank_str + " " + color_str
 
 def get_move_str(rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, env):
     board_position_old = rank_i_old * env.chess.board_files + file_i_old

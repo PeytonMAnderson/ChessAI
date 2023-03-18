@@ -22,6 +22,8 @@ class GlobalChess:
         self.history_position = 0
         self.piece_numbers = piece_numbers
         self.valid_moves = []
+        self.all_valid_moves = []
+        self.whites_turn = True
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalChess":
         with open(yaml_path, "r") as f:
