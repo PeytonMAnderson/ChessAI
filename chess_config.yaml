@@ -48,4 +48,4 @@ CHESS:
   BOARD_RANKS: 8
   BOARD_FILES: 8
   PIECE_NUMBERS: {"NONE": 0, "PAWN": 1, "KNIGHT": 2, "BISHOP": 3, "ROOK": 4, "QUEEN": 5, "KING": 6, "WHITE": 1, "BLACK": 2}
-  BOARD: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 2
+  BOARD: rnbqkbnrrnbqkbnr/pppppppppppppppp/8/8/8/8/PPPPPPPPPPPPPPPP/RNBQKBNRRNBQKBNR b KQkq - 1 2

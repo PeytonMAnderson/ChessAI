@@ -97,7 +97,8 @@ def convert_fen_to_board(fen_string: str, file_dim: int, rank_dim: int, piece_nu
             piece = rank[string_index]
 
             if piece.isdigit() is False:
-                board_array[rank_index * file_dim + file_index] = get_piece_value(piece, piece_numbers)
+                if len(board_array) > rank_index * file_dim + file_index:
+                    board_array[rank_index * file_dim + file_index] = get_piece_value(piece, piece_numbers)
                 file_index += 1
                 string_index += 1
             else:
