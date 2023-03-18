@@ -81,15 +81,23 @@ def get_piece_str(piece_value: int, piece_numbers: dict) -> str:
 def get_file_from_number(file_index: int) -> str:
     return chr(ord('a') + file_index)
 
+def get_number_from_file(file_str: str) -> int:
+    return ord(file_str) - ord('a')
+
 def convert_fen_to_board(fen_string: str, file_dim: int, rank_dim: int, piece_numbers: dict) -> list:
     board_array = [0] * rank_dim * file_dim
 
     #Get the piece positions from the fen string
     split_string = fen_string.split(" ")
     piece_positions = split_string[0]
-    piece_ranks = split_string[0].split("/")
+    turn = split_string[1] if len(split_string) >= 2 else None
+    castle_avail = split_string[2] if len(split_string) >= 3 else None
+    enpassant = split_string[3] if len(split_string) >= 4 else None
+    half_move = split_string[4] if len(split_string) >= 5 else None
+    full_move = split_string[5] if len(split_string) >= 6 else None
 
     #Go through the ranks
+    piece_ranks = piece_positions.split("/")
     rank_index = 0
     for rank in piece_ranks:
 
@@ -107,9 +115,12 @@ def convert_fen_to_board(fen_string: str, file_dim: int, rank_dim: int, piece_nu
             else:
                 file_index += int(piece)
                 string_index += 1
-        
         rank_index += 1
-    return board_array 
+
+    #Get Turn
+    is_white = True if turn is None or turn == 'w' else False
+
+    return [ board_array, is_white, castle_avail, enpassant, half_move, full_move ]
 
 def convert_board_to_fen(board: list, file_dim: int, rank_dim: int, piece_numbers: dict, env) -> str:
     rank_index = 0
@@ -193,3 +204,17 @@ def get_move_str(rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: 
 
     #Return the entire Move string
     return moving_piece_file_str + moving_piece_str + capture_string + destination_file_str + destination_rank_str
+
+def get_position_from_move_str(move_str: str, env) -> tuple | None:
+    if move_str is None:
+        return None
+    rank = move_str[len(move_str)-1]
+    file = move_str[len(move_str)-2]
+
+    file_i = get_number_from_file(file)
+    rank_i = env.chess.board_ranks - int(rank)
+
+
+
+    print((rank_i, file_i))
+    return rank_i, file_i

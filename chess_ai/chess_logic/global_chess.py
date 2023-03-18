@@ -34,7 +34,12 @@ class GlobalChess:
             self.board_files = settings['BOARD_FILES']
             self.board_ranks = settings['BOARD_RANKS']
             self.piece_numbers = settings['PIECE_NUMBERS']
-            self.board = convert_fen_to_board(settings['BOARD'], self.board_files, self.board_ranks, self.piece_numbers)
+
+            #Get Chess State from FEN string
+            fen_data = convert_fen_to_board(settings['BOARD'], self.board_files, self.board_ranks, self.piece_numbers)
+            self.board = fen_data[0]
+            self.whites_turn = fen_data[1]
+
             self.history.append((None, settings['BOARD']))
 
         return self
