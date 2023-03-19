@@ -246,4 +246,4 @@ class ChessUtils:
         
         #Add Active color:
         color_str = "w" if whites_turn else "b"
-        return rank_str + " " + color_str
+        return rank_str + " " + color_str + " " + castling_avail + " " + en_passant_avail + " " + str(half_move) + " " + str(full_move)

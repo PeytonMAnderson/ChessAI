@@ -43,13 +43,21 @@ class GlobalChess:
 
             Returns: Self for chaining
         """
-        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn)
+        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn, self.state.full_move)
         new_hist = {"last_move": new_move['move_str'], "fen_string": new_move['fen_string']}
-        print(new_hist)
         self.board.board = new_move['board']
         self.state.update_from_move_dict(new_move)
-        self.history.pop_add(new_hist)        
         self.state.last_move = new_move['move_str']
+        self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
+        self.history.pop_add(new_hist)
+
+    def load_from_history(self, frame: dict) -> "GlobalChess":
+        history_data = self.util.convert_fen_to_board(frame['fen_string'], self.board.files, self.board.ranks, self.board.piece_numbers)
+        self.board.board = history_data[0]
+        self.state.update_from_fen_list(history_data)
+        self.state.last_move = frame['last_move']
+        self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
+        
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalChess":
         with open(yaml_path, "r") as f:

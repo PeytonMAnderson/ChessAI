@@ -112,8 +112,47 @@ class ChessCheck:
         pieces_list = self.get_all_piece_locations(is_white, board)
         valid_moves = []
         for piece_r, piece_f in pieces_list:
-            moves_list = self.get_base_moves(piece_r, piece_f, board)
+            moves_list = self.base_moves.get_base_moves(piece_r, piece_f, board)
             for move_r, move_f in moves_list:
-                if self.check_move_cause_check(piece_r, piece_f, move_r, move_f) is False:
+                if self.check_move_cause_check(piece_r, piece_f, move_r, move_f, board) is False:
                     valid_moves.append((piece_r, piece_f, move_r, move_f))
         return valid_moves
+    
+    def calc_check_status(self, board: list, whites_turn: bool) -> str:
+        """Calculates check status of the game.
+
+            This includes:
+
+                Check
+                Checkmate
+                Stalemate
+            
+            Return str of the check status
+        """
+        white_king = self.utils.get_piece_number_from_str('K', self.board.piece_numbers)
+        black_king = self.utils.get_piece_number_from_str('k', self.board.piece_numbers)
+
+        white_check = self.check_for_check(white_king, board)
+        black_check = self.check_for_check(black_king, board)
+
+        white_moves = self.check_all_available_moves(True, board)
+        black_moves = self.check_all_available_moves(False, board)
+
+        check_status = "None"
+        if white_check:
+            if len(white_moves) == 0:
+                check_status = "Black Checkmate"
+            else:
+                check_status = "Black Check"
+        elif black_check:
+            if len(black_moves) == 0:
+                check_status = "White Checkmate"
+            else:
+                check_status = "White Check"
+        else:
+            if whites_turn and len(white_moves) == 0:
+                check_status = "Black Stalemate"
+            elif not whites_turn and len(black_moves) == 0:
+                check_status = "White Stalemate"
+                
+        return check_status

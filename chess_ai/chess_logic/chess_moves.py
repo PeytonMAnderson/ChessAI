@@ -125,7 +125,7 @@ class ChessMoves:
         rank_i = self.utils.get_number_from_rank(rank, self.board.ranks)
         return rank_i, file_i
 
-    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whits_turn: bool) -> dict | None:
+    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, full_move: int) -> dict | None:
         """ Moves the piece on the passed board.
 
             Gets the new Move string.
@@ -152,7 +152,7 @@ class ChessMoves:
             new_board[board_position_old] = 0
 
             #Update Turn
-            whites_turn = False if whits_turn else True
+            white_turn = False if whites_turn else True
 
             #Get Castle Availability
             castle_avail = 'KQkq'
@@ -164,15 +164,17 @@ class ChessMoves:
             half_move = 0
 
             #Get Full Move
-            full_move = 1
+            full_move_new = int(full_move)
+            if whites_turn is True:
+                full_move_new += 1
 
             #Get New FEN String
             new_fen = self.utils.convert_board_to_fen(new_board,
-                                                        whites_turn,
+                                                        white_turn,
                                                         castle_avail,
                                                         en_passant,
                                                         half_move,
-                                                        full_move,
+                                                        full_move_new,
                                                         self.board.files,
                                                         self.board.ranks, 
                                                         self.board.piece_numbers)
@@ -182,12 +184,12 @@ class ChessMoves:
             return {
                 "board": new_board,
                 "move_str": new_move,
-                "whites_turn": whites_turn,
+                "whites_turn": white_turn,
                 "fen_string": new_fen,
                 "castle_avail": castle_avail,
                 "en_passant": en_passant,
                 "half_move": half_move,
-                "full_move": full_move
+                "full_move": full_move_new
             }
 
         return None
