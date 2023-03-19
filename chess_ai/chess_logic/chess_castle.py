@@ -162,3 +162,11 @@ class ChessCastle:
                 if castle_avail.count('q') > 0:
                     return castle_avail.replace('q', '')
         return castle_avail
+    
+    def castle_rook(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list) -> None:
+        ro, fo = self.get_rook_position_old(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
+        rn, fn = self.get_rook_position_new(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
+        old_pos = ro * self.board.files + fo
+        new_pos = rn * self.board.files + fn
+        board[new_pos] = board[old_pos]
+        board[old_pos] = 0

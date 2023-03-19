@@ -125,7 +125,18 @@ class ChessUtils:
             Returns: Index of current rank.
         """
         return board_rank_count - int(rank_str)
+    
+    def get_position_from_rank_file(self, rank_file_str: str, board_rank_count: int) -> tuple | None:
+        """Get the position (rank_i, file_i) from the rank file strings.
 
+            Returns: Tuple (rank_i, file_i) of the rank_file_str.
+        """
+        if len(rank_file_str) == 2:
+            file = rank_file_str[0]
+            rank = rank_file_str[1]
+            return self.get_number_from_rank(rank, board_rank_count), self.get_number_from_file(file)
+        return None
+    
     def convert_fen_to_board(self, fen_string: str, file_dim: int, rank_dim: int, piece_numbers: dict) -> list:
         """Reads a FEN string can parses data from the string.
                 Calculates:

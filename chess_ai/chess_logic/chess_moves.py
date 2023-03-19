@@ -4,14 +4,16 @@ from .chess_board import ChessBoard
 from .chess_base_moves import ChessBaseMoves
 from .chess_check import ChessCheck
 from .chess_castle import ChessCastle
+from .chess_enpassant import ChessEnpassant
 
 class ChessMoves:
-    def __init__(self, utils: ChessUtils, board: ChessBoard, base_move: ChessBaseMoves, check: ChessCheck, castle: ChessCastle, *args, **kwargs) -> None:
+    def __init__(self, utils: ChessUtils, board: ChessBoard, base_move: ChessBaseMoves, check: ChessCheck, castle: ChessCastle, enpassant: ChessEnpassant, *args, **kwargs) -> None:
         self.utils = utils
         self.board = board
         self.base_move = base_move
         self.check = check
         self.castle = castle
+        self.enpassant = enpassant
         self._valid_moves = []
 
     def filter_moves(self, rank_i_old: int, file_i_old: int, move_list: list, board: list) -> list:
@@ -25,7 +27,7 @@ class ChessMoves:
                 filtered_moves.append((new_r, new_f))
         return filtered_moves
     
-    def get_valid_moves(self, rank_i_old: int, file_i_old: int, board: list, castle_avail: str) -> list:
+    def get_valid_moves(self, rank_i_old: int, file_i_old: int, board: list, castle_avail: str, enpassant: str) -> list:
         """Get a list of all valid moves that pass all checks.
 
             Returns: List of all valid moves.
@@ -34,6 +36,7 @@ class ChessMoves:
         if piece_function is not None:
             moves = piece_function(rank_i_old, file_i_old, board)
             moves = moves + self.castle.get_castle_moves(rank_i_old, file_i_old, board, castle_avail)
+            moves = moves + self.enpassant.get_enpassant_moves(rank_i_old, file_i_old, board, enpassant)
             if moves is not None:
                 return self.filter_moves(rank_i_old, file_i_old, moves, board)
             print("WARNING: Moves does not exist.")
@@ -41,12 +44,12 @@ class ChessMoves:
             print("WARNING: Piece function does not exist.")
         return []
     
-    def update_valid_moves(self, rank_i_old: int, file_i_old: int, board: list, castle_avail: str) -> "ChessMoves":
+    def update_valid_moves(self, rank_i_old: int, file_i_old: int, board: list, castle_avail: str, enpassant: str) -> "ChessMoves":
         """Calculates new valid moves and updates valid_moves member.
 
             Returns: Self for chaining
         """
-        self._valid_moves = self.get_valid_moves(rank_i_old, file_i_old, board, castle_avail)
+        self._valid_moves = self.get_valid_moves(rank_i_old, file_i_old, board, castle_avail, enpassant)
         return self
     
     def clear_valid_moves(self) -> "ChessMoves":
@@ -82,7 +85,7 @@ class ChessMoves:
         """
         return self._valid_moves
 
-    def get_move_str(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, castled: bool) -> str:
+    def get_move_str(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, castled: bool, enpassant: bool) -> str:
         """Get the move string of the passed move (rank_i_old, file_i_old) -> (rank_i_new, file_i_new).
 
             Returns: Move String.
@@ -97,9 +100,9 @@ class ChessMoves:
         moving_piece = board[board_position_old]
         destination_piece = board[board_position_new]
 
-        #Determin if a capture happened
+        #Determine if a capture happened
         capture_string = ""
-        if destination_piece != 0:
+        if destination_piece != 0 or enpassant:
             capture_string = "x"
 
         #Get the destination rank and file
@@ -119,7 +122,7 @@ class ChessMoves:
         #Return the entire Move string
         return moving_piece_file_str + moving_piece_str + capture_string + destination_file_str + destination_rank_str
 
-    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, castle_avail: str, full_move: int) -> dict | None:
+    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, castle_avail: str, enpassant: str, full_move: int) -> dict | None:
         """ Moves the piece on the passed board.
 
             Gets the new Move string.
@@ -143,15 +146,16 @@ class ChessMoves:
             new_board[board_position_old] = 0
 
             #Castle
-            castled = False
+            castle_bool = False
             if self.castle.move_is_castle(rank_i_old, file_i_old, rank_i_new, file_i_new, board):
-                ro, fo = self.castle.get_rook_position_old(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
-                rn, fn = self.castle.get_rook_position_new(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
-                old_pos = ro * self.board.files + fo
-                new_pos = rn * self.board.files + fn
-                new_board[new_pos] = new_board[old_pos]
-                new_board[old_pos] = 0
+                self.castle.castle_rook(rank_i_old, file_i_old, rank_i_new, file_i_new, new_board)
                 castled = True
+
+            #Enpassant
+            enpassant_bool = False
+            if self.enpassant.move_is_enpassant(rank_i_old, file_i_old, rank_i_new, file_i_new, board, enpassant):
+                self.enpassant.take_pawn(rank_i_old, file_i_old, rank_i_new, file_i_new, new_board)
+                enpassant_bool = True
 
             #Update Turn
             white_turn = False if whites_turn else True
@@ -162,7 +166,7 @@ class ChessMoves:
                 castle = "-"
 
             #Get En Passant Availability
-            en_passant = '-'
+            en_passant = self.enpassant.get_enpassant_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
 
             #Get Half Move
             half_move = 0
@@ -173,7 +177,7 @@ class ChessMoves:
                 full_move_new += 1
 
             #Get Move String
-            new_move_str = self.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castled)
+            new_move_str = self.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_bool, enpassant_bool)
 
             #Get New FEN String
             new_fen = self.utils.convert_board_to_fen(new_board,

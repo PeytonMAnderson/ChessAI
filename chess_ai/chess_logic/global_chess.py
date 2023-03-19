@@ -12,7 +12,8 @@ from .chess_base_moves import ChessBaseMoves
 from .chess_board import ChessBoard
 from .chess_history import ChessHistory
 from .chess_state import ChessState
-from.chess_castle import ChessCastle
+from .chess_castle import ChessCastle
+from .chess_enpassant import ChessEnpassant 
 
 #Global Variable Class
 class GlobalChess:
@@ -28,10 +29,12 @@ class GlobalChess:
         self.util = ChessUtils()
         self.history = ChessHistory()
         self.state = ChessState()
+        
         self.base_moves = ChessBaseMoves(self.util, self.board)
+        self.enpassant = ChessEnpassant(self.util, self.board, self.base_moves)
         self.check = ChessCheck(self.util, self.board, self.base_moves)
         self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
-        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle)
+        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant)
         
         
     def move_piece(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int) -> "GlobalChess":
@@ -46,7 +49,16 @@ class GlobalChess:
 
             Returns: Self for chaining
         """
-        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn, self.state.castle_avail, self.state.full_move)
+        new_move = self.moves.move(rank_i_old, 
+                                   file_i_old, 
+                                   rank_i_new, 
+                                   file_i_new, 
+                                   self.board.board, 
+                                   self.state.whites_turn, 
+                                   self.state.castle_avail, 
+                                   self.state.en_passant, 
+                                   self.state.full_move
+        )
         new_hist = {"last_move_str": new_move['move_str'], "last_move_tuple": new_move['move_tuple'], "fen_string": new_move['fen_string']}
         self.board.board = new_move['board']
         self.state.update_from_move_dict(new_move)

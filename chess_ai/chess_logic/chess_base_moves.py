@@ -59,6 +59,16 @@ class ChessBaseMoves:
                 return False
         else:
             return True
+    
+    def get_pawn_attack_moves(self, rank_i_old: int, file_i_old: int, is_white: bool) -> list:
+        """Get the attacking moves for pawn of a certain color.
+
+            Returns: List of moves the pawn is able to attack.
+        """
+        if is_white:
+            return [(rank_i_old - 1, file_i_old - 1), (rank_i_old - 1, file_i_old + 1)]
+        return [(rank_i_old + 1, file_i_old - 1), (rank_i_old + 1, file_i_old + 1)]
+
 
     def check_pawn_moves(self, rank_i_old: int, file_i_old: int, board: list) -> list:
         """Checks all available moves for the type of PAWN.
@@ -78,17 +88,12 @@ class ChessBaseMoves:
             if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
                 valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
 
-        #Check if left is a piece to take
-        new_r, new_f = rank_i_old + new_rank_diff, file_i_old - 1
-        if self.check_if_blocked(new_r, new_f, board) is True and self.check_if_in_bounds(new_r, new_f) is True:
-            if self.check_if_capturable(rank_i_old, file_i_old, new_r, new_f, board):
-                valid_moves.append((new_r, new_f))
-
-        #Check if right is a piece to take
-        new_r, new_f = rank_i_old + new_rank_diff, file_i_old + 1
-        if self.check_if_blocked(new_r, new_f, board)  is True and self.check_if_in_bounds(new_r, new_f) is True:
-            if self.check_if_capturable(rank_i_old, file_i_old, new_r, new_f, board):
-                valid_moves.append((new_r, new_f))
+        #Add Pawn Attacking Moves
+        pawn_attack_moves = self.get_pawn_attack_moves(rank_i_old, file_i_old, is_white)
+        for new_r, new_f in pawn_attack_moves:
+            if self.check_if_blocked(new_r, new_f, board) is True and self.check_if_in_bounds(new_r, new_f) is True:
+                if self.check_if_capturable(rank_i_old, file_i_old, new_r, new_f, board):
+                    valid_moves.append((new_r, new_f))
 
         #Add Starting double move
         if rank_i_old == 1 and not is_white:
