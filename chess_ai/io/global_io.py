@@ -18,7 +18,6 @@ class GlobalIO:
 
         #Changing Variables
         self.selected_position = None
-        self.last_move = None
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalIO":
         with open(yaml_path, "r") as f:

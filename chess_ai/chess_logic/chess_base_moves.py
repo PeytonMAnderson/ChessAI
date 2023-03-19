@@ -184,7 +184,7 @@ class ChessBaseMoves:
         return bishop_moves + rook_moves
 
 
-    def check_king_moves(self, rank_i_old: int, file_i_old: int, board: list, env):
+    def check_king_moves(self, rank_i_old: int, file_i_old: int, board: list):
         """Checks all available moves for the type of KING.
 
             Returns: A list of all available moves: (rank, file) pairs

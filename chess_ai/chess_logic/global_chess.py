@@ -43,25 +43,28 @@ class GlobalChess:
 
             Returns: Self for chaining
         """
-        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.whites_turn)
+        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn)
+        new_hist = {"last_move": new_move['move_str'], "fen_string": new_move['fen_string']}
+        print(new_hist)
         self.board.board = new_move['board']
         self.state.update_from_move_dict(new_move)
+        self.history.pop_add(new_hist)        
+        self.state.last_move = new_move['move_str']
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalChess":
         with open(yaml_path, "r") as f:
             yaml_settings = yaml.safe_load(f)
             settings = yaml_settings['CHESS']
 
-            #Save Chess Values
-            self.board_files = settings['BOARD_FILES']
-            self.board_ranks = settings['BOARD_RANKS']
-            self.piece_numbers = settings['PIECE_NUMBERS']
+            #Save Board Chess Values
+            self.board.files = settings['BOARD_FILES']
+            self.board.ranks = settings['BOARD_RANKS']
+            self.board.piece_numbers = settings['PIECE_NUMBERS']
 
             #Get Chess State from FEN string
-            fen_data = self.util.convert_fen_to_board(settings['BOARD'], self.board_files, self.board_ranks, self.piece_numbers)
-            self.board = fen_data[0]
-            self.whites_turn = fen_data[1]
-
-            self.history.append((None, settings['BOARD']))
+            fen_data = self.util.convert_fen_to_board(settings['BOARD'], self.board.files, self.board.ranks, self.board.piece_numbers)
+            self.board.board = fen_data[0]
+            self.state.update_from_fen_list(fen_data)
+            self.history.pop_add({"last_move": None, "fen_string": settings['BOARD']})
 
         return self

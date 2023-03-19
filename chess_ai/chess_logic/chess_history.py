@@ -48,6 +48,7 @@ class ChessHistory:
     def pop_add(self, frame_data: dict) -> "ChessHistory":
         self.pop_frames()
         self.add_frame(frame_data)
+        self._history_position = len(self._history) - 1
         return self
     
     def get_previous(self) -> dict:

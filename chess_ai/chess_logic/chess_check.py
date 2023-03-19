@@ -67,7 +67,7 @@ class ChessCheck:
         pieces_list = self.get_all_piece_locations(is_white, board)
         moves_list = []
         for piece_r, piece_f in pieces_list:
-            moves_list = moves_list + self.get_base_moves(piece_r, piece_f, board)
+            moves_list = moves_list + self.base_moves.get_base_moves(piece_r, piece_f, board)
         return moves_list        
 
     def check_all_moves_for_check(self, rank_i: int, file_i: int, is_white: bool, board: list) -> bool:
