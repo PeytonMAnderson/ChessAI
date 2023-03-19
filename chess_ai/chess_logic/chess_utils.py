@@ -1,220 +1,249 @@
 
 
-def get_piece_on_board(rank_i: int, file_i: int, env):
-    board_position = rank_i * env.chess.board_files + file_i
-    if board_position < len(env.chess.board):
-        return env.chess.board[board_position]
-    print("WARNING: Location on board is out of range.")
-    return 0
+class ChessUtils:
+    def __init__(self, *args, **kwargs) -> None:
+        pass
 
-def get_piece_value(letter: str, piece_numbers: dict) -> int:
-    
-    #Black Pieces
-    if letter == 'p':
-        return piece_numbers['PAWN'] + piece_numbers['BLACK'] * 10
-    elif letter == 'n':
-        return piece_numbers['KNIGHT'] + piece_numbers['BLACK'] * 10
-    elif letter == 'b':
-        return piece_numbers['BISHOP'] + piece_numbers['BLACK'] * 10
-    elif letter == 'r':
-        return piece_numbers['ROOK'] + piece_numbers['BLACK'] * 10
-    elif letter == 'q':
-        return piece_numbers['QUEEN'] + piece_numbers['BLACK'] * 10
-    elif letter == 'k':
-        return piece_numbers['KING'] + piece_numbers['BLACK'] * 10
+    def get_piece_number_on_board(self, rank_i: int, file_i: int, board: list, board_files_count: int) -> int:
+        """Get the piece number at board[rank_i * board_files_count + file_i] (rank_i, file_i) from the board list.
 
-    #White Pieces
-    elif letter == 'P':
-        return piece_numbers['PAWN'] + piece_numbers['WHITE'] * 10
-    elif letter == 'N':
-        return piece_numbers['KNIGHT'] + piece_numbers['WHITE'] * 10
-    elif letter == 'B':
-        return piece_numbers['BISHOP'] + piece_numbers['WHITE'] * 10
-    elif letter == 'R':
-        return piece_numbers['ROOK'] + piece_numbers['WHITE'] * 10
-    elif letter == 'Q':
-        return piece_numbers['QUEEN'] + piece_numbers['WHITE'] * 10
-    elif letter == 'K':
-        return piece_numbers['KING'] + piece_numbers['WHITE'] * 10
-
-    #Else this is not a piece
-    else:
+            Returns: piece number at that location.
+        """
+        board_position = rank_i * board_files_count + file_i
+        if board_position < len(board):
+            return board[board_position]
+        print("WARNING: Location on board is out of range.")
         return 0
-    
-def get_is_white(piece_value: int, piece_numbers: dict) -> bool:
-    return True if int(piece_value / 10) == piece_numbers['WHITE'] else False
-    
-def get_piece_type_str(piece_value: int, piece_numbers: dict, upper_case: bool) -> str | None:
-    
-    #Check piece type
-    if piece_value % 10 == piece_numbers['NONE']:
-        return None
-    elif piece_value % 10 == piece_numbers['PAWN']:
-        return 'P' if upper_case else 'p'
-    elif piece_value % 10 == piece_numbers['KNIGHT']:
-        return 'N' if upper_case else 'n'
-    elif piece_value % 10 == piece_numbers['BISHOP']:
-        return 'B' if upper_case else 'b'
-    elif piece_value % 10 == piece_numbers['ROOK']:
-        return 'R' if upper_case else 'r'
-    elif piece_value % 10 == piece_numbers['QUEEN']:
-        return 'Q' if upper_case else 'q'
-    elif piece_value % 10 == piece_numbers['KING']:
-        return 'K' if upper_case else 'k'
-    else:
-        return None
-    
-def get_piece_str(piece_value: int, piece_numbers: dict) -> str:
 
-    #If there is no piece
-    if piece_value % 10 == piece_numbers['NONE']:
-        return None
-    #Check if black or white
-    white = True if int(piece_value / 10) == piece_numbers['WHITE'] else False
-    #White
-    if white:
-        return get_piece_type_str(piece_value, piece_numbers, True)
-    #Black
-    else:
-        return get_piece_type_str(piece_value, piece_numbers, False)
-    
-def get_file_from_number(file_index: int) -> str:
-    return chr(ord('a') + file_index)
+    def get_piece_number_from_str(self, letter: str, piece_numbers: dict) -> int:
+        """Get the piece number from the letter of a FEN string.
 
-def get_number_from_file(file_str: str) -> int:
-    return ord(file_str) - ord('a')
+            Valid letters: 'pnbrqkPNBRQK'
+            Calculation: piece_type + piece_color * 10
 
-def convert_fen_to_board(fen_string: str, file_dim: int, rank_dim: int, piece_numbers: dict) -> list:
-    board_array = [0] * rank_dim * file_dim
-
-    #Get the piece positions from the fen string
-    split_string = fen_string.split(" ")
-    piece_positions = split_string[0]
-    turn = split_string[1] if len(split_string) >= 2 else None
-    castle_avail = split_string[2] if len(split_string) >= 3 else None
-    enpassant = split_string[3] if len(split_string) >= 4 else None
-    half_move = split_string[4] if len(split_string) >= 5 else None
-    full_move = split_string[5] if len(split_string) >= 6 else None
-
-    #Go through the ranks
-    piece_ranks = piece_positions.split("/")
-    rank_index = 0
-    for rank in piece_ranks:
-
-        #Go through the files
-        file_index = 0
-        string_index = 0
-        while file_index < file_dim and string_index < len(rank):
-            piece = rank[string_index]
-
-            if piece.isdigit() is False:
-                if len(board_array) > rank_index * file_dim + file_index:
-                    board_array[rank_index * file_dim + file_index] = get_piece_value(piece, piece_numbers)
-                file_index += 1
-                string_index += 1
-            else:
-                file_index += int(piece)
-                string_index += 1
-        rank_index += 1
-
-    #Get Turn
-    is_white = True if turn is None or turn == 'w' else False
-
-    return [ board_array, is_white, castle_avail, enpassant, half_move, full_move ]
-
-def convert_board_to_fen(board: list, file_dim: int, rank_dim: int, piece_numbers: dict, env) -> str:
-    rank_index = 0
-    file_index = 0
-
-    rank_str = ""
-    #Go Through ranks
-    while rank_index < rank_dim:
-
-        #Go Through Files
-        file_str_total = ""
-        file_str_prev = ''
-        file_index = 0
-        while file_index < file_dim:
-
-            #Get value from board
-            board_value = board[rank_index * file_dim + file_index]
-            s = get_piece_str(board_value, piece_numbers)
-
-            #If value is a string or a number
-            if s is not None:
-                file_str_prev = s
-                file_str_total = file_str_total + s
-
-            else:
-                #If Previous str was also a digit, increment instead of adding new
-                if file_str_prev.isdigit():
-                    prev_digit = int(file_str_prev)
-                    file_str_total = file_str_total.removesuffix(file_str_prev)
-                    file_str_prev = str(prev_digit + 1)
-                    file_str_total = file_str_total + str(prev_digit + 1)
-                
-                #New Space, add 1 as beginning digit
-                else:
-                    file_str_prev = "1"
-                    file_str_total = file_str_total + "1"
-
-            #Increment File
-            file_index += 1
-        
-        #Add Rank to rank String
-        if len(rank_str) > 0:
-            rank_str = rank_str + "/" + file_str_total
+            Returns: piece number of the indicated letter.
+        """
+        if letter == 'p':
+            return piece_numbers['PAWN'] + piece_numbers['BLACK'] * 10
+        elif letter == 'n':
+            return piece_numbers['KNIGHT'] + piece_numbers['BLACK'] * 10
+        elif letter == 'b':
+            return piece_numbers['BISHOP'] + piece_numbers['BLACK'] * 10
+        elif letter == 'r':
+            return piece_numbers['ROOK'] + piece_numbers['BLACK'] * 10
+        elif letter == 'q':
+            return piece_numbers['QUEEN'] + piece_numbers['BLACK'] * 10
+        elif letter == 'k':
+            return piece_numbers['KING'] + piece_numbers['BLACK'] * 10
+        elif letter == 'P':
+            return piece_numbers['PAWN'] + piece_numbers['WHITE'] * 10
+        elif letter == 'N':
+            return piece_numbers['KNIGHT'] + piece_numbers['WHITE'] * 10
+        elif letter == 'B':
+            return piece_numbers['BISHOP'] + piece_numbers['WHITE'] * 10
+        elif letter == 'R':
+            return piece_numbers['ROOK'] + piece_numbers['WHITE'] * 10
+        elif letter == 'Q':
+            return piece_numbers['QUEEN'] + piece_numbers['WHITE'] * 10
+        elif letter == 'K':
+            return piece_numbers['KING'] + piece_numbers['WHITE'] * 10
         else:
-            rank_str = file_str_total
-
-        #Increment Rank
-        rank_index += 1
+            return 0
     
-    #Add Active color:
-    color_str = "w" if env.chess.whites_turn else "b"
+    def get_is_white_from_piece_number(self, piece_value: int, piece_numbers: dict) -> bool:
+        """Get if the color of the piece value is white.
 
-    return rank_str + " " + color_str
+            Returns: True if piece is white, else False if piece is black
+        """
+        return True if int(piece_value / 10) == piece_numbers['WHITE'] else False
+    
+    def get_str_from_piece_type(self, piece_value: int, piece_numbers: dict, is_white: bool) -> str | None:
+        """Get letter of piece type. Works for white (Uppercase) and black(Lowercase) from is_white input.
 
-def get_move_str(rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, env):
-    board_position_old = rank_i_old * env.chess.board_files + file_i_old
-    board_position_new = rank_i_new * env.chess.board_files + file_i_new
+            Valid letters: 'pnbrqkPNBRQK'
+            Calculation: piece_value % 10 == piece_type
 
-    #Get the pieces that are moving and the captured piece
-    moving_piece = env.chess.board[board_position_old]
-    destination_piece = env.chess.board[board_position_new]
+            Returns: Letter of piece or None if piece does not exist.
+        """
+        if piece_value % 10 == piece_numbers['NONE']:
+            return None
+        elif piece_value % 10 == piece_numbers['PAWN']:
+            return 'P' if is_white else 'p'
+        elif piece_value % 10 == piece_numbers['KNIGHT']:
+            return 'N' if is_white else 'n'
+        elif piece_value % 10 == piece_numbers['BISHOP']:
+            return 'B' if is_white else 'b'
+        elif piece_value % 10 == piece_numbers['ROOK']:
+            return 'R' if is_white else 'r'
+        elif piece_value % 10 == piece_numbers['QUEEN']:
+            return 'Q' if is_white else 'q'
+        elif piece_value % 10 == piece_numbers['KING']:
+            return 'K' if is_white else 'k'
+        else:
+            return None
+        
+    def get_str_from_piece_number(self, piece_value: int, piece_numbers: dict) -> str | None:
+        """Calculates the letter of piece type. Determines if piece is white then calls: get_str_from_piece_type.
 
-    #Determin if a capture happened
-    capture_string = ""
-    if destination_piece != 0:
-        capture_string = "x"
+            Valid letters: 'pnbrqkPNBRQK'
+            Calculation:    int(piece_value / 10) == piece_color
+                            piece_value % 10 == piece_type
 
-    #Get the destination rank and file
-    destination_rank_str: str = str(env.chess.board_ranks - rank_i_new)
-    destination_file_str: str = get_file_from_number(file_i_new)
-    moving_piece_file_str: str = ''
-    moving_piece_str: str = get_piece_type_str(moving_piece, env.chess.piece_numbers, True)
+            Returns: Letter of piece or None if piece does not exist.
+        """
+        if piece_value % 10 == piece_numbers['NONE']:
+            return None
+        if self.get_is_white_from_piece_number(piece_value, piece_numbers):
+            return self.get_str_from_piece_type(piece_value, piece_numbers, True)
+        else:
+            return self.get_str_from_piece_type(piece_value, piece_numbers, False)
+    
+    def get_file_from_number(self, file_index: int) -> str:
+        """Get the file letter from the file index.
 
-    #Show file from for certain cases
-    if moving_piece_str == 'P' and capture_string == 'x':
-        moving_piece_file_str = get_file_from_number(file_i_old)
+            Returns: Letter of current file.
+        """
+        return chr(ord('a') + file_index)
 
-    #Remove the P if it was a Pawn
-    if moving_piece_str == 'P':
-        moving_piece_str = ''
+    def get_number_from_file(self, file_str: str) -> int:
+        """Get the file index from the file letter.
 
-    #Return the entire Move string
-    return moving_piece_file_str + moving_piece_str + capture_string + destination_file_str + destination_rank_str
+            Returns: Index of current file.
+        """
+        return ord(file_str) - ord('a')
+    
+    def get_rank_from_number(self, rank_index: int, board_rank_count: int) -> str:
+        """Get the rank str from the rank index.
 
-def get_position_from_move_str(move_str: str, env) -> tuple | None:
-    if move_str is None:
-        return None
-    rank = move_str[len(move_str)-1]
-    file = move_str[len(move_str)-2]
+            Returns: str of current rank.
+        """
+        return str(board_rank_count - rank_index)
+    
+    def get_number_from_rank(self, rank_str: str, board_rank_count: int) -> int:
+        """Get the rank index from the rank str.
 
-    file_i = get_number_from_file(file)
-    rank_i = env.chess.board_ranks - int(rank)
+            Returns: Index of current rank.
+        """
+        return board_rank_count - int(rank_str)
 
+    def convert_fen_to_board(self, fen_string: str, file_dim: int, rank_dim: int, piece_numbers: dict) -> list:
+        """Reads a FEN string can parses data from the string.
+                Calculates:
+                    Board: Piece Locations
+                    Turn: White or Black turn
+                    Castling: Castling Availability as str
+                    En passant: En passant Availability as str
+                    Half Move: Half Move number
+                    Full Move: Full Move number
+            
+            returns list[ Board, Turn, Castling, enpassant, half_move, full_move ]
+        """
+        board_array = [0] * rank_dim * file_dim
 
+        #Get the piece positions from the fen string
+        split_string = fen_string.split(" ")
+        piece_positions = split_string[0]
+        turn = split_string[1] if len(split_string) >= 2 else None
+        castle_avail = split_string[2] if len(split_string) >= 3 else None
+        enpassant = split_string[3] if len(split_string) >= 4 else None
+        half_move = split_string[4] if len(split_string) >= 5 else None
+        full_move = split_string[5] if len(split_string) >= 6 else None
 
-    print((rank_i, file_i))
-    return rank_i, file_i
+        #Go through the ranks
+        piece_ranks = piece_positions.split("/")
+        rank_index = 0
+        for rank in piece_ranks:
+
+            #Go through the files
+            file_index = 0
+            string_index = 0
+            while file_index < file_dim and string_index < len(rank):
+                piece = rank[string_index]
+
+                if piece.isdigit() is False:
+                    if len(board_array) > rank_index * file_dim + file_index:
+                        board_array[rank_index * file_dim + file_index] = self.get_piece_number_from_str(piece, piece_numbers)
+                    file_index += 1
+                    string_index += 1
+                else:
+                    file_index += int(piece)
+                    string_index += 1
+            rank_index += 1
+
+        #Get Turn
+        is_white = True if turn is None or turn == 'w' else False
+
+        return [ board_array, is_white, castle_avail, enpassant, half_move, full_move ]
+
+    def convert_board_to_fen(self, 
+            board: list, 
+            whites_turn: bool,
+            castling_avail: str,
+            en_passant_avail: str,
+            half_move: int,
+            full_move: int,
+            file_dim: int, 
+            rank_dim: int, 
+            piece_numbers: dict
+        ) -> str:
+        """Reads a board and converts board into a FEN string.
+                Calculates:
+                    Board: Piece Locations
+                    whites_turn: White or Black turn
+                    castling_avail: Castling Availability as str
+                    en_passant_avail: En passant Availability as str
+                    half_move: Half Move number
+                    full_move: Full Move number
+            
+            returns list[ Board, Turn, Castling, enpassant, half_move, full_move ]
+        """
+        rank_index = 0
+        file_index = 0
+
+        rank_str = ""
+        #Go Through ranks
+        while rank_index < rank_dim:
+
+            #Go Through Files
+            file_str_total = ""
+            file_str_prev = ''
+            file_index = 0
+            while file_index < file_dim:
+
+                #Get value from board
+                board_value = board[rank_index * file_dim + file_index]
+                s = self.get_str_from_piece_number(board_value, piece_numbers)
+
+                #If value is a string or a number
+                if s is not None:
+                    file_str_prev = s
+                    file_str_total = file_str_total + s
+
+                else:
+                    #If Previous str was also a digit, increment instead of adding new
+                    if file_str_prev.isdigit():
+                        prev_digit = int(file_str_prev)
+                        file_str_total = file_str_total.removesuffix(file_str_prev)
+                        file_str_prev = str(prev_digit + 1)
+                        file_str_total = file_str_total + str(prev_digit + 1)
+                    
+                    #New Space, add 1 as beginning digit
+                    else:
+                        file_str_prev = "1"
+                        file_str_total = file_str_total + "1"
+
+                #Increment File
+                file_index += 1
+            
+            #Add Rank to rank String
+            if len(rank_str) > 0:
+                rank_str = rank_str + "/" + file_str_total
+            else:
+                rank_str = file_str_total
+
+            #Increment Rank
+            rank_index += 1
+        
+        #Add Active color:
+        color_str = "w" if whites_turn else "b"
+        return rank_str + " " + color_str
