@@ -5,15 +5,25 @@ from .chess_base_moves import ChessBaseMoves
 from .chess_check import ChessCheck
 from .chess_castle import ChessCastle
 from .chess_enpassant import ChessEnpassant
+from .chess_promotion import ChessPromotion
 
 class ChessMoves:
-    def __init__(self, utils: ChessUtils, board: ChessBoard, base_move: ChessBaseMoves, check: ChessCheck, castle: ChessCastle, enpassant: ChessEnpassant, *args, **kwargs) -> None:
+    def __init__(self, 
+                utils: ChessUtils, 
+                board: ChessBoard, 
+                base_move: ChessBaseMoves, 
+                check: ChessCheck, 
+                castle: ChessCastle, 
+                enpassant: ChessEnpassant, 
+                promote: ChessPromotion, 
+        *args, **kwargs) -> None:
         self.utils = utils
         self.board = board
         self.base_move = base_move
         self.check = check
         self.castle = castle
         self.enpassant = enpassant
+        self.promote = promote
         self._valid_moves = []
 
     def filter_moves(self, rank_i_old: int, file_i_old: int, move_list: list, board: list) -> list:
@@ -144,6 +154,13 @@ class ChessMoves:
             new_board = board.copy()
             new_board[board_position_new] = new_board[board_position_old]
             new_board[board_position_old] = 0
+
+            #Promote
+            if self.promote.move_can_promote(rank_i_old, file_i_old, rank_i_new, file_i_new, board):
+                piece_value = self.utils.get_piece_number_on_board(rank_i_old, file_i_old, board, self.board.files)
+                is_white = self.utils.get_is_white_from_piece_number(piece_value, self.board.piece_numbers)
+                queen = 'Q' if is_white else 'q'
+                new_board[board_position_new] = self.utils.get_piece_number_from_str(queen, self.board.piece_numbers)
 
             #Castle
             castle_bool = False

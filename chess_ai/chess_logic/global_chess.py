@@ -14,6 +14,7 @@ from .chess_history import ChessHistory
 from .chess_state import ChessState
 from .chess_castle import ChessCastle
 from .chess_enpassant import ChessEnpassant 
+from .chess_promotion import ChessPromotion
 
 #Global Variable Class
 class GlobalChess:
@@ -29,13 +30,13 @@ class GlobalChess:
         self.util = ChessUtils()
         self.history = ChessHistory()
         self.state = ChessState()
-        
+
+        self.promote = ChessPromotion(self.util, self.board)
         self.base_moves = ChessBaseMoves(self.util, self.board)
         self.enpassant = ChessEnpassant(self.util, self.board, self.base_moves)
         self.check = ChessCheck(self.util, self.board, self.base_moves)
         self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
-        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant)
-        
+        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant, self.promote)
         
     def move_piece(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int) -> "GlobalChess":
         """Move a piece on the chess board.

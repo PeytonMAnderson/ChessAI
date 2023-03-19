@@ -82,16 +82,18 @@ class ChessBaseMoves:
         is_white = self.utils.get_is_white_from_piece_number(piece_value, self.board.piece_numbers)
         new_rank_diff = -1 if is_white else 1
         if is_white:
-            if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
-                valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
+            if self.check_if_in_bounds(rank_i_old + new_rank_diff, file_i_old):
+                if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
+                    valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
         else:
-            if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
-                valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
+            if self.check_if_in_bounds(rank_i_old + new_rank_diff, file_i_old):
+                if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
+                    valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
 
         #Add Pawn Attacking Moves
         pawn_attack_moves = self.get_pawn_attack_moves(rank_i_old, file_i_old, is_white)
         for new_r, new_f in pawn_attack_moves:
-            if self.check_if_blocked(new_r, new_f, board) is True and self.check_if_in_bounds(new_r, new_f) is True:
+            if self.check_if_in_bounds(new_r, new_f) is True and self.check_if_blocked(new_r, new_f, board) is True:
                 if self.check_if_capturable(rank_i_old, file_i_old, new_r, new_f, board):
                     valid_moves.append((new_r, new_f))
 
