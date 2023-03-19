@@ -94,7 +94,7 @@ class ChessCheck:
         return False
 
     def check_move_cause_check(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list) -> bool:
-        """Check if a new move (rank_i_old, file_i_old) -> (rank_i_new, file_i_new) will case a check on the player's king from the passed board.
+        """Check if a new move (rank_i_old, file_i_old) -> (rank_i_new, file_i_new) will cause a check on the player's king from the passed board.
 
             Returns: True if the move will cause a check, false if otherwise.
         """

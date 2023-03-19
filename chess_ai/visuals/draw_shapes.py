@@ -63,6 +63,12 @@ def draw_pieces(surface: Surface, env: Environment):
             file_index += 1
         rank_index += 1
 
+def draw_square_from_position(surface: Surface, rank_i: int, file_i:int, color: tuple, env: Environment) -> None:
+    x_o, y_o, size = get_local_board_coords(env)
+    x, y = x_o + file_i * size, y_o + rank_i * size
+    rect = Rect(x, y, size, size)
+    draw.rect(surface, color, rect)
+
 def check_bounds(mouse_position: tuple, rank_i: int, file_i: int, env: Environment) -> bool:
     x_o, y_o, size = get_local_board_coords(env)
 
@@ -111,14 +117,10 @@ def draw_valid_moves(surface: Surface, env: Environment):
         draw.rect(surface, env.visual.board_valid_moves_color, rect)
 
 def draw_last_move(surface: Surface, env: Environment):
-    xo, yo, size = get_local_board_coords(env)
-
-    if env.chess.state.last_move is not None:
-        r, f = env.chess.moves.get_position_from_move_str(env.chess.state.last_move)
-        x, y = xo + f * size, yo + r * size
-        rect = Rect(x, y, size, size)
-        draw.rect(surface, env.visual.board_last_move_color, rect)
-
+    if env.chess.state.last_move_tuple is not None:
+        ro, fo, rf, ff = env.chess.state.last_move_tuple
+        draw_square_from_position(surface, ro, fo, env.visual.board_last_move_from_color, env)
+        draw_square_from_position(surface, rf, ff, env.visual.board_last_move_to_color, env)
 
 def draw_all_shapes(surface: Surface, env: Environment):
     #Draw Background

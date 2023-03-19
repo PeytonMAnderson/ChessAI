@@ -14,17 +14,17 @@ class ChessBoard:
             self.board = board
         return self
     
-    def get_piece_position(self, piece_value: int) -> tuple | None:
+    def get_piece_position(self, piece_value: int, board: list) -> tuple | None:
         """Get the piece's rank and file by checking the board in the parameters.
 
             Returns: tuple[rank_i, file_i] of the piece location. None if piece is not found.
         """
         rank_i = 0
         file_i = 0
-        for piece in self.board:
+        for piece in board:
             if piece == piece_value:
                 return rank_i, file_i
-            if file_i >= self.board.files - 1:
+            if file_i >= self.files - 1:
                 rank_i += 1
                 file_i = 0
             else:

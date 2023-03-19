@@ -12,8 +12,7 @@ def select_square(mouse_position: tuple, env: Environment) -> tuple | None:
                 return rank, file
     return None
 
-
-def mouse_events(event, env: Environment):
+def mouse_left_click_events(event, env: Environment):
     ix, iy = env.io.input_position
     new_selected = select_square((ix, iy), env)
     if new_selected is None:
@@ -24,7 +23,7 @@ def mouse_events(event, env: Environment):
             piece = env.chess.util.get_piece_number_on_board(new_selected[0], new_selected[1], env.chess.board.board, env.chess.board.files)
             if piece != 0:
                 if env.chess.util.get_is_white_from_piece_number(piece, env.chess.board.piece_numbers) == env.chess.state.whites_turn:
-                    env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board)
+                    env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail)
                     env.io.selected_position = new_selected
         else:
             ro, fo = env.io.selected_position
@@ -42,3 +41,8 @@ def mouse_events(event, env: Environment):
                 if (ro == rf and fo == ff):
                     env.io.selected_position = None
                     env.chess.moves.clear_valid_moves()
+
+def mouse_events(event, env: Environment):
+    if event.button == 1:
+        mouse_left_click_events(event, env)
+

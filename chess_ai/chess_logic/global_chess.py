@@ -12,6 +12,7 @@ from .chess_base_moves import ChessBaseMoves
 from .chess_board import ChessBoard
 from .chess_history import ChessHistory
 from .chess_state import ChessState
+from.chess_castle import ChessCastle
 
 #Global Variable Class
 class GlobalChess:
@@ -26,11 +27,13 @@ class GlobalChess:
         self.board = ChessBoard(board, board_ranks, board_files, piece_numbers)
         self.util = ChessUtils()
         self.history = ChessHistory()
+        self.state = ChessState()
         self.base_moves = ChessBaseMoves(self.util, self.board)
         self.check = ChessCheck(self.util, self.board, self.base_moves)
-        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check)
-        self.state = ChessState()
-
+        self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
+        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle)
+        
+        
     def move_piece(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int) -> "GlobalChess":
         """Move a piece on the chess board.
             Updates History.
@@ -43,11 +46,12 @@ class GlobalChess:
 
             Returns: Self for chaining
         """
-        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn, self.state.full_move)
-        new_hist = {"last_move": new_move['move_str'], "fen_string": new_move['fen_string']}
+        new_move = self.moves.move(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, self.state.whites_turn, self.state.castle_avail, self.state.full_move)
+        new_hist = {"last_move_str": new_move['move_str'], "last_move_tuple": new_move['move_tuple'], "fen_string": new_move['fen_string']}
         self.board.board = new_move['board']
         self.state.update_from_move_dict(new_move)
-        self.state.last_move = new_move['move_str']
+        self.state.last_move_str = new_hist['last_move_str']
+        self.state.last_move_tuple = new_hist['last_move_tuple']
         self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
         self.history.pop_add(new_hist)
 
@@ -55,7 +59,8 @@ class GlobalChess:
         history_data = self.util.convert_fen_to_board(frame['fen_string'], self.board.files, self.board.ranks, self.board.piece_numbers)
         self.board.board = history_data[0]
         self.state.update_from_fen_list(history_data)
-        self.state.last_move = frame['last_move']
+        self.state.last_move_str = frame['last_move_str']
+        self.state.last_move_tuple = frame['last_move_tuple']
         self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
         
 
@@ -73,6 +78,6 @@ class GlobalChess:
             fen_data = self.util.convert_fen_to_board(settings['BOARD'], self.board.files, self.board.ranks, self.board.piece_numbers)
             self.board.board = fen_data[0]
             self.state.update_from_fen_list(fen_data)
-            self.history.pop_add({"last_move": None, "fen_string": settings['BOARD']})
+            self.history.pop_add({"last_move_str": "None", "last_move_tuple": None, "fen_string": settings['BOARD']})
 
         return self

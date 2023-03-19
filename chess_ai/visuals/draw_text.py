@@ -42,7 +42,7 @@ def draw_game_stats(surface: Surface, env: Environment):
     turn_pos = (x, y)
 
     #Last Move:
-    lm_text = rf_font.render(f"Last Move: {env.chess.state.last_move}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+    lm_text = rf_font.render(f"Last Move: {env.chess.state.last_move_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
     lm_pos = (x, y + fontsize * 2)
 
     #Check Status

@@ -13,7 +13,8 @@ class ChessState:
         self.en_passant = en_passant
         self.half_move = half_move
         self.full_move = full_move
-        self.last_move = None
+        self.last_move_str = "None"
+        self.last_move_tuple = None
 
     def update_from_move_dict(self, new_move: dict) -> "ChessState":
         self.whites_turn = new_move['whites_turn']
