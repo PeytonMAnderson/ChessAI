@@ -51,9 +51,25 @@ class ChessMoves:
                 return self.filter_moves(rank_i_old, file_i_old, moves, board)
             print("WARNING: Moves does not exist.")
         else:
-            print("WARNING: Piece function does not exist.")
+            print(f"WARNING: Piece function does not exist. {rank_i_old, file_i_old}")
         return []
     
+    def get_all_valid_moves(self, board: list, castle_avail: str, enpassant: str, is_white: bool) -> list:
+        all_valid_moves = []
+        rank_i = 0
+        file_i = 0
+        while rank_i < self.board.ranks:
+            file_i = 0
+            while file_i < self.board.files:
+                piece_value = board[rank_i * self.board.files + file_i]
+                if piece_value != 0 and self.utils.get_is_white_from_piece_number(piece_value, self.board.piece_numbers) == is_white:
+                    new_moves = self.get_valid_moves(rank_i, file_i, board, castle_avail, enpassant)
+                    for r, f in new_moves:
+                        all_valid_moves.append((rank_i, file_i, r, f))
+                file_i += 1
+            rank_i += 1
+        return all_valid_moves
+
     def update_valid_moves(self, rank_i_old: int, file_i_old: int, board: list, castle_avail: str, enpassant: str) -> "ChessMoves":
         """Calculates new valid moves and updates valid_moves member.
 

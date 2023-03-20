@@ -20,9 +20,10 @@ def mouse_left_click_events(event, env: Environment):
         env.chess.moves.clear_valid_moves()
     else:
         if env.io.selected_position is None:
-            piece = env.chess.util.get_piece_number_on_board(new_selected[0], new_selected[1], env.chess.board.board, env.chess.board.files)
-            if piece != 0:
-                if env.chess.util.get_is_white_from_piece_number(piece, env.chess.board.piece_numbers) == env.chess.state.whites_turn:
+            piece_value = env.chess.util.get_piece_number_on_board(new_selected[0], new_selected[1], env.chess.board.board, env.chess.board.files)
+            if piece_value != 0:
+                is_white = env.chess.util.get_is_white_from_piece_number(piece_value, env.chess.board.piece_numbers)
+                if is_white == env.chess.state.whites_turn and env.ai.piece_is_playable(is_white):
                     env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail, env.chess.state.en_passant)
                     env.io.selected_position = new_selected
         else:
@@ -31,6 +32,7 @@ def mouse_left_click_events(event, env: Environment):
             #Make sure move is valid
             if env.chess.moves.valid_moves_has_move(new_selected):
                 if not (ro == rf and fo == ff):
+                    env.ai.paused = False
                     env.chess.move_piece(ro, fo, rf, ff)
                     env.io.last_move = new_selected
                 env.io.selected_position = None

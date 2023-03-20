@@ -43,6 +43,7 @@ while env.io.running:
     ########################
     draw_all_shapes(screen, env)
     draw_all_text(screen, env)
+    env.execute_next_turn()
     
     ## Done after drawing everything to the screen
     pygame.display.flip()       
