@@ -18,7 +18,7 @@ class CustomAI(BaseAI):
         moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
         for ro, fo, rf, ff in moves_list:
             new_board = env.chess.base_moves.base_move(ro, fo, rf, ff, board)
-            new_score = env.chess.score.calc_game_score(new_board, is_white)
+            new_score = env.chess.score.calc_game_score(new_board, not is_white)
             color_score = new_score if is_white else 0 - new_score
             if best_color_score is None or color_score > best_color_score:
                 best_color_score = color_score
@@ -33,14 +33,17 @@ class CustomAI(BaseAI):
         branches = 0
         if depth == 0:
             moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
+            their_bestest_score = None
             for our_ro, our_fo, our_rf, our_ff in moves_list:
                 our_board = env.chess.base_moves.base_move(our_ro, our_fo, our_rf, our_ff, board)
                 our_score = env.chess.score.calc_game_score(board, is_white)
-                their_best_score, _, their_branches = self.calc_best_move(our_board, not is_white, env)
-                total_score = our_score + their_best_score if their_best_score is not None else our_score
-                branches += their_branches
+                their_best_move = self.calc_best_move(our_board, not is_white, env)
+                if their_best_move is not None:
+                    branches += their_best_move[2]
+                    their_color_score = their_best_move[0] if not is_white else 0 - their_best_move[0]
+                    their_bestest_score = their_color_score if their_bestest_score is None or their_color_score > their_bestest_score else their_bestest_score
+                total_score = our_score + their_best_move[0] if their_best_move is not None else our_score
                 color_score = total_score if is_white else 0 - total_score
-                print(f"Depth: {depth}, Best: {best_score}: Score: {color_score} ({total_score})")
                 if best_score is None or color_score > best_score:
                     best_score = color_score
                     best_move = (our_ro, our_fo, our_rf, our_ff)
