@@ -182,7 +182,7 @@ class ChessMoves:
             castle_bool = False
             if self.castle.move_is_castle(rank_i_old, file_i_old, rank_i_new, file_i_new, board):
                 self.castle.castle_rook(rank_i_old, file_i_old, rank_i_new, file_i_new, new_board)
-                castled = True
+                castle_bool = True
 
             #Enpassant
             enpassant_bool = False

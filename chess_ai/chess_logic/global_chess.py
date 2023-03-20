@@ -35,9 +35,9 @@ class GlobalChess:
 
         self.promote = ChessPromotion(self.util, self.board)
         self.base_moves = ChessBaseMoves(self.util, self.board)
-        self.score = ChessScore(self.util, self.board, piece_scores)
         self.enpassant = ChessEnpassant(self.util, self.board, self.base_moves)
         self.check = ChessCheck(self.util, self.board, self.base_moves)
+        self.score = ChessScore(self.util, self.board, self.check, piece_scores)
         self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
         self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant, self.promote)
         
@@ -68,9 +68,9 @@ class GlobalChess:
         self.state.update_from_move_dict(new_move)
         self.state.last_move_str = new_hist['last_move_str']
         self.state.last_move_tuple = new_hist['last_move_tuple']
-        self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
+        self.state.check_status = self.check.calc_check_status_str(self.board.board, self.state.whites_turn)
         self.history.pop_add(new_hist)
-        self.score.update_score(self.board.board)
+        self.score.update_score(self.board.board, self.state.whites_turn)
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         history_data = self.util.convert_fen_to_board(frame['fen_string'], self.board.files, self.board.ranks, self.board.piece_numbers)
@@ -78,7 +78,7 @@ class GlobalChess:
         self.state.update_from_fen_list(history_data)
         self.state.last_move_str = frame['last_move_str']
         self.state.last_move_tuple = frame['last_move_tuple']
-        self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
+        self.state.check_status = self.check.calc_check_status_str(self.board.board, self.state.whites_turn)
         
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalChess":

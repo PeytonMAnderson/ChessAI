@@ -118,7 +118,37 @@ class ChessCheck:
                     valid_moves.append((piece_r, piece_f, move_r, move_f))
         return valid_moves
     
-    def calc_check_status(self, board: list, whites_turn: bool) -> str:
+    def calc_check_status(self, board: list, whites_turn: bool) -> int | None:
+        white_king = self.utils.get_piece_number_from_str('K', self.board.piece_numbers)
+        black_king = self.utils.get_piece_number_from_str('k', self.board.piece_numbers)
+
+        white_check = self.check_for_check(white_king, board)
+        black_check = self.check_for_check(black_king, board)
+
+        white_moves = self.check_all_available_moves(True, board)
+        black_moves = self.check_all_available_moves(False, board)
+
+        check_status = None
+
+        if white_check:
+            if len(white_moves) == 0:
+                check_status = -2
+            else:
+                check_status = -1
+        elif black_check:
+            if len(black_moves) == 0:
+                check_status = 2
+            else:
+                check_status = 1
+        else:
+            if whites_turn and len(white_moves) == 0:
+                check_status = 0
+            elif not whites_turn and len(black_moves) == 0:
+                check_status = 0
+                
+        return check_status
+    
+    def calc_check_status_str(self, board: list, whites_turn: bool) -> str:
         """Calculates check status of the game.
 
             This includes:
@@ -129,30 +159,19 @@ class ChessCheck:
             
             Return str of the check status
         """
-        white_king = self.utils.get_piece_number_from_str('K', self.board.piece_numbers)
-        black_king = self.utils.get_piece_number_from_str('k', self.board.piece_numbers)
+        check_status = self.calc_check_status(board, whites_turn)
+        if check_status is None:
+            return "None"
+        elif check_status == -2:
+            return "Black Checkmate"
+        elif check_status == -1:
+            return "Black Check"
+        elif check_status == 0:
+            return "Stalemate"
+        elif check_status == 1:
+            return "White Check"
+        elif check_status == 2:
+            return "White Checkmate"
 
-        white_check = self.check_for_check(white_king, board)
-        black_check = self.check_for_check(black_king, board)
 
-        white_moves = self.check_all_available_moves(True, board)
-        black_moves = self.check_all_available_moves(False, board)
 
-        check_status = "None"
-        if white_check:
-            if len(white_moves) == 0:
-                check_status = "Black Checkmate"
-            else:
-                check_status = "Black Check"
-        elif black_check:
-            if len(black_moves) == 0:
-                check_status = "White Checkmate"
-            else:
-                check_status = "White Check"
-        else:
-            if whites_turn and len(white_moves) == 0:
-                check_status = "Black Stalemate"
-            elif not whites_turn and len(black_moves) == 0:
-                check_status = "White Stalemate"
-                
-        return check_status

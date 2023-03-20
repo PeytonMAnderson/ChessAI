@@ -1,11 +1,13 @@
 
 from .chess_board import ChessBoard
 from .chess_utils import ChessUtils
+from .chess_check import ChessCheck
 
 class ChessScore:
-    def __init__(self, utils: ChessUtils, board: ChessBoard, piece_scores: dict = None, *args, **kwargs) -> None:
+    def __init__(self, utils: ChessUtils, board: ChessBoard, check: ChessCheck, piece_scores: dict = None, *args, **kwargs) -> None:
         self.utils = utils
         self.board = board
+        self.check = check
         self.piece_scores = piece_scores
         self.score = 0
         self.score_max = 0
@@ -41,10 +43,27 @@ class ChessScore:
         black = self.calc_team_score(board, False)
         self.score_max = white + black
     
-    def calc_game_score(self, board: list) -> int:
-        white = self.calc_team_score(board, True)
-        black = self.calc_team_score(board, False)
-        return white - black
+    def calc_game_score(self, board: list, whites_turn: bool) -> int:
+        check_status = self.check.calc_check_status(board, whites_turn)
+        if check_status is None:
+            white = self.calc_team_score(board, True)
+            black = self.calc_team_score(board, False)
+            return white - black
+        else:
+            if check_status == 2:
+                return self.score_max / 2
+            elif check_status == -2:
+                return -self.score_max / 2
+            elif check_status == 1:
+                white = self.calc_team_score(board, True)
+                black = self.calc_team_score(board, False)
+                return white + 4 - black
+            elif check_status == -1:
+                white = self.calc_team_score(board, True)
+                black = self.calc_team_score(board, False)
+                return white - black - 4
+            elif check_status == 0:
+                return 0
     
-    def update_score(self, board: list) -> None:
-        self.score = self.calc_game_score(board)
+    def update_score(self, board: list, whites_turn: bool) -> None:
+        self.score = self.calc_game_score(board, whites_turn)

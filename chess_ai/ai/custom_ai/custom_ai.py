@@ -21,8 +21,9 @@ class CustomAI(BaseAI):
                 their_moves_list = env.chess.moves.get_all_valid_moves(our_board, env.chess.state.castle_avail, env.chess.state.en_passant, not is_white)
                 for their_ro, their_fo, their_rf, their_ff in their_moves_list:
                     their_board = env.chess.base_moves.base_move(their_ro, their_fo, their_rf, their_ff, our_board)
-                    new_score = env.chess.score.calc_game_score(their_board)
+                    new_score = env.chess.score.calc_game_score(their_board, is_white)
                     color_score = new_score if is_white else 0 - new_score
+                    #print(f"Best: {best_score}: Score: {color_score} ({new_score})")
                     if best_score == None or color_score > best_score:
                         best_score = color_score
                         best_move = (our_ro, our_fo, our_rf, our_ff)
@@ -38,7 +39,7 @@ class CustomAI(BaseAI):
                 their_moves_list = env.chess.moves.get_all_valid_moves(our_board, env.chess.state.castle_avail, env.chess.state.en_passant, not is_white)
                 for their_ro, their_fo, their_rf, their_ff in their_moves_list:
                     their_board = env.chess.base_moves.base_move(their_ro, their_fo, their_rf, their_ff, our_board)
-                    new_score = env.chess.score.calc_game_score(their_board)
+                    new_score = env.chess.score.calc_game_score(their_board, is_white)
                     color_score = new_score if is_white else 0 - new_score
                     best_deep_score, _, deep_branches = self.calc_best_move_recurse(their_board, new_depth, env, is_white)
                     adj_score = color_score + best_deep_score * self.score_falloff_ratio
@@ -53,8 +54,8 @@ class CustomAI(BaseAI):
 
     def execute_turn(self, board: list, env):
         print("EXECUTE")
-        _, best_move, branches = self.calc_best_move_recurse(board, self.max_depth, env, self.is_white)
-        print(f"DONE! Branches Checked: {branches}")
+        best_score, best_move, branches = self.calc_best_move_recurse(board, self.max_depth, env, self.is_white)
+        print(f"DONE! Branches Checked: {branches} and found Best Move: {best_move} with best score: {best_score}")
         if best_move is not None:
             ro, fo, rf, ff = best_move
             env.chess.move_piece(ro, fo, rf, ff)
