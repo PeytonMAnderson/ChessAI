@@ -2,6 +2,7 @@ from pygame import Surface, Rect, draw, transform
 
 from ..environment import Environment
 from .images import get_image_from_number
+from .draw_text import draw_score_text
 
 def draw_background(surface: Surface, env: Environment):
     surface.fill(env.visual.background_color)
@@ -122,6 +123,24 @@ def draw_last_move(surface: Surface, env: Environment):
         draw_square_from_position(surface, ro, fo, env.visual.board_last_move_from_color, env)
         draw_square_from_position(surface, rf, ff, env.visual.board_last_move_to_color, env)
 
+def draw_score_bar(surface: Surface, env: Environment):
+    x_o, y_o, size = get_local_board_coords(env)
+    x, y = x_o, y_o + size * env.chess.board.ranks + size/2
+    bar_size = size * env.chess.board.files
+    white_rect = Rect(x, y, bar_size, size/2)
+    draw.rect(surface, env.visual.colors['WHITE'], white_rect)
+
+    score_diff = env.chess.score.score
+    score_total = env.chess.score.score_max
+    score_tot_black = score_total / 2
+    score_black = score_tot_black - score_diff
+    score_ratio = score_black / score_total
+    black_size = score_ratio * bar_size
+    black_rect = Rect(x, y, black_size, size/2)
+    draw.rect(surface, env.visual.colors['GRAY'], black_rect)
+    draw_score_text(surface, x + black_size, y, score_diff, size/2, env)
+
+
 def draw_all_shapes(surface: Surface, env: Environment):
     #Draw Background
     draw_background(surface, env)
@@ -131,6 +150,9 @@ def draw_all_shapes(surface: Surface, env: Environment):
     draw_selected(surface, env)
     draw_last_move(surface, env)
     draw_valid_moves(surface, env)
+
+    #Draw Score Bar
+    draw_score_bar(surface, env)
 
     #Draw pieces sprites
     draw_pieces(surface, env)

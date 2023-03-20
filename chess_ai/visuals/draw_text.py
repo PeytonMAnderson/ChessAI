@@ -52,7 +52,17 @@ def draw_game_stats(surface: Surface, env: Environment):
     #Blit
     surface.blit(turn_text, turn_pos)
     surface.blit(lm_text, lm_pos)
-    surface.blit(check_text, check_pos)   
+    surface.blit(check_text, check_pos)  
+
+def draw_score_text(surface: Surface, xo: int, yo: int, score: int, size: int, env: Environment):
+    fontsize = int(env.visual.fontsize_title * env.visual.zoom / 2) 
+    rf_font = font.Font('freesansbold.ttf', fontsize)
+    score_str = str(score) if score < 0 else "+" + str(score)
+    x_diff = size/4 if score >= 0 else -size/4 - fontsize
+    font_color = env.visual.colors['WHITE'] if score < 0 else env.visual.colors['GRAY']
+    score_text = rf_font.render(f"{score_str}", True, font_color)
+    score_pos = (xo + x_diff, yo + size/4)
+    surface.blit(score_text, score_pos)
 
 def draw_all_text(surface: Surface, env: Environment):
     draw_ranks_files(surface, env)

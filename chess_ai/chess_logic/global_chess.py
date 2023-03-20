@@ -15,6 +15,7 @@ from .chess_state import ChessState
 from .chess_castle import ChessCastle
 from .chess_enpassant import ChessEnpassant 
 from .chess_promotion import ChessPromotion
+from .chess_score import ChessScore
 
 #Global Variable Class
 class GlobalChess:
@@ -23,6 +24,7 @@ class GlobalChess:
                  board_ranks: int = 8,
                  board: list =  [],
                  piece_numbers: dict = {},
+                 piece_scores: dict = {},
     *args, **kwargs) -> None:
         
         #Attach Chess Objects
@@ -33,6 +35,7 @@ class GlobalChess:
 
         self.promote = ChessPromotion(self.util, self.board)
         self.base_moves = ChessBaseMoves(self.util, self.board)
+        self.score = ChessScore(self.util, self.board, piece_scores)
         self.enpassant = ChessEnpassant(self.util, self.board, self.base_moves)
         self.check = ChessCheck(self.util, self.board, self.base_moves)
         self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
@@ -67,6 +70,7 @@ class GlobalChess:
         self.state.last_move_tuple = new_hist['last_move_tuple']
         self.state.check_status = self.check.calc_check_status(self.board.board, self.state.whites_turn)
         self.history.pop_add(new_hist)
+        self.score.update_score(self.board.board)
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         history_data = self.util.convert_fen_to_board(frame['fen_string'], self.board.files, self.board.ranks, self.board.piece_numbers)
@@ -92,5 +96,9 @@ class GlobalChess:
             self.board.board = fen_data[0]
             self.state.update_from_fen_list(fen_data)
             self.history.pop_add({"last_move_str": "None", "last_move_tuple": None, "fen_string": settings['BOARD']})
+
+            #Scores
+            self.score.piece_scores = settings['PIECE_SCORES']
+            self.score.update_max_score(self.board.board)
 
         return self
