@@ -44,8 +44,8 @@ class ChessScore:
         self.score_max = white + black
     
     def calc_game_score(self, board: list, whites_turn: bool) -> int:
-        #check_status = self.check.calc_check_status(board, whites_turn)
-        check_status = None
+        check_status = self.check.calc_check_status(board, whites_turn)
+        #check_status = None
         if check_status is None:
             white = self.calc_team_score(board, True)
             black = self.calc_team_score(board, False)
