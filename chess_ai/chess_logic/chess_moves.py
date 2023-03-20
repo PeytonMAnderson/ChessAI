@@ -6,6 +6,7 @@ from .chess_check import ChessCheck
 from .chess_castle import ChessCastle
 from .chess_enpassant import ChessEnpassant
 from .chess_promotion import ChessPromotion
+from .chess_score import ChessScore
 
 class ChessMoves:
     def __init__(self, 
@@ -16,6 +17,7 @@ class ChessMoves:
                 castle: ChessCastle, 
                 enpassant: ChessEnpassant, 
                 promote: ChessPromotion, 
+                score: ChessScore,
         *args, **kwargs) -> None:
         self.utils = utils
         self.board = board
@@ -24,6 +26,7 @@ class ChessMoves:
         self.castle = castle
         self.enpassant = enpassant
         self.promote = promote
+        self.score = score
         self._valid_moves = []
 
     def filter_moves(self, rank_i_old: int, file_i_old: int, move_list: list, board: list) -> list:
@@ -111,7 +114,7 @@ class ChessMoves:
         """
         return self._valid_moves
 
-    def get_move_str(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, castled: bool, enpassant: bool) -> str:
+    def get_move_str(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, castled: bool, enpassant: bool, captured: bool, check_status: int) -> str:
         """Get the move string of the passed move (rank_i_old, file_i_old) -> (rank_i_new, file_i_new).
 
             Returns: Move String.
@@ -128,21 +131,23 @@ class ChessMoves:
 
         #Determine if a capture happened
         capture_string = ""
-        if destination_piece != 0 or enpassant:
+        if captured != 0 or enpassant:
+            print(f"{destination_piece} -> {enpassant}")
             capture_string = "x"
 
         #Get the destination rank and file
-        destination_rank_str: str = str(self.board.ranks - rank_i_new)
+        destination_rank_str: str = self.utils.get_rank_from_number(rank_i_new, self.board.ranks)
         destination_file_str: str = self.utils.get_file_from_number(file_i_new)
         moving_piece_file_str: str = ''
         moving_piece_str: str = self.utils.get_str_from_piece_type(moving_piece, self.board.piece_numbers, True)
 
         #Show file from for certain cases
         if moving_piece_str == 'P' and capture_string == 'x':
-            moving_piece_file_str = self.utils.get_file_from_number(file_i_old)
+            new_str = self.utils.get_file_from_number(file_i_old)
+            moving_piece_file_str = new_str if new_str is not None else ''
 
         #Remove the P if it was a Pawn
-        if moving_piece_str == 'P':
+        if moving_piece_str == 'P' or moving_piece_str is None:
             moving_piece_str = ''
 
         #Return the entire Move string
@@ -166,6 +171,11 @@ class ChessMoves:
         board_position_old = rank_i_old * self.board.files + file_i_old
         board_position_new = rank_i_new * self.board.files + file_i_new
         if board_position_old < len(board) and board_position_new < len(board):
+
+            #Captured Piece
+            captured = False
+            if new_board[board_position_new] != 0:
+                captured = True
 
             #Update Piece on board
             new_board = board.copy()
@@ -202,9 +212,19 @@ class ChessMoves:
             return new_board, castle_str, en_passant_str, castle_bool, en_passant_bool
 
         print("WARNING: Position is out of bounds.")
-        return board, castle_avail, en_passant, False, False
+        return board, castle_avail, en_passant, False, False, captured
 
-    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, castle_avail: str, en_passant: str, full_move: int) -> dict | None:
+    def move(self, 
+             rank_i_old: int, 
+             file_i_old: int, 
+             rank_i_new: int, 
+             file_i_new: int, 
+             board: list, 
+             whites_turn: bool, 
+             castle_avail: str, 
+             en_passant: str, 
+             half_move: int, 
+             full_move: int) -> dict | None:
         """ Moves the piece on the passed board.
 
             Gets the new Move string.
@@ -217,19 +237,20 @@ class ChessMoves:
 
             Returns: dict[  "board"   "move_str"    "move_tuple"    "whites_turn"     "fen_string"   "castle_avail"    "en_passant"    "half_move"    "full_move"    ] or None if no move.
         """
-        #Update Piece on board
-        new_board, castle_str, en_passant_str, castle_bool, en_passant_bool = self.simulate_move(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_avail, en_passant)
-
         #Get Half Move
-        half_move = 0
+        half_move_new = int(half_move)
+        if board[rank_i_new * self.board.files + file_i_new] != 0:
+            half_move_new = 0
+        else:
+            half_move_new += 1
+
+        #Update Piece on board
+        new_board, castle_str, en_passant_str, castle_bool, en_passant_bool, captured = self.simulate_move(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_avail, en_passant)
 
         #Get Full Move
         full_move_new = int(full_move)
         if whites_turn is True:
             full_move_new += 1
-
-        #Get Move String
-        new_move_str = self.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_bool, en_passant_bool)
 
         #Get New Color
         white_turn = False if whites_turn else True
@@ -239,23 +260,47 @@ class ChessMoves:
                                                     white_turn,
                                                     castle_str,
                                                     en_passant_str,
-                                                    half_move,
+                                                    half_move_new,
                                                     full_move_new,
                                                     self.board.files,
                                                     self.board.ranks, 
                                                     self.board.piece_numbers)
-            
-        print(f"New Move: {new_move_str}")
-        print(f"New FEN: {new_fen}")
     
         return {
             "board": new_board,
-            "move_str": new_move_str,
             "move_tuple": (rank_i_old, file_i_old, rank_i_new, file_i_new),
             "whites_turn": white_turn,
             "fen_string": new_fen,
             "castle_avail": castle_str,
             "en_passant": en_passant_str,
-            "half_move": half_move,
-            "full_move": full_move_new
+            "half_move": half_move_new,
+            "full_move": full_move_new,
+            "castle_bool": castle_bool, 
+            "en_passant_bool": en_passant_bool,
+            "captured": captured
         }
+    
+    def calc_best_move(self, board: list, is_white: bool, castle_avail: str, en_passant:str) -> tuple:
+        #Get Variables
+        best_score = None
+        best_color_score = None
+        best_move = None
+        branches = 0
+
+        #Loop through their moves to see what they would choose
+        moves_list = self.get_all_valid_moves(board, castle_avail, en_passant, is_white)
+        for ro, fo, rf, ff in moves_list:
+            #Get their new board for their moves
+            new_board, _, _, _, _ = self.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
+            new_score = self.score.calc_game_score(new_board, not is_white)
+
+            #Calculate their score
+            color_score = new_score if is_white else 0 - new_score
+
+            #If their new score is their best one yet, save their values
+            if best_color_score is None or color_score > best_color_score:
+                best_color_score = color_score
+                best_score = new_score 
+                best_move = (ro, fo, rf, ff)
+            branches += 1
+        return best_score, best_move, branches

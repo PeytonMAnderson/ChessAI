@@ -5,7 +5,8 @@ class ChessState:
                 castle_avail: str = 'KQkq',
                 en_passant: str = '-',
                 half_move: int = 0,
-                full_move: int = 1,             
+                full_move: int = 1,
+                max_half_moves: int = 0,             
         *args, **kwargs) -> None:
         self.whites_turn = whites_turn
         self.check_status = check_status
@@ -15,6 +16,8 @@ class ChessState:
         self.full_move = full_move
         self.last_move_str = "None"
         self.last_move_tuple = None
+        self.game_ended = False
+        self.max_half_moves = max_half_moves
 
     def update_from_move_dict(self, new_move: dict) -> "ChessState":
         self.whites_turn = new_move['whites_turn']
@@ -33,3 +36,7 @@ class ChessState:
         self.half_move = new_fen[4]
         self.full_move = new_fen[5]
         return self
+    
+    def calc_game_ended(self) -> "ChessState":
+        if int(self.half_move) >= self.max_half_moves:
+            self.game_ended = True

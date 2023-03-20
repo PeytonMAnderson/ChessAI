@@ -33,7 +33,6 @@ class CustomAI(BaseAI):
         for ro, fo, rf, ff in moves_list:
             #Get their new board for their moves
             new_board, new_castle_str, new_en_passant_str, _, _ = env.chess.moves.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
-            new_board = env.chess.base_moves.base_move(ro, fo, rf, ff, board)
             new_score = env.chess.score.calc_game_score(new_board, not is_white)
 
             #Recurse if their is a recurse function
@@ -58,7 +57,10 @@ class CustomAI(BaseAI):
                 best_color_score = total_color_score
                 best_score = total_score
                 best_move = (ro, fo, rf, ff)
-
+            elif total_color_score == best_color_score and random.random() < self.random_chance:
+                best_color_score = total_color_score
+                best_score = total_score
+                best_move = (ro, fo, rf, ff)
             branches += 1
 
             #Prune branch if found value higher than previous
@@ -92,35 +94,41 @@ class CustomAI(BaseAI):
                     worst_prev_best_color_score,
                     new_castle_str,
                     new_en_passant_str, 
-                    True,
+                    False,
                     depth - 1
                 )
             branches += their_branches
+            
 
             #Calculate new total score from our score and their best score
             total_score = new_score
             if their_best_score is not None:
                 their_best_color_score = their_best_score if not is_white else 0 - their_best_score
                 worst_prev_best_color_score = their_best_color_score if worst_prev_best_color_score is None or their_best_color_score < worst_prev_best_color_score else worst_prev_best_color_score
-                total_score + their_best_score
+                total_score = total_score + their_best_score
             total_color_score = total_score if is_white else 0 - total_score
+
+            #print(f"Best Move: {best_move}, Best Score: {best_score}, Total Score: {total_score}, Our Score: {new_score}, Their Best: {their_best_score}")
 
             #If the new total score is the best one yet, store values
             if best_color_score is None or total_color_score > best_color_score:
                 best_color_score = total_color_score
                 best_score = total_score
                 best_move = (ro, fo, rf, ff)
-
+            elif total_color_score == best_color_score and random.random() < self.random_chance:
+                best_color_score = total_color_score
+                best_score = total_score
+                best_move = (ro, fo, rf, ff)
             branches += 1
         return best_score, best_move, branches
     
     def calc_best_recursion(self, board: list, env, is_white: bool, castle_avail: str, en_passant: str, depth: int = 0):
         best_move = self.calc_our_best_move(board, env, is_white, castle_avail, en_passant, depth)
-        print(f"Depth: {depth}  Best Move: {best_move}")
+        #print(f"Depth: {depth}  Best Move: {best_move}")
         return best_move
         
     def execute_turn(self, board: list, env):
-        print("EXECUTE")
+        print(f"Calculating next move...")
         best_score, best_move, branches = self.calc_best_recursion(board, env, self.is_white, env.chess.state.castle_avail, env.chess.state.en_passant, self.max_depth)
         print(f"DONE! Branches Checked: {branches} and found Best Move: {best_move} with best score: {best_score}")
         if best_move is not None:
