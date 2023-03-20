@@ -3,6 +3,8 @@ import random
 
 from ..base_ai import BaseAI
 
+# from ...environment import Environment
+
 class CustomAI(BaseAI):
     def __init__(self, is_white: bool, max_depth: int = 2, *args, **kwargs) -> None:
         super().__init__(is_white, *args, **kwargs)
@@ -15,6 +17,8 @@ class CustomAI(BaseAI):
                             is_white: bool, 
                             env, 
                             worst_prev_best_color_score: int, 
+                            castle_avail: str,
+                            en_passant: str,
                             prune: bool = False, 
                             depth: int = 0
         ) -> tuple:
@@ -28,13 +32,21 @@ class CustomAI(BaseAI):
         moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
         for ro, fo, rf, ff in moves_list:
             #Get their new board for their moves
+            new_board, new_castle_str, new_en_passant_str, _, _ = env.chess.moves.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
             new_board = env.chess.base_moves.base_move(ro, fo, rf, ff, board)
             new_score = env.chess.score.calc_game_score(new_board, not is_white)
 
             #Recurse if their is a recurse function
             deep_score, _, deep_branches = 0, None, 0
             if depth > 0:
-                deep_score, _, deep_branches = self.calc_best_recursion(new_board, env, not is_white, depth - 1)
+                deep_score, _, deep_branches = self.calc_best_recursion(
+                    new_board, 
+                    env, 
+                    not is_white, 
+                    new_castle_str,
+                    new_en_passant_str,
+                    depth - 1
+                )
             branches += deep_branches
 
             #Calculate their score
@@ -55,7 +67,7 @@ class CustomAI(BaseAI):
                     return best_score, best_move, branches
         return best_score, best_move, branches
     
-    def calc_our_best_move(self, board: list, env, is_white: bool, depth: int = 0) -> tuple:
+    def calc_our_best_move(self, board: list, env, is_white: bool, castle_avail: str, en_passant: str, depth: int = 0) -> tuple:
         #Get Variables
         best_score = None
         best_color_score = None
@@ -67,13 +79,22 @@ class CustomAI(BaseAI):
         moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
         for ro, fo, rf, ff in moves_list:
             #Get new boards with our moves
-            new_board = env.chess.base_moves.base_move(ro, fo, rf, ff, board)
+            new_board, new_castle_str, new_en_passant_str, _, _ = env.chess.moves.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
             new_score = env.chess.score.calc_game_score(new_board, not is_white)
 
             #Calculate what their best response would be
             their_best_score, _, their_branches = None, None, 0
             if depth > 0:
-                their_best_score, _, their_branches = self.calc_their_best_move(new_board, not is_white, env, worst_prev_best_color_score, True, depth - 1)
+                their_best_score, _, their_branches = self.calc_their_best_move(
+                    new_board, 
+                    not is_white, 
+                    env, 
+                    worst_prev_best_color_score,
+                    new_castle_str,
+                    new_en_passant_str, 
+                    True,
+                    depth - 1
+                )
             branches += their_branches
 
             #Calculate new total score from our score and their best score
@@ -93,14 +114,14 @@ class CustomAI(BaseAI):
             branches += 1
         return best_score, best_move, branches
     
-    def calc_best_recursion(self, board: list, env, is_white: bool, depth: int = 0):
-        best_move = self.calc_our_best_move(board, env, is_white, depth)
+    def calc_best_recursion(self, board: list, env, is_white: bool, castle_avail: str, en_passant: str, depth: int = 0):
+        best_move = self.calc_our_best_move(board, env, is_white, castle_avail, en_passant, depth)
         print(f"Depth: {depth}  Best Move: {best_move}")
         return best_move
         
     def execute_turn(self, board: list, env):
         print("EXECUTE")
-        best_score, best_move, branches = self.calc_best_recursion(board, env, self.is_white, self.max_depth)
+        best_score, best_move, branches = self.calc_best_recursion(board, env, self.is_white, env.chess.state.castle_avail, env.chess.state.en_passant, self.max_depth)
         print(f"DONE! Branches Checked: {branches} and found Best Move: {best_move} with best score: {best_score}")
         if best_move is not None:
             ro, fo, rf, ff = best_move

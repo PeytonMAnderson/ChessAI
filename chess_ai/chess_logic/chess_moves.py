@@ -148,24 +148,25 @@ class ChessMoves:
         #Return the entire Move string
         return moving_piece_file_str + moving_piece_str + capture_string + destination_file_str + destination_rank_str
 
-    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, castle_avail: str, enpassant: str, full_move: int) -> dict | None:
-        """ Moves the piece on the passed board.
+    def simulate_move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, castle_avail: str, en_passant: str) -> list:
+        """Simulates an advanced move and returns the board with that move. Accounts for promotions, castling, en passant, etc. 
 
-            Gets the new Move string.
-            Updates turn.
-            Updates castle availability.
-            Updates En Passant Availability
-            Updates half moves.
-            Updates full moves.
-            Generates new FEN String.
+        Args:
+            rank_i_old (int): rank of old position for piece
+            file_i_old (int): file of old position for piece
+            rank_i_new (int): rank of new position for piece
+            file_i_new (int): file of new position for piece
+            board (list): board that will be modified
+            castle_avail (str): string of castling availability (KQkq)
+            en_passant (str): string of en passant availability (e3)
 
-            Returns: dict[  "board"   "move_str"    "move_tuple"    "whites_turn"     "fen_string"   "castle_avail"    "en_passant"    "half_move"    "full_move"    ] or None if no move.
+        Returns:
+            list: [ new_board, castle_str, en_passant_str, castle_bool, en_passant_bool]
         """
         board_position_old = rank_i_old * self.board.files + file_i_old
         board_position_new = rank_i_new * self.board.files + file_i_new
-
         if board_position_old < len(board) and board_position_new < len(board):
-            
+
             #Update Piece on board
             new_board = board.copy()
             new_board[board_position_new] = new_board[board_position_old]
@@ -185,56 +186,76 @@ class ChessMoves:
                 castle_bool = True
 
             #Enpassant
-            enpassant_bool = False
-            if self.enpassant.move_is_enpassant(rank_i_old, file_i_old, rank_i_new, file_i_new, board, enpassant):
+            en_passant_bool = False
+            if self.enpassant.move_is_enpassant(rank_i_old, file_i_old, rank_i_new, file_i_new, board, en_passant):
                 self.enpassant.take_pawn(rank_i_old, file_i_old, rank_i_new, file_i_new, new_board)
-                enpassant_bool = True
-
-            #Update Turn
-            white_turn = False if whites_turn else True
+                en_passant_bool = True
 
             #Get Castle Availability
-            castle = self.castle.update_avail(rank_i_old, file_i_old, board, castle_avail)
-            if castle == "":
-                castle = "-"
+            castle_str = self.castle.update_avail(rank_i_old, file_i_old, board, castle_avail)
+            if castle_str == "":
+                castle_str = "-"
 
             #Get En Passant Availability
-            en_passant = self.enpassant.get_enpassant_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
+            en_passant_str = self.enpassant.get_enpassant_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board)
 
-            #Get Half Move
-            half_move = 0
+            return new_board, castle_str, en_passant_str, castle_bool, en_passant_bool
 
-            #Get Full Move
-            full_move_new = int(full_move)
-            if whites_turn is True:
-                full_move_new += 1
+        print("WARNING: Position is out of bounds.")
+        return board, castle_avail, en_passant, False, False
 
-            #Get Move String
-            new_move_str = self.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_bool, enpassant_bool)
+    def move(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int, board: list, whites_turn: bool, castle_avail: str, en_passant: str, full_move: int) -> dict | None:
+        """ Moves the piece on the passed board.
 
-            #Get New FEN String
-            new_fen = self.utils.convert_board_to_fen(new_board,
-                                                        white_turn,
-                                                        castle,
-                                                        en_passant,
-                                                        half_move,
-                                                        full_move_new,
-                                                        self.board.files,
-                                                        self.board.ranks, 
-                                                        self.board.piece_numbers)
+            Gets the new Move string.
+            Updates turn.
+            Updates castle availability.
+            Updates En Passant Availability
+            Updates half moves.
+            Updates full moves.
+            Generates new FEN String.
+
+            Returns: dict[  "board"   "move_str"    "move_tuple"    "whites_turn"     "fen_string"   "castle_avail"    "en_passant"    "half_move"    "full_move"    ] or None if no move.
+        """
+        #Update Piece on board
+        new_board, castle_str, en_passant_str, castle_bool, en_passant_bool = self.simulate_move(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_avail, en_passant)
+
+        #Get Half Move
+        half_move = 0
+
+        #Get Full Move
+        full_move_new = int(full_move)
+        if whites_turn is True:
+            full_move_new += 1
+
+        #Get Move String
+        new_move_str = self.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, board, castle_bool, en_passant_bool)
+
+        #Get New Color
+        white_turn = False if whites_turn else True
+
+        #Get New FEN String
+        new_fen = self.utils.convert_board_to_fen(new_board,
+                                                    white_turn,
+                                                    castle_str,
+                                                    en_passant_str,
+                                                    half_move,
+                                                    full_move_new,
+                                                    self.board.files,
+                                                    self.board.ranks, 
+                                                    self.board.piece_numbers)
             
-            print(f"New Move: {new_move_str}")
-            print(f"New FEN: {new_fen}")
-            return {
-                "board": new_board,
-                "move_str": new_move_str,
-                "move_tuple": (rank_i_old, file_i_old, rank_i_new, file_i_new),
-                "whites_turn": white_turn,
-                "fen_string": new_fen,
-                "castle_avail": castle,
-                "en_passant": en_passant,
-                "half_move": half_move,
-                "full_move": full_move_new
-            }
-
-        return None
+        print(f"New Move: {new_move_str}")
+        print(f"New FEN: {new_fen}")
+    
+        return {
+            "board": new_board,
+            "move_str": new_move_str,
+            "move_tuple": (rank_i_old, file_i_old, rank_i_new, file_i_new),
+            "whites_turn": white_turn,
+            "fen_string": new_fen,
+            "castle_avail": castle_str,
+            "en_passant": en_passant_str,
+            "half_move": half_move,
+            "full_move": full_move_new
+        }
