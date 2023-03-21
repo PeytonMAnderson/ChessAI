@@ -7,7 +7,7 @@ import yaml
 
 from .chess_utils import ChessUtils
 from .chess_check import ChessCheck
-from .chess_moves import ChessMoves
+from .chess_moves import ChessMovesNew
 from .chess_base_moves import ChessBaseMoves
 from .chess_board import ChessBoard
 from .chess_history import ChessHistory
@@ -39,7 +39,7 @@ class GlobalChess:
         self.check = ChessCheck(self.util, self.board, self.base_moves)
         self.score = ChessScore(self.util, self.board, self.check, piece_scores)
         self.castle = ChessCastle(self.util, self.board, self.base_moves, self.check)
-        self.moves = ChessMoves(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant, self.promote, self.score)
+        self.moves = ChessMovesNew(self.util, self.board, self.base_moves, self.check, self.castle, self.enpassant, self.promote, self.score)
         
     def move_piece(self, rank_i_old: int, file_i_old: int, rank_i_new: int, file_i_new: int) -> "GlobalChess":
         """Move a piece on the chess board.
@@ -69,8 +69,19 @@ class GlobalChess:
         
         self.board.board = new_move['board']
         self.state.update_from_move_dict(new_move)
-        self.state.check_status = self.check.calc_check_status_str(self.board.board, self.state.whites_turn)
-        new_move_str = self.moves.get_move_str(rank_i_old, file_i_old, rank_i_new, file_i_new, self.board.board, new_move['castle_bool'], new_move['en_passant_bool'], self.state.check_status)
+        self.state.check_status = self.check.calc_check_status_fast(self.board.board, self.state.whites_turn)
+        self.state.check_status_str = self.check.get_check_status_str(self.state.check_status)
+        new_move_str = self.moves.get_move_str(
+            rank_i_old, 
+            file_i_old, 
+            rank_i_new, 
+            file_i_new, 
+            self.board.board, 
+            new_move['castle_bool'], 
+            new_move['en_passant_bool'], 
+            new_move['captured'], 
+            self.state.check_status
+        )
         new_hist = {"last_move_str": new_move_str, "last_move_tuple": new_move['move_tuple'], "fen_string": new_move['fen_string']}
         self.state.last_move_str = new_hist['last_move_str']
         self.state.last_move_tuple = new_hist['last_move_tuple']
@@ -84,7 +95,7 @@ class GlobalChess:
         best_move_score, best_move, _ = self.moves.calc_best_move(self.board.board, self.state.whites_turn, self.state.castle_avail, self.state.en_passant)
         if best_move is not None:
             (ro, fo, rf, ff) = best_move
-            print(f"Best Move Score: {best_move_score}, Best Move: {self.moves.get_move_str(ro, fo, rf, ff, self.board.board, False, False, None)}")
+            print(f"Best Move Score: {best_move_score}, Best Move: {self.moves.get_move_str(ro, fo, rf, ff, self.board.board, False, False, False, None)}")
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         history_data = self.util.convert_fen_to_board(frame['fen_string'], self.board.files, self.board.ranks, self.board.piece_numbers)

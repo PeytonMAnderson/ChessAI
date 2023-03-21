@@ -24,13 +24,13 @@ def mouse_left_click_events(event, env: Environment):
             if piece_value != 0:
                 is_white = env.chess.util.get_is_white_from_piece_number(piece_value, env.chess.board.piece_numbers)
                 if is_white == env.chess.state.whites_turn and env.ai.piece_is_playable(is_white):
-                    env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail, env.chess.state.en_passant)
+                    env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail, env.chess.state.en_passant, env.chess.state.whites_turn)
                     env.io.selected_position = new_selected
         else:
             ro, fo = env.io.selected_position
             rf, ff = new_selected
             #Make sure move is valid
-            if env.chess.moves.valid_moves_has_move(new_selected):
+            if env.chess.moves.valid_moves_has_move(env.io.selected_position[0], env.io.selected_position[1], rf, ff):
                 if not (ro == rf and fo == ff):
                     env.ai.paused = False
                     env.chess.move_piece(ro, fo, rf, ff)

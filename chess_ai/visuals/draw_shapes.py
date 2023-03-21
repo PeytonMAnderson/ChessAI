@@ -112,7 +112,7 @@ def draw_valid_moves(surface: Surface, env: Environment):
     x_o, y_o, size = get_local_board_coords(env)
 
     for valid_move in env.chess.moves.get_valid_moves_list():
-        rank, file = valid_move
+        rank_o, file_o, rank, file = valid_move
         x, y = x_o + file * size, y_o + rank * size
         rect = Rect(x, y, size, size)
         draw.rect(surface, env.visual.board_valid_moves_color, rect)

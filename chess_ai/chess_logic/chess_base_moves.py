@@ -84,26 +84,26 @@ class ChessBaseMoves:
         if is_white:
             if self.check_if_in_bounds(rank_i_old + new_rank_diff, file_i_old):
                 if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
-                    valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
+                    valid_moves.append((rank_i_old, file_i_old, rank_i_old + new_rank_diff, file_i_old))
         else:
             if self.check_if_in_bounds(rank_i_old + new_rank_diff, file_i_old):
                 if self.check_if_blocked(rank_i_old + new_rank_diff, file_i_old, board) is False:
-                    valid_moves.append((rank_i_old + new_rank_diff, file_i_old))
+                    valid_moves.append((rank_i_old, file_i_old, rank_i_old + new_rank_diff, file_i_old))
 
         #Add Pawn Attacking Moves
         pawn_attack_moves = self.get_pawn_attack_moves(rank_i_old, file_i_old, is_white)
         for new_r, new_f in pawn_attack_moves:
             if self.check_if_in_bounds(new_r, new_f) is True and self.check_if_blocked(new_r, new_f, board) is True:
                 if self.check_if_capturable(rank_i_old, file_i_old, new_r, new_f, board):
-                    valid_moves.append((new_r, new_f))
+                    valid_moves.append((rank_i_old, file_i_old, new_r, new_f))
 
         #Add Starting double move
         if rank_i_old == 1 and not is_white:
             if self.check_if_blocked(rank_i_old + 2, file_i_old, board) is False and self.check_if_blocked(rank_i_old + 1, file_i_old, board) is False:
-                valid_moves.append((rank_i_old + 2, file_i_old))
+                valid_moves.append((rank_i_old, file_i_old, rank_i_old + 2, file_i_old))
         elif rank_i_old == self.board.ranks - 2 and is_white:
             if self.check_if_blocked(rank_i_old - 2, file_i_old, board) is False and self.check_if_blocked(rank_i_old - 1, file_i_old, board) is False:
-                valid_moves.append((rank_i_old - 2, file_i_old))
+                valid_moves.append((rank_i_old, file_i_old, rank_i_old - 2, file_i_old))
 
         return valid_moves
 
@@ -121,7 +121,7 @@ class ChessBaseMoves:
         for r_d, f_d in checks:
             r, f = rank_i_old + r_d, file_i_old + f_d
             if self.check_if_open(rank_i_old, file_i_old, r, f, board):
-                valid_moves.append((r, f))
+                valid_moves.append((rank_i_old, file_i_old, r, f))
         return valid_moves
 
 
@@ -146,10 +146,10 @@ class ChessBaseMoves:
                     blocked = True
                 elif self.check_if_blocked(r, f, board):
                     if self.check_if_capturable(rank_i_old, file_i_old, r, f, board):
-                        valid_moves.append((r, f))
+                        valid_moves.append((rank_i_old, file_i_old, r, f))
                     blocked = True
                 else:
-                    valid_moves.append((r, f))
+                    valid_moves.append((rank_i_old, file_i_old, r, f))
 
         return valid_moves
 
@@ -174,10 +174,10 @@ class ChessBaseMoves:
                     blocked = True
                 elif self.check_if_blocked(r, f, board):
                     if self.check_if_capturable(rank_i_old, file_i_old, r, f, board):
-                        valid_moves.append((r, f))
+                        valid_moves.append((rank_i_old, file_i_old, r, f))
                     blocked = True
                 else:
-                    valid_moves.append((r, f))
+                    valid_moves.append((rank_i_old, file_i_old, r, f))
 
         return valid_moves
 
@@ -203,7 +203,7 @@ class ChessBaseMoves:
             for fi in range(3):
                 r, f = ro + ri, fo + fi
                 if self.check_if_open(rank_i_old, file_i_old, r, f, board):
-                    valid_moves.append((r, f))
+                    valid_moves.append((rank_i_old, file_i_old, r, f))
         return valid_moves
 
     def get_piece_type_function(self, rank_i_old: int, file_i_old: int, board: list) -> Callable | None:

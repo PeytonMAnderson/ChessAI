@@ -3,7 +3,7 @@ import random
 
 from ..base_ai import BaseAI
 
-# from ...environment import Environment
+#from ...environment import Environment
 
 class CustomAI(BaseAI):
     def __init__(self, is_white: bool, max_depth: int = 2, *args, **kwargs) -> None:
@@ -29,11 +29,11 @@ class CustomAI(BaseAI):
         branches = 0
 
         #Loop through their moves to see what they would choose
-        moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
+        moves_list = env.chess.moves.get_valid_team_moves(is_white, board, env.chess.state.castle_avail, env.chess.state.en_passant)
         for ro, fo, rf, ff in moves_list:
+
             #Get their new board for their moves
-            new_board, new_castle_str, new_en_passant_str, _, _ = env.chess.moves.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
-            new_score = env.chess.score.calc_game_score(new_board, not is_white)
+            new_board, new_score, castle_str, en_passant_str = env.chess.moves.simulate_move( ro, fo, rf, ff, board, is_white, castle_avail, en_passant)
 
             #Recurse if their is a recurse function
             deep_score, _, deep_branches = 0, None, 0
@@ -42,8 +42,8 @@ class CustomAI(BaseAI):
                     new_board, 
                     env, 
                     not is_white, 
-                    new_castle_str,
-                    new_en_passant_str,
+                    castle_str,
+                    en_passant_str,
                     depth - 1
                 )
             branches += deep_branches
@@ -78,11 +78,10 @@ class CustomAI(BaseAI):
         worst_prev_best_color_score = None
 
         #Loop through all of our moves to see the best option
-        moves_list = env.chess.moves.get_all_valid_moves(board, env.chess.state.castle_avail, env.chess.state.en_passant, is_white)
+        moves_list = env.chess.moves.get_valid_team_moves(is_white, board, env.chess.state.castle_avail, env.chess.state.en_passant)
         for ro, fo, rf, ff in moves_list:
             #Get new boards with our moves
-            new_board, new_castle_str, new_en_passant_str, _, _ = env.chess.moves.simulate_move( ro, fo, rf, ff, board, castle_avail, en_passant)
-            new_score = env.chess.score.calc_game_score(new_board, not is_white)
+            new_board, new_score, castle_str, en_passant_str = env.chess.moves.simulate_move( ro, fo, rf, ff, board, is_white, castle_avail, en_passant)
 
             #Calculate what their best response would be
             their_best_score, _, their_branches = None, None, 0
@@ -92,8 +91,8 @@ class CustomAI(BaseAI):
                     not is_white, 
                     env, 
                     worst_prev_best_color_score,
-                    new_castle_str,
-                    new_en_passant_str, 
+                    castle_str,
+                    en_passant_str, 
                     False,
                     depth - 1
                 )

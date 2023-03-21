@@ -166,7 +166,7 @@ class ChessCheck:
     def check_piece_moves_cause_check_fast(self, king_rank: int, king_file: int, piece_rank: int, piece_file: int, piece_function: any, board: list) -> bool:
         moves_checked = 0
         piece_moves = piece_function(piece_rank, piece_file, board)
-        for new_r, new_f in piece_moves:
+        for old_r, old_f, new_r, new_f in piece_moves:
             moves_checked += 1
             if (new_r, new_f) == (king_rank, king_file):
                 return True
@@ -274,10 +274,10 @@ class ChessCheck:
         valid_moves = []
         for piece_r, piece_f in pieces_list:
             moves_list = self.base_moves.get_base_moves(piece_r, piece_f, board)
-            for move_r, move_f in moves_list:
-                caused_check = self.check_move_causes_check_fast(king_rank, king_file, king_is_white, piece_r, piece_f, move_r, move_f, board)
+            for move_ro, move_fo, move_rf, move_ff in moves_list:
+                caused_check = self.check_move_causes_check_fast(king_rank, king_file, king_is_white, move_ro, move_fo, move_rf, move_ff, board)
                 if caused_check is False:
-                    valid_moves.append((piece_r, piece_f, move_r, move_f))
+                    valid_moves.append((move_ro, move_fo, move_rf, move_ff))
         return valid_moves
     
     def calc_check_status_fast(self, board: list, whites_turn: bool) -> int | None:
@@ -311,8 +311,8 @@ class ChessCheck:
                     return None
         print("WARNING: King was not found.")
         return None
-
-    def calc_check_status_str(self, board: list, whites_turn: bool) -> str:
+    
+    def get_check_status_str(self, check_status: int) -> str:
         """Calculates check status of the game.
 
             This includes:
@@ -323,7 +323,6 @@ class ChessCheck:
             
             Return str of the check status
         """
-        check_status = self.calc_check_status_fast(board, whites_turn)
         if check_status is None:
             return "None"
         elif check_status == -2:
@@ -336,6 +335,19 @@ class ChessCheck:
             return "White Check"
         elif check_status == 2:
             return "White Checkmate"
+
+    def calc_check_status_str(self, board: list, whites_turn: bool) -> str:
+        """Calculates check status of the game.
+
+            This includes:
+
+                Check
+                Checkmate
+                Stalemate
+            
+            Return str of the check status
+        """
+        return self.get_check_status_str(self.calc_check_status_fast(board, whites_turn))
     
 
 

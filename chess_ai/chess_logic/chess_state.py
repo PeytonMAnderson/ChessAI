@@ -1,7 +1,8 @@
 class ChessState:
     def __init__(self, 
                 whites_turn: bool = True,
-                check_status: str = 'None',
+                check_status: int | None = None,
+                check_status_str: str = "None",
                 castle_avail: str = 'KQkq',
                 en_passant: str = '-',
                 half_move: int = 0,
@@ -9,6 +10,7 @@ class ChessState:
                 max_half_moves: int = 0,             
         *args, **kwargs) -> None:
         self.whites_turn = whites_turn
+        self.check_status_str = check_status_str
         self.check_status = check_status
         self.castle_avail = castle_avail
         self.en_passant = en_passant
