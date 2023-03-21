@@ -12,6 +12,18 @@ class CustomAI(BaseAI):
         self.score_falloff_ratio = 0.90
         self.random_chance = 0.1
 
+    def sort_move(self, move_tuple: tuple) -> int:
+        return -move_tuple[0]
+
+    def order_move_list(self, move_list: list, board: list, is_white: bool, env) -> list:
+        move_tuple_list = []
+        for ro, fo, rf, ff in move_list:
+            piece_value = env.chess.util.get_piece_number_on_board(rf, ff, board, env.chess.board.files)
+            piece_score = env.chess.score.calc_piece_score_king(piece_value)
+            move_tuple_list.append((piece_score, (ro, fo, rf, ff)))
+        move_tuple_list.sort(key=self.sort_move)
+        return move_tuple_list
+
     def calc_their_best_move(self, 
                             board: list, 
                             is_white: bool, 
@@ -30,10 +42,17 @@ class CustomAI(BaseAI):
 
         #Loop through their moves to see what they would choose
         moves_list = env.chess.moves.get_valid_team_moves(is_white, board, env.chess.state.castle_avail, env.chess.state.en_passant)
-        for ro, fo, rf, ff in moves_list:
+        sorted_list = self.order_move_list(moves_list, board, is_white, env)
+        for sort_score, (ro, fo, rf, ff) in sorted_list:
 
             #Get their new board for their moves
             new_board, new_score, castle_str, en_passant_str = env.chess.moves.simulate_move( ro, fo, rf, ff, board, is_white, castle_avail, en_passant)
+
+            #Prune branch if found value higher than previous
+            if worst_prev_best_color_score is not None and prune:
+                new_color_score = new_score if is_white else -new_score
+                if new_color_score > worst_prev_best_color_score:
+                    return best_score, best_move, branches
 
             #Recurse if their is a recurse function
             deep_score, _, deep_branches = 0, None, 0
@@ -49,7 +68,7 @@ class CustomAI(BaseAI):
             branches += deep_branches
 
             #Calculate their score
-            total_score = new_score + deep_score * self.score_falloff_ratio
+            total_score = new_score + deep_score * self.score_falloff_ratio if deep_score is not None else new_score
             total_color_score = total_score if is_white else 0 - total_score
 
             #If their new score is their best one yet, save their values
@@ -62,11 +81,6 @@ class CustomAI(BaseAI):
                 best_score = total_score
                 best_move = (ro, fo, rf, ff)
             branches += 1
-
-            #Prune branch if found value higher than previous
-            if worst_prev_best_color_score is not None and prune:
-                if total_color_score > worst_prev_best_color_score:
-                    return best_score, best_move, branches
         return best_score, best_move, branches
     
     def calc_our_best_move(self, board: list, env, is_white: bool, castle_avail: str, en_passant: str, depth: int = 0) -> tuple:
@@ -79,7 +93,8 @@ class CustomAI(BaseAI):
 
         #Loop through all of our moves to see the best option
         moves_list = env.chess.moves.get_valid_team_moves(is_white, board, env.chess.state.castle_avail, env.chess.state.en_passant)
-        for ro, fo, rf, ff in moves_list:
+        sorted_list = self.order_move_list(moves_list, board, is_white, env)
+        for sort_score, (ro, fo, rf, ff) in sorted_list:
             #Get new boards with our moves
             new_board, new_score, castle_str, en_passant_str = env.chess.moves.simulate_move( ro, fo, rf, ff, board, is_white, castle_avail, en_passant)
 
@@ -93,7 +108,7 @@ class CustomAI(BaseAI):
                     worst_prev_best_color_score,
                     castle_str,
                     en_passant_str, 
-                    False,
+                    True,
                     depth - 1
                 )
             branches += their_branches

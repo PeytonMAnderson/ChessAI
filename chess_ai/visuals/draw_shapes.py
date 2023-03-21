@@ -137,9 +137,10 @@ def draw_score_bar(surface: Surface, env: Environment):
 
     score_diff = env.chess.score.score
     score_total = env.chess.score.score_max
-    score_tot_black = score_total / 2
-    score_black = score_tot_black - score_diff
-    score_ratio = score_black / score_total
+    score_black = score_total - score_diff
+    score_ratio = score_black / (score_total * 2)
+    if -score_diff > score_total:
+        score_ratio = 1.0
     black_size = score_ratio * bar_size
     black_rect = Rect(x, y, black_size, size/2)
     draw.rect(surface, env.visual.colors['GRAY'], black_rect)

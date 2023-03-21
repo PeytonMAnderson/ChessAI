@@ -58,7 +58,7 @@ def draw_score_text(surface: Surface, xo: int, yo: int, score: int, size: int, e
     fontsize = int(env.visual.fontsize_title * env.visual.zoom / 2) 
     rf_font = font.Font('freesansbold.ttf', fontsize)
     score_str = str(score) if score < 0 else "+" + str(score)
-    x_diff = size/4 if score >= 0 else -size/4 - fontsize
+    x_diff = size if score >= 0 else -size - fontsize
     font_color = env.visual.colors['WHITE'] if score < 0 else env.visual.colors['GRAY']
     score_text = rf_font.render(f"{score_str}", True, font_color)
     score_pos = (xo + x_diff, yo + size/4)

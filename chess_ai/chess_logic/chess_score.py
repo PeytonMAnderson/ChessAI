@@ -25,6 +25,22 @@ class ChessScore:
         elif piece_type == "Q":
             return self.piece_scores['QUEEN']
         return 0
+    
+    def calc_piece_score_king(self, piece_value: int) -> int:
+        piece_type = self.utils.get_str_from_piece_type(piece_value, self.board.piece_numbers, True)
+        if piece_type == "P":
+            return self.piece_scores['PAWN']
+        elif piece_type == "N":
+            return self.piece_scores['KNIGHT']
+        elif piece_type == "B":
+            return self.piece_scores['BISHOP']
+        elif piece_type == "R":
+            return self.piece_scores['ROOK']
+        elif piece_type == "Q":
+            return self.piece_scores['QUEEN']
+        elif piece_type == "K": 
+            return self.piece_scores['KING']
+        return 0
 
     def calc_team_score(self, board: list, is_white: bool) -> int:
         count = 0
@@ -50,20 +66,16 @@ class ChessScore:
             black = self.calc_team_score(board, False)
             return white - black
         else:
-            if check_status == 2:
-                return self.score_max / 2
-            elif check_status == -2:
-                return -self.score_max / 2
-            elif check_status == 1:
+            if abs(check_status) == 2:
+                sign = 1 if check_status > 0 else -1
+                return sign * self.piece_scores['CHECKMATE']
+            if abs(check_status) == 1:
+                sign = 1 if check_status > 0 else -1
                 white = self.calc_team_score(board, True)
                 black = self.calc_team_score(board, False)
-                return white + 1 - black
-            elif check_status == -1:
-                white = self.calc_team_score(board, True)
-                black = self.calc_team_score(board, False)
-                return white - black - 1
-            elif check_status == 0:
+                return white - black + sign * self.piece_scores['CHECK']
+            else:
                 return 0
-    
+            
     def update_score(self, board: list, whites_turn: bool) -> None:
         self.score = self.calc_game_score(board, whites_turn)
