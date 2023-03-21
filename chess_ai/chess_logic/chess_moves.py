@@ -445,7 +445,6 @@ class ChessMovesNew:
 
             #Add Castle Moves
             if castle_avail.find('K' if is_white else 'k') >= 0:
-                print(f"Found K in {castle_avail}")
                 file_i = file_i_old + 1
                 while file_i < self.board.files - 1:
                     if board[rank_i_old * self.board.files + file_i] != 0:
@@ -455,10 +454,8 @@ class ChessMovesNew:
                         break
                     file_i += 1
             if castle_avail.find('Q' if is_white else 'q') >= 0:
-                print(f"Found Q in {castle_avail}")
                 file_i = file_i_old - 1
                 while file_i >= 1:
-                    print(board[rank_i_old * self.board.files + file_i])
                     if board[rank_i_old * self.board.files + file_i] != 0:
                         break
                     if file_i == 1:

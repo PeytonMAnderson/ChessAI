@@ -46,7 +46,7 @@ def draw_game_stats(surface: Surface, env: Environment):
     lm_pos = (x, y + fontsize * 2)
 
     #Check Status
-    check_text = rf_font.render(f"Check: {env.chess.state.check_status}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+    check_text = rf_font.render(f"Check: {env.chess.state.check_status_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
     check_pos = (x, y + fontsize * 4)
 
     #Blit
