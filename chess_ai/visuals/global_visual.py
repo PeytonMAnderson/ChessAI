@@ -32,6 +32,7 @@ class GlobalVisual:
                 fontsize: int = 18,
                 fontsize_title: int = 36,
                 board_square_size: int = 20,
+                perspective: str = "WHITE",
                 world_origin: tuple = (0, 0),
                 board_origin: tuple = (0, 0),
                 background: tuple = (0, 0, 0),
@@ -42,6 +43,7 @@ class GlobalVisual:
                 last_move_to: tuple = (0, 0, 0),
                 last_move_from: tuple = (0, 0, 0),
                 valid_moves: tuple = (0, 0 ,0),
+                
                 colors: dict = {},
     *args, **kwargs) -> None:
         
@@ -62,7 +64,9 @@ class GlobalVisual:
         self.board_last_move_to_color = last_move_to
         self.board_last_move_from_color = last_move_from
         self.board_valid_moves_color = valid_moves
+        self.perspective = perspective
         self.colors = colors
+        
 
     
     def set_from_yaml(self, yaml_path: str) -> "GlobalVisual":
@@ -82,6 +86,7 @@ class GlobalVisual:
             self.fontsize = settings['FONTSIZE']
             self.fontsize_title = settings['FONTSIZE_TITLE']
             self.board_square_size = settings['BOARD_SQUARE_SIZE']
+            self.perspective = settings['PERSPECTIVE']
             self.world_origin = tuple(settings['WORLD_ORIGIN'])
             self.board_origin = tuple(settings['BOARD_ORIGIN'])
             
@@ -96,3 +101,9 @@ class GlobalVisual:
             self.fontcolor = get_color(settings['FONT_COLOR'], self.colors)
 
         return self
+    
+    def adjust_perspective(self, rank_i: int, file_i: int, env) -> tuple:
+        if self.perspective == "WHITE":
+            return rank_i, file_i
+        else:
+            return env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1

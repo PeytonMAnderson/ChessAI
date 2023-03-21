@@ -5,11 +5,12 @@ from ..environment import Environment
 from ..visuals.draw_shapes import check_bounds
 
 
+
 def select_square(mouse_position: tuple, env: Environment) -> tuple | None:
     for rank in range(env.chess.board.ranks):
         for file in range(env.chess.board.files):
             if check_bounds(mouse_position, rank, file, env) is True:
-                return rank, file
+                return env.visual.adjust_perspective(rank, file, env)
     return None
 
 def mouse_left_click_events(event, env: Environment):

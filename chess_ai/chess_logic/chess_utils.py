@@ -98,12 +98,15 @@ class ChessUtils:
         else:
             return self.get_str_from_piece_type(piece_value, piece_numbers, False)
     
-    def get_file_from_number(self, file_index: int) -> str:
+    def get_file_from_number(self, file_index: int, board_file_count: int = None, perspective: str = "WHITE") -> str:
         """Get the file letter from the file index.
 
             Returns: Letter of current file.
         """
-        return chr(ord('a') + file_index)
+        if perspective == "BLACK":
+            return chr(ord('a') + board_file_count - file_index - 1)
+        else:
+            return chr(ord('a') + file_index)
 
     def get_number_from_file(self, file_str: str) -> int:
         """Get the file index from the file letter.
@@ -112,12 +115,15 @@ class ChessUtils:
         """
         return ord(file_str) - ord('a')
     
-    def get_rank_from_number(self, rank_index: int, board_rank_count: int) -> str:
+    def get_rank_from_number(self, rank_index: int, board_rank_count: int, perspective: str = "WHITE") -> str:
         """Get the rank str from the rank index.
 
             Returns: str of current rank.
         """
-        return str(board_rank_count - rank_index)
+        if perspective == "BLACK":
+            return str(rank_index + 1)
+        else:
+            return str(board_rank_count - rank_index)
     
     def get_number_from_rank(self, rank_str: str, board_rank_count: int) -> int:
         """Get the rank index from the rank str.

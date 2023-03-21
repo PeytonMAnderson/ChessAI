@@ -42,3 +42,6 @@ class ChessState:
     def calc_game_ended(self) -> "ChessState":
         if int(self.half_move) >= self.max_half_moves:
             self.game_ended = True
+        if self.check_status is not None:
+            if abs(self.check_status) == 2 or self.check_status == 0:
+                self.game_ended = True

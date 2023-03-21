@@ -17,11 +17,9 @@ def get_local_board_coords(env: Environment):
     return x_o, y_o, size
 
 def draw_board(surface: Surface, env: Environment):
-    white = True
+    white = False
     x, yo, size = get_local_board_coords(env)
-
     for file in range(env.chess.board.files):
-
         y = yo
         for rank in range(env.chess.board.ranks):
 
@@ -41,11 +39,15 @@ def draw_board(surface: Surface, env: Environment):
 def draw_pieces(surface: Surface, env: Environment):
     rank_index = 0
     file_index = 0
+    rank_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.ranks - 1
+    file_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.files - 1
+    per_diff = 1 if env.visual.perspective == "WHITE" else -1
 
     x, y, size = get_local_board_coords(env)
 
     while rank_index < env.chess.board.ranks:
         file_index = 0
+        file_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.files - 1
         while file_index < env.chess.board.files:
 
             #Get place image from chess board
@@ -55,18 +57,21 @@ def draw_pieces(surface: Surface, env: Environment):
                 #Get Size of Piece
                 size = env.visual.board_square_size * env.visual.zoom
                 #Get Position of Piece
-                img_x = x + file_index * size
-                img_y = y + rank_index * size
+                img_x = x + file_index_per * size
+                img_y = y + rank_index_per * size
                 #Scale and place image on canvas
                 img = transform.scale(img, (size, size))
                 surface.blit(img, (img_x, img_y))
 
             file_index += 1
+            file_index_per += per_diff
+        rank_index_per += per_diff
         rank_index += 1
 
 def draw_square_from_position(surface: Surface, rank_i: int, file_i:int, color: tuple, env: Environment) -> None:
+    rd, fd = env.visual.adjust_perspective(rank_i, file_i, env)
     x_o, y_o, size = get_local_board_coords(env)
-    x, y = x_o + file_i * size, y_o + rank_i * size
+    x, y = x_o + fd * size, y_o + rd * size
     rect = Rect(x, y, size, size)
     draw.rect(surface, color, rect)
 
@@ -87,9 +92,9 @@ def check_bounds(mouse_position: tuple, rank_i: int, file_i: int, env: Environme
 
 def draw_selected(surface: Surface, env: Environment):
     x_o, y_o, size = get_local_board_coords(env)
-
     if env.io.selected_position is not None:
-        x, y = x_o + env.io.selected_position[1] * size, y_o + env.io.selected_position[0] * size
+        rd, fd = env.visual.adjust_perspective(env.io.selected_position[0], env.io.selected_position[1], env)
+        x, y = x_o + fd * size, y_o + rd * size
         rect = Rect(x, y, size, size)
         draw.rect(surface, env.visual.board_selected_color, rect)
 
@@ -110,10 +115,10 @@ def grab_selected(surface: Surface, env: Environment):
 
 def draw_valid_moves(surface: Surface, env: Environment):
     x_o, y_o, size = get_local_board_coords(env)
-
     for valid_move in env.chess.moves.get_valid_moves_list():
         rank_o, file_o, rank, file = valid_move
-        x, y = x_o + file * size, y_o + rank * size
+        rd, fd = env.visual.adjust_perspective(rank, file, env)
+        x, y = x_o + fd * size, y_o + rd * size
         rect = Rect(x, y, size, size)
         draw.rect(surface, env.visual.board_valid_moves_color, rect)
 
