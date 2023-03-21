@@ -1,35 +1,198 @@
 
+from .chess_piece import ChessPiece
+from .chess_utils import ChessUtils
 
 class ChessBoard:
-    def __init__(self, board: list = None, board_ranks: int = 8, board_files: int = 8, piece_numbers: dict = None, *args, **kargs) -> None:
-        self.board = board
-        self.ranks = board_ranks
-        self.files = board_files
-        self.piece_numbers = piece_numbers
+    def __init__(self,
+        piece_values: dict,
+        ranks: int = 8,
+        files: int = 8,
+        whites_turn: bool = True,
+        check_status: int | None = None,
+        en_passant: str = "-",
+        castle_avail: str = "KQkq",
+        half_move: int = 0,
+        full_move: int = 0,
+    *args, **kwargs) -> None:
+        """ A Empty chess board that can be populated with pieces and updated.
+        """
+        #Board
+        self.ranks = ranks
+        self.files = files
+        self.value_board = [0] * ranks * files
+        self.piece_board = [None] * ranks * files
 
-    def reset(self, board: list = None) -> "ChessBoard":
-        if board is None:
-            self.board = [0] * self.ranks * self.files
-        else:
-            self.board = board
+        #Game Status
+        self.whites_turn = whites_turn
+        self.check_status = check_status
+        self.en_passant = en_passant
+        self.castle_avail = castle_avail
+        self.half_move = half_move
+        self.full_move = full_move
+
+        #Positions for optimized searching
+        self.white_attacking_positions = []
+        self.black_attacking_positions = []
+        self.king_positions = [None, None]
+        self.white_positions = []
+        self.black_positions = []
+
+        #Helper Functions
+        self.utils = ChessUtils(piece_values)
+
+    def fen_to_board(self, fen_str: str) -> "ChessBoard":
+        """Updates the entire board from the FEN string.
+
+            Returns: Self for chaining.
+        """
+        #Reset Board:
+        self.value_board = [0] * self.ranks * self.files
+        self.piece_board = [None] * self.ranks * self.files
+        
+        #Get the piece positions from the fen string
+        split_string = fen_str.split(" ")
+        piece_positions = split_string[0]
+        turn = split_string[1] if len(split_string) >= 2 else None
+        castle_avail = split_string[2] if len(split_string) >= 3 else None
+        enpassant = split_string[3] if len(split_string) >= 4 else None
+        half_move = split_string[4] if len(split_string) >= 5 else None
+        full_move = split_string[5] if len(split_string) >= 6 else None
+
+        #Go through the ranks
+        piece_ranks = piece_positions.split("/")
+        rank_index = 0
+        for rank in piece_ranks:
+
+            #Go through the files
+            file_index = 0
+            string_index = 0
+            while file_index < self.files and string_index < len(rank):
+                piece = rank[string_index]
+                if piece.isdigit() is False:
+                    loc = rank_index * self.files + file_index
+                    if len(self.value_board) > loc:
+                        piece_value = self.utils._calc_piece_value(piece_str=piece)
+                        piece_type, piece_color = self.utils._calc_piece_type_color(piece_str=piece)
+                        self.value_board[loc] = piece_value
+                        self.piece_board[loc] = ChessPiece(piece_value, piece_type, piece_color)
+                    file_index += 1
+                    string_index += 1
+                else:
+                    file_index += int(piece)
+                    string_index += 1
+            rank_index += 1
+
+        #Game State
+        self.whites_turn = True if turn is None or turn == 'w' else False
+        self.castle_avail = castle_avail
+        self.en_passant = enpassant
+        self.half_move = int(half_move)
+        self.full_move = int(full_move)
+        
+        #Update Check status
+        #----
+
+        #Return self
         return self
     
-    def get_piece_position(self, piece_value: int, board: list) -> tuple | None:
-        """Get the piece's rank and file by checking the board in the parameters.
+    def board_to_fen(self) -> str:
+        """Generates a FEN string from the current board.
 
-            Returns: tuple[rank_i, file_i] of the piece location. None if piece is not found.
+            Returns: FEN string.
         """
-        rank_i = 0
-        file_i = 0
-        for piece in board:
-            if piece == piece_value:
-                return rank_i, file_i
-            if file_i >= self.files - 1:
-                rank_i += 1
-                file_i = 0
+        rank_index = 0
+        file_index = 0
+
+        rank_str = ""
+        #Go Through ranks
+        while rank_index < self.ranks:
+
+            #Go Through Files
+            file_str_total = ""
+            file_str_prev = ''
+            file_index = 0
+            while file_index < self.files:
+
+                #Get piece from board
+                loc = rank_index * self.files + file_index
+                piece: ChessPiece = self.piece_board[loc]
+
+                #If location is a piece
+                if piece is not None:
+                    s = self.utils._calc_piece_str(piece_type=piece.type, is_white=piece.is_white)
+                    file_str_prev = s
+                    file_str_total = file_str_total + s
+                else:
+                    #If Previous str was also a digit, increment instead of adding new
+                    if file_str_prev.isdigit():
+                        prev_digit = int(file_str_prev)
+                        file_str_total = file_str_total.removesuffix(file_str_prev)
+                        file_str_prev = str(prev_digit + 1)
+                        file_str_total = file_str_total + str(prev_digit + 1)
+                    
+                    #New Space, add 1 as beginning digit
+                    else:
+                        file_str_prev = "1"
+                        file_str_total = file_str_total + "1"
+                #Increment File
+                file_index += 1
+            #Add Rank to rank String
+            if len(rank_str) > 0:
+                rank_str = rank_str + "/" + file_str_total
             else:
-                file_i += 1
-        return None
+                rank_str = file_str_total
+            #Increment Rank
+            rank_index += 1
+        
+        #Add Active color:
+        color_str = "w" if self.whites_turn else "b"
+        return rank_str + " " + color_str + " " + self.castle_avail + " " + self.en_passant + " " + str(self.half_move) + " " + str(self.full_move)
+    
+    def _move_piece_basic(self, rank_old: int, file_old: int, rank_new: int, file_new: int) -> "ChessBoard":
+        old_loc = rank_old * self.files + file_old
+        new_loc = rank_new * self.files + file_new
+        self.value_board[new_loc] = self.value_board[old_loc]
+        self.piece_board[new_loc] = self.piece_board[old_loc]
+        self.value_board[old_loc] = 0
+        self.piece_board[old_loc] = None
+        return self
+    
+    def _move_piece_update(self, rank_old: int, file_old: int, rank_new: int, file_new: int, moving_piece: ChessPiece) -> "ChessBoard":
+        #Update team positions
+        if moving_piece.is_white:
+            self.white_positions.remove((rank_old, file_old))
+            self.white_positions.append((rank_new, file_new))
+        else:
+            self.black_positions.remove((rank_old, file_old))
+            self.black_positions.append((rank_new, file_new)) 
+
+        #Update King position
+        if moving_piece.type == "K":
+            self.king_positions[0 if moving_piece.is_white else 1] = (rank_new, file_new)
+
+        #Update attacking positions
+        if moving_piece.is_white:
+            new_attacks = []
+            for r, f in self.white_positions:
+                new_pos = r * self.files + f
+                piece: ChessPiece = self.piece_board[new_pos]
+
+            self.white_attacking_positions = 
+
+                
+    
+    def move_piece(self, rank_old: int, file_old: int, rank_new: int, file_new: int) -> "ChessBoard":
+        return self._move_piece_basic(rank_old, file_old, rank_new, file_new)
+    
+    def update_piece(self, rank_i: int, file_i: int, new_piece: ChessPiece = None) -> "ChessBoard":
+        if new_piece is None:
+            loc = rank_i * self.files + file_i
+            self.value_board[loc] = 0
+            self.piece_board[loc] = 0
+        else:
+            loc = rank_i * self.files + file_i
+            self.value_board[loc] = new_piece.value
+            self.piece_board[loc] = new_piece
     
 
 
