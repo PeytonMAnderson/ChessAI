@@ -170,23 +170,6 @@ class VisualShapes:
             self._draw_square(surface, ro, fo, env.visual.board_last_move_from_color, env)
             self._draw_square(surface, rf, ff, env.visual.board_last_move_to_color, env)
 
-        for i in range(len(env.chess.board.piece_board)):
-            piece: ChessPiece = env.chess.board.piece_board[i]
-            if piece is not None:
-                if piece.is_white:
-                    self._draw_square(surface, piece.position[0], piece.position[1], env.visual.colors['ORANGE'], env)
-                else:
-                    self._draw_square(surface, piece.position[0], piece.position[1], env.visual.colors['PURPLE'], env)
-
-        # for r, f in env.chess.board.black_positions:
-        #     self._draw_square(surface, r, f, env.visual.colors['PURPLE'], env)
-        # for r, f in env.chess.board.king_positions:
-        #     self._draw_square(surface, r, f, env.visual.colors['YELLOW'], env)
-        # for move in env.chess.board.white_moves:
-        #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
-        # for move in env.chess.board.black_moves:
-        #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
-
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":
@@ -238,10 +221,17 @@ class VisualShapes:
         score_total = env.chess.score.score_max
         score_black = score_total - score_diff
         score_ratio: float
+
+        #Get score ratio, clamped to max score
         if abs(score_diff) > score_total or score_total == 0:
-            score_ratio = 1.0
+            if score_diff > 0:
+                score_ratio = 0.0
+            else:
+                1.0
         else:
             score_ratio = score_black / (score_total * 2)
+
+        #Draw bar
         black_size = score_ratio * bar_size
         black_rect = Rect(x, y, black_size, size/2)
         draw.rect(surface, env.visual.colors['GRAY'], black_rect)

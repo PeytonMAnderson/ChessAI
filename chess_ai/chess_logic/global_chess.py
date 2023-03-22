@@ -152,7 +152,9 @@ class GlobalChess:
         self.last_move_str = frame['last_move_str']
         self.last_move_tuple = frame['last_move_tuple']
         self.score.calc_score(self.board)
-        if abs(self.board.check_status) == 2 or self.board.check_status == 0:
+        
+        #Calc if game ended
+        if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
             self.game_ended = True
         elif self.board.half_move >= self.max_half_moves:
             self.game_ended = True
