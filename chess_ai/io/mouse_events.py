@@ -3,6 +3,7 @@ import pygame
 
 from ..environment import Environment
 from ..visuals.draw_shapes import check_bounds
+from ..chess_logic.chess_piece import ChessPiece
 
 
 
@@ -21,11 +22,10 @@ def mouse_left_click_events(event, env: Environment):
         env.chess.moves.clear_valid_moves()
     else:
         if env.io.selected_position is None:
-            piece_value = env.chess.util.get_piece_number_on_board(new_selected[0], new_selected[1], env.chess.board.board, env.chess.board.files)
-            if piece_value != 0:
-                is_white = env.chess.util.get_is_white_from_piece_number(piece_value, env.chess.board.piece_numbers)
-                if is_white == env.chess.state.whites_turn and env.ai.piece_is_playable(is_white):
-                    env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail, env.chess.state.en_passant, env.chess.state.whites_turn)
+            piece: ChessPiece = env.chess.board.piece_board[new_selected[0] * env.chess.board.files + new_selected[1]]
+            if piece is not None:
+                if piece.is_white == env.chess.board.whites_turn and env.ai.piece_is_playable(piece.is_white):
+                    #env.chess.moves.update_valid_moves(new_selected[0], new_selected[1], env.chess.board.board, env.chess.state.castle_avail, env.chess.state.en_passant, env.chess.state.whites_turn)
                     env.io.selected_position = new_selected
         else:
             ro, fo = env.io.selected_position
@@ -38,7 +38,6 @@ def mouse_left_click_events(event, env: Environment):
                     env.io.last_move = new_selected
                 env.io.selected_position = None
                 env.chess.moves.clear_valid_moves()
-
             else:
                 #If move is not valid, if move is same as start location, reset move
                 if (ro == rf and fo == ff):

@@ -14,7 +14,7 @@ def draw_ranks_files(surface: Surface, env: Environment):
     #Get Rank Origin
     xr, yr =  x - size/2, y + size/4
     for rank in range(env.chess.board.ranks):
-        rank_str = env.chess.util.get_rank_from_number(rank, env.chess.board.ranks, env.visual.perspective)
+        rank_str = env.chess.board.utils.get_rank_from_number(rank, env.chess.board.ranks, env.visual.perspective)
         rank_text = rf_font.render(rank_str, True, env.visual.fontcolor, env.visual.background_color)
         rank_pos = (xr, yr + size * rank)
         surface.blit(rank_text, rank_pos)
@@ -22,7 +22,7 @@ def draw_ranks_files(surface: Surface, env: Environment):
     #Get File Origin
     xf, yf =  x + size/3, y - size/2
     for file in range(env.chess.board.files):
-        file_str = env.chess.util.get_file_from_number(file, env.chess.board.files, env.visual.perspective)
+        file_str = env.chess.board.utils.get_file_from_number(file, env.chess.board.files, env.visual.perspective)
         file_text = rf_font.render(file_str, True, env.visual.fontcolor, env.visual.background_color)
         file_pos = (xf + size * file, yf)
         surface.blit(file_text, file_pos)
@@ -38,15 +38,15 @@ def draw_game_stats(surface: Surface, env: Environment):
     rf_font = font.Font('freesansbold.ttf', fontsize)
 
     #Turn
-    turn_text = rf_font.render(f"Turn: {'White' if env.chess.state.whites_turn else 'Black'}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+    turn_text = rf_font.render(f"Turn: {'White' if env.chess.board.whites_turn else 'Black'}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
     turn_pos = (x, y)
 
     #Last Move:
-    lm_text = rf_font.render(f"Last Move: {env.chess.state.last_move_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+    lm_text = rf_font.render(f"Last Move: {env.chess.last_move_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
     lm_pos = (x, y + fontsize * 2)
 
     #Check Status
-    check_text = rf_font.render(f"Check: {env.chess.state.check_status_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+    check_text = rf_font.render(f"Check: {None}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
     check_pos = (x, y + fontsize * 4)
 
     #Blit

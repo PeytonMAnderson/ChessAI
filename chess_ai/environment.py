@@ -28,5 +28,5 @@ class Environment:
             self.piece_images = load_images(pieces_dir)
 
     def execute_next_turn(self):
-        if self.chess.state.game_ended is False:
-            self.ai.execute_turn(self.chess.state.whites_turn, self.chess.board.board, self)
+        if self.chess.game_ended is False:
+            self.ai.execute_turn(self.chess.board.whites_turn, self.chess.board.value_board, self)

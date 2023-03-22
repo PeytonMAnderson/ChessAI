@@ -34,8 +34,7 @@ class GlobalAI:
             player_value.execute_turn(board, env)
         
     def execute_turn(self, whites_turn: bool, board: list, env): 
-
-        if self.paused is True or env.chess.state.check_status == 'White Checkmate' or env.chess.state.check_status == 'Black Checkmate':
+        if self.paused is True or (env.chess.board.check_status is not None and abs(env.chess.board.check_status) == 2):
             return
         if whites_turn:
             self.execute_player(self.white_player_str, self.white_player, board, env)

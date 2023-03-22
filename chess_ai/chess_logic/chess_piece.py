@@ -152,10 +152,16 @@ def get_king_moves(rank_i_old: int, file_i_old: int, is_white: bool, board) -> t
         for fi in range(3):
             if ri == 1 and fi == 1:
                 continue
-            #Check captures
             r, f = ro + ri, fo + fi
             new_loc = r * board.files + f
             defending_piece: ChessPiece = board.piece_board[new_loc]
+
+            #Filter move that causes check
+            for _, _, rf, ff in board.black_moves:
+                if (rf, ff) == (r, f):
+                    continue
+
+            #Add moves and attacks
             if defending_piece is None:
                 moves.append((rank_i_old, file_i_old, r, f))
             elif defending_piece.is_white != is_white:
@@ -196,8 +202,5 @@ class ChessPiece:
         self.attacks = []
 
     def calc_positions(self, board) -> "ChessPiece":
-        if self.flags.count("PINNED") == 0:
-            self.moves, self.attacks = self.move_function(self.position[0], self.position[1], self.is_white, board)
-        else:
-            self.moves, self.attacks = [], []
+        self.moves, self.attacks = self.move_function(self.position[0], self.position[1], self.is_white, board)
     

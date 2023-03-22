@@ -5,6 +5,7 @@ from .chess_utils import ChessUtils
 class ChessBoard:
     def __init__(self,
         piece_values: dict,
+        piece_scores: dict,
         ranks: int = 8,
         files: int = 8,
         whites_turn: bool = True,
@@ -12,6 +13,7 @@ class ChessBoard:
         en_passant: str = "-",
         castle_avail: str = "KQkq",
         half_move: int = 0,
+        max_half_moves: int = 50,
         full_move: int = 0,
     *args, **kwargs) -> None:
         """ A Empty chess board that can be populated with pieces and updated.
@@ -28,17 +30,23 @@ class ChessBoard:
         self.en_passant = en_passant
         self.castle_avail = castle_avail
         self.half_move = half_move
+        self.max_half_moves = max_half_moves
         self.full_move = full_move
+        self.last_move_castle = False
+        self.last_move_en_passant = False
 
         #Positions for optimized searching
         self.white_attacking_positions = []
         self.black_attacking_positions = []
+        self.white_moves = []
+        self.black_moves = []
         self.king_positions = [None, None]
         self.white_positions = []
         self.black_positions = []
+        self.in_check = False
 
         #Helper Functions
-        self.utils = ChessUtils(piece_values)
+        self.utils = ChessUtils(piece_values, piece_scores)
 
     def fen_to_board(self, fen_str: str) -> "ChessBoard":
         """Updates the entire board from the FEN string.
@@ -74,7 +82,7 @@ class ChessBoard:
                         piece_value = self.utils._calc_piece_value(piece_str=piece)
                         piece_type, piece_color = self.utils._calc_piece_type_color(piece_str=piece)
                         self.value_board[loc] = piece_value
-                        self.piece_board[loc] = ChessPiece(piece_value, piece_type, piece_color)
+                        self.piece_board[loc] = ChessPiece(piece_value, piece_type, piece_color, (rank_index, file_index))
                     file_index += 1
                     string_index += 1
                 else:
@@ -157,29 +165,61 @@ class ChessBoard:
         self.piece_board[old_loc] = None
         return self
     
-    def _move_piece_update(self, rank_old: int, file_old: int, rank_new: int, file_new: int, moving_piece: ChessPiece) -> "ChessBoard":
-        #Update team positions
-        if moving_piece.is_white:
-            self.white_positions.remove((rank_old, file_old))
-            self.white_positions.append((rank_new, file_new))
+    def _update_others_moves(self) -> "ChessBoard":
+        """If whites_turn, calculates the attacking moves of black. Else, moves of white.
+
+            Returns: Self for chaining.
+        """
+        if not self.whites_turn:
+            new_attacks = []
+            for r, f in self.white_positions:
+                new_pos = r * self.files + f
+                piece: ChessPiece = self.piece_board[new_pos]
+                piece.calc_positions(self)
+                new_attacks = new_attacks + piece.attacks
+            self.white_attacking_positions = new_attacks
         else:
-            self.black_positions.remove((rank_old, file_old))
-            self.black_positions.append((rank_new, file_new)) 
+            new_attacks = []
+            for r, f in self.black_positions:
+                new_pos = r * self.files + f
+                piece: ChessPiece = self.piece_board[new_pos]
+                piece.calc_positions(self)
+                new_attacks = new_attacks + piece.attacks
+            self.black_attacking_positions = new_attacks
+    
+    def _set_check(self) -> "ChessBoard":
+        """Sets the in_check flag 
+        """
+        if self.whites_turn:
+            for ro, fo, rf, ff in self.black_attacking_positions:
+                if (rf, ff) == self.king_positions[0]:
+                    self.in_check = True
+                    return self
+            self.in_check = False
+        else:
+            for ro, fo, rf, ff in self.white_attacking_positions:
+                if (rf, ff) == self.king_positions[1]:
+                    self.in_check = True
+                    return self
+            self.in_check = False
+        return self
+
+    def _move_piece_update(self, rank_old: int, file_old: int, rank_new: int, file_new: int, moving_piece: ChessPiece) -> "ChessBoard":
+        #Perform Move
+        
+        #Update Turn
+        self.whites_turn = False if self.whites_turn else True
 
         #Update King position
         if moving_piece.type == "K":
             self.king_positions[0 if moving_piece.is_white else 1] = (rank_new, file_new)
 
         #Update attacking positions
-        if moving_piece.is_white:
-            new_attacks = []
-            for r, f in self.white_positions:
-                new_pos = r * self.files + f
-                piece: ChessPiece = self.piece_board[new_pos]
+        self._update_others_moves()._set_check()
+        
+        #Return self
+        return self
 
-            self.white_attacking_positions = 
-
-                
     
     def move_piece(self, rank_old: int, file_old: int, rank_new: int, file_new: int) -> "ChessBoard":
         return self._move_piece_basic(rank_old, file_old, rank_new, file_new)

@@ -51,7 +51,7 @@ def draw_pieces(surface: Surface, env: Environment):
         while file_index < env.chess.board.files:
 
             #Get place image from chess board
-            num = env.chess.board.board[rank_index * env.chess.board.files + file_index]
+            num = env.chess.board.value_board[rank_index * env.chess.board.files + file_index]
             img = get_image_from_number(num, env)
             if img is not None:
                 #Get Size of Piece
@@ -100,7 +100,8 @@ def draw_selected(surface: Surface, env: Environment):
 
 def grab_selected(surface: Surface, env: Environment):
     if env.io.selected_position is not None:
-        piece = env.chess.util.get_piece_number_on_board(env.io.selected_position[0], env.io.selected_position[1], env.chess.board.board, env.chess.board.files)
+        f, r = env.io.selected_position
+        piece = env.chess.board.value_board[r * env.chess.board.files * f]
         if piece is not None and piece != 0:
             img = get_image_from_number(piece, env)
             if img is not None:
@@ -115,7 +116,7 @@ def grab_selected(surface: Surface, env: Environment):
 
 def draw_valid_moves(surface: Surface, env: Environment):
     x_o, y_o, size = get_local_board_coords(env)
-    for valid_move in env.chess.moves.get_valid_moves_list():
+    for valid_move in env.chess.board.white_moves:
         rank_o, file_o, rank, file = valid_move
         rd, fd = env.visual.adjust_perspective(rank, file, env)
         x, y = x_o + fd * size, y_o + rd * size
@@ -123,7 +124,7 @@ def draw_valid_moves(surface: Surface, env: Environment):
         draw.rect(surface, env.visual.board_valid_moves_color, rect)
 
 def draw_last_move(surface: Surface, env: Environment):
-    if env.chess.state.last_move_tuple is not None:
+    if env.chess.last_move_tuple is not None:
         ro, fo, rf, ff = env.chess.state.last_move_tuple
         draw_square_from_position(surface, ro, fo, env.visual.board_last_move_from_color, env)
         draw_square_from_position(surface, rf, ff, env.visual.board_last_move_to_color, env)
@@ -158,7 +159,7 @@ def draw_all_shapes(surface: Surface, env: Environment):
     draw_valid_moves(surface, env)
 
     #Draw Score Bar
-    draw_score_bar(surface, env)
+    #draw_score_bar(surface, env)
 
     #Draw pieces sprites
     draw_pieces(surface, env)
