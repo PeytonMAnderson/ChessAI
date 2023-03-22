@@ -69,6 +69,13 @@ class GlobalChess:
         rank = self.board.utils.get_rank_from_number(move.new_position[0], self.board.ranks)
         file = self.board.utils.get_file_from_number(move.new_position[1])
 
+        #Get Castle String
+        if move.castle:
+            if move.new_position[1] - move.piece.position[1] > 0:
+                return "O-O"
+            else:
+                return "O-O-O"
+
         #Get check string
         check_str = ""
         if self.board.check_status is not None:
@@ -122,10 +129,11 @@ class GlobalChess:
             self.game_ended = True
         else:
             self.game_ended = False
-
+        fen = self.board.board_to_fen()
+        print(fen)
         self.history.pop_add({"last_move_str": self.last_move_str, 
                               "last_move_tuple": self.last_move_tuple, 
-                              "fen_string": self.board.board_to_fen()})
+                              "fen_string":fen})
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         """Load a state of the game from history. Updates score, history, game_ended, and last move.

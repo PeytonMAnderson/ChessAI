@@ -248,10 +248,10 @@ class ChessBoard:
         new_board.last_move_castle = False
         new_board.last_move_en_passant = False
         if new_move.castle:
-            old_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
-            new_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
-            new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
-            new_board.piece_board[old_pos] = None
+            old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
+            new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
+            new_board.piece_board[new_rook_pos] = new_board.piece_board[old_rook_pos]
+            new_board.piece_board[old_rook_pos] = None
             new_board.last_move_castle = True
             if new_board.whites_turn:
                 new_board.white_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
@@ -259,6 +259,7 @@ class ChessBoard:
             else:
                 new_board.black_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
                 new_board.black_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
+            new_board.piece_board[new_rook_pos].position = new_move.castle_rook_move.new_position
             
         #See if move is enpassant
         elif new_move.en_passant:
@@ -322,9 +323,9 @@ class ChessBoard:
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
                 if len(self.black_moves) == 0:
-                    self.check_status = -2
+                    self.check_status = 2
                 else:
-                    self.check_status = -1
+                    self.check_status = 1
             else:
                 if len(self.black_moves) == 0:
                     self.check_status = 0
@@ -354,22 +355,23 @@ class ChessBoard:
         #Update Castle Str
         if new_move.piece.type == "K":
             if self.whites_turn:
-                self.castle_avail.replace('K', '').replace('Q','')
+                self.castle_avail = self.castle_avail.replace('K', '').replace('Q','')
             else:
-                self.castle_avail.replace('k', '').replace('q','')
+                self.castle_avail = self.castle_avail.replace('k', '').replace('q','')
         elif new_move.piece.type == "R":
             if self.whites_turn:
                 if new_move.piece.position[1] == 0:
-                    self.castle_avail.replace('Q', '')
+                    self.castle_avail = self.castle_avail.replace('Q', '')
                 elif new_move.piece.position[1] == self.files-1:
-                    self.castle_avail.replace('K', '')
+                    self.castle_avail = self.castle_avail.replace('K', '')
             else:
                 if new_move.piece.position[1] == 0:
-                    self.castle_avail.replace('q', '')
+                    self.castle_avail = self.castle_avail.replace('q', '')
                 elif new_move.piece.position[1] == self.files-1:
-                    self.castle_avail.replace('k', '')
+                    self.castle_avail = self.castle_avail.replace('k', '')
         
         #Update En passant str
+        self.en_passant = "-"
         if new_move.piece.type == "P":
             if new_move.new_position[0] - new_move.piece.position[0] == 2:
                 r = new_move.piece.position[0] + 1
@@ -381,8 +383,6 @@ class ChessBoard:
                 rank = self.utils.get_rank_from_number(r, self.ranks)
                 file = self.utils.get_file_from_number(new_move.new_position[1])
                 self.en_passant = file + rank
-        else:
-            self.en_passant = "-"
 
         #Execute Move
         self._new_move(new_move, False)

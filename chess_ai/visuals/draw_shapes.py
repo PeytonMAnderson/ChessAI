@@ -180,8 +180,8 @@ class VisualShapes:
 
         # for r, f in env.chess.board.black_positions:
         #     self._draw_square(surface, r, f, env.visual.colors['PURPLE'], env)
-        for r, f in env.chess.board.king_positions:
-            self._draw_square(surface, r, f, env.visual.colors['YELLOW'], env)
+        # for r, f in env.chess.board.king_positions:
+        #     self._draw_square(surface, r, f, env.visual.colors['YELLOW'], env)
         # for move in env.chess.board.white_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
         # for move in env.chess.board.black_moves:
