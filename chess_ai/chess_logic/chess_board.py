@@ -1,6 +1,7 @@
 
 from .chess_piece import ChessPiece
 from .chess_utils import ChessUtils
+from .chess_move import ChessMove
 
 class ChessBoard:
     def __init__(self,
@@ -18,13 +19,11 @@ class ChessBoard:
     *args, **kwargs) -> None:
         """ A Empty chess board that can be populated with pieces and updated.
         """
-        #Board
-        self.ranks = ranks
-        self.files = files
-        self.value_board = [0] * ranks * files
-        self.piece_board = [None] * ranks * files
+
 
         #Game Status
+        self.ranks = ranks
+        self.files = files
         self.whites_turn = whites_turn
         self.check_status = check_status
         self.en_passant = en_passant
@@ -32,17 +31,21 @@ class ChessBoard:
         self.half_move = half_move
         self.max_half_moves = max_half_moves
         self.full_move = full_move
-        self.last_move_castle = False
-        self.last_move_en_passant = False
 
         #Positions for optimized searching
+        self.value_board = [0] * ranks * files
+        self.piece_board = [None] * ranks * files
         self.white_positions = []
         self.black_positions = []
         self.white_moves = []
         self.black_moves = []
+        self.white_attacks = []
+        self.black_attacks = []
         self.king_positions = [None, None]
         self.in_check = False
         self.checking_pieces = []
+        self.last_move_castle = False
+        self.last_move_en_passant = False
 
         #Helper Functions
         self.utils = ChessUtils(piece_values, piece_scores)
@@ -154,94 +157,149 @@ class ChessBoard:
         #Add Active color:
         color_str = "w" if self.whites_turn else "b"
         return rank_str + " " + color_str + " " + self.castle_avail + " " + self.en_passant + " " + str(self.half_move) + " " + str(self.full_move)
+
+    def copy(self) -> "ChessBoard":
+        new_board = ChessBoard(
+            self.utils.piece_values, 
+            self.utils.piece_scores,
+            self.ranks,
+            self.files,
+            self.whites_turn,
+            self.check_status,
+            self.en_passant,
+            self.castle_avail,
+            self.half_move,
+            self.max_half_moves,
+            self.full_move
+        )
+        new_board.value_board = self.value_board
+        new_board.piece_board = self.piece_board
+        new_board.white_positions = self.white_positions
+        new_board.black_positions = self.black_positions
+        new_board.white_moves = self.white_moves
+        new_board.black_moves = self.black_moves
+        new_board.white_attacks = self.white_attacks
+        new_board.black_attacks = self.black_attacks
+        new_board.king_positions = self.king_positions
+        new_board.in_check = self.in_check
+        new_board.checking_pieces = self.checking_pieces
+        new_board.last_move_castle = self.last_move_castle
+        new_board.last_move_en_passant = self.last_move_en_passant
+        return new_board
     
-    def _move_piece_basic(self, rank_old: int, file_old: int, rank_new: int, file_new: int) -> "ChessBoard":
-        old_loc = rank_old * self.files + file_old
-        new_loc = rank_new * self.files + file_new
-        self.value_board[new_loc] = self.value_board[old_loc]
-        self.piece_board[new_loc] = self.piece_board[old_loc]
-        self.value_board[old_loc] = 0
-        self.piece_board[old_loc] = None
-        return self
+    def _move_new_board(self, new_move: ChessMove) -> "ChessBoard":
+        """Creates a new board and performs a move on that board. Does not edit current board.
+
+            Returns: new board that has been edited
+        """
+        #Get new copy of board
+        new_board = self.copy()
+
+        #Perform Move
+        old_pos = new_move.piece.position[0] * self.files +  new_move.piece.position[1]
+        new_pos = new_move.new_position[0] * self.files +  new_move.new_position[1]
+        new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
+        new_board.piece_board[old_pos] = 0
+
+        #Update Data Trackers
+        if new_board.whites_turn:
+            new_board.white_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))
+            new_board.white_positions.append((new_move.new_position[0], new_move.new_position[1]))
+            if new_board.black_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
+                new_board.black_positions.remove((new_move.new_position[0], new_move.new_position[1]))
+            if new_move.piece.type == "K":
+                new_board.king_positions[0] = new_move.new_position
+        else:
+            new_board.black_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))     
+            new_board.black_positions.append((new_move.new_position[0], new_move.new_position[1]))       
+            if new_board.white_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
+                new_board.white_positions.remove((new_move.new_position[0], new_move.new_position[1]))
+            if new_move.piece.type == "K":
+                new_board.king_positions[1] = new_move.new_position
+
+        #See if move is castle
+        if new_move.castle:
+            old_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
+            new_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
+            new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
+            new_board.piece_board[old_pos] = 0
+            
+        #See if move is enpassant
+        elif new_move.en_passant:
+            pos = new_move.en_passant_pawn.position[0] * self.files +  new_move.en_passant_pawn.position[1]
+            new_board.piece_board[pos] = 0
+            if new_board.whites_turn:
+                new_board.black_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
+            else:
+                new_board.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
+
+        #Update Turn
+        new_board.whites_turn = True if new_board.whites_turn else new_board.whites_turn
+        return new_board
+
+    def check_move_for_check(self, new_move: ChessMove) -> bool:
+        """Creates a new board to simulate new move to see if other team is able to check.
+
+            Returns: True if other team is able to check our king.
+        """
+        new_board = self._move_new_board(new_move)
+        if new_board.whites_turn:
+            for r, f in new_board.black_positions:
+                piece: ChessPiece = new_board.piece_board[r * new_board.files + f]
+                if piece.get_piece_check(new_board):
+                    return True
+        else:
+            for r, f in new_board.white_positions:
+                piece: ChessPiece = new_board.piece_board[r * new_board.files + f]
+                if piece.get_piece_check(new_board):
+                    return True
+        return False
     
-    def _update_others_moves(self) -> "ChessBoard":
-        """If whites_turn, calculates the attacking moves of black. Else, moves of white.
+    def calc_check_status(self) -> "ChessBoard":
+        """Calculates the check status of the current board. The move list must be up to date.
 
             Returns: Self for chaining.
         """
-        if not self.whites_turn:
-            new_attacks = []
-            for r, f in self.white_positions:
-                new_pos = r * self.files + f
-                piece: ChessPiece = self.piece_board[new_pos]
-                piece.calc_positions(self)
-                new_attacks = new_attacks + piece.attacks
-            self.white_attacking_positions = new_attacks
-        else:
-            new_attacks = []
-            for r, f in self.black_positions:
-                new_pos = r * self.files + f
-                piece: ChessPiece = self.piece_board[new_pos]
-                piece.calc_positions(self)
-                new_attacks = new_attacks + piece.attacks
-            self.black_attacking_positions = new_attacks
-    
-    def _set_check(self) -> "ChessBoard":
-        """Sets the in_check flag for the current board.
-
-            Returns: self for chaining
-        """
         if self.whites_turn:
-            for ro, fo, rf, ff in self.black_attacking_positions:
-                if (rf, ff) == self.king_positions[0]:
-                    self.in_check = True
-                    return self
-            self.in_check = False
+            #Get in check
+            move: ChessMove
+            in_check = False
+            for move in self.black_attacks:
+                if move.new_position == self.king_positions[0]:
+                    in_check = True
+                    break
+            #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
+            if in_check:
+                if len(self.white_moves) == 0:
+                    self.check_status = -2
+                else:
+                    self.check_status = -1
+            else:
+                if len(self.white_moves) == 0:
+                    self.check_status = 0
+                else:
+                    self.check_status = None
         else:
-            for ro, fo, rf, ff in self.white_attacking_positions:
-                if (rf, ff) == self.king_positions[1]:
-                    self.in_check = True
-                    return self
-            self.in_check = False
-        return self
-    
-    def _set_checking_pieces(self) -> "ChessBoard":
-        self.checking_pieces = []
-        positions = self.black_positions if self.whites_turn else self.white_positions
-        king_position = self.king_positions[0] if self.whites_turn else self.king_positions[1]
-        if self.whites_turn:
-            for r, f in self.black_positions:
-                pos = r * self.files + f
-                piece: ChessPiece = self.piece_board[pos]
-                for ro, fo, rf, ff in piece.attacks:
-                    if self.king_positions[0] == (rf, ff):
-                        self.checking_pieces.append(piece)
-        else: 
-            for r, f in self.white_positions:
-                pos = r * self.files + f
-                piece: ChessPiece = self.piece_board[pos]
-                for ro, fo, rf, ff in piece.attacks:
-                    if self.king_positions[1] == (rf, ff):
-                        self.checking_pieces.append(piece)
-
-
-    def _move_piece_update(self, rank_old: int, file_old: int, rank_new: int, file_new: int, moving_piece: ChessPiece) -> "ChessBoard":
-        #Perform Move
-        
-        #Update Turn
-        self.whites_turn = False if self.whites_turn else True
-
-        #Update King position
-        if moving_piece.type == "K":
-            self.king_positions[0 if moving_piece.is_white else 1] = (rank_new, file_new)
-
-        #Update attacking positions
-        self._update_others_moves()._set_check()
-        
-        #Return self
+            #Get in check
+            move: ChessMove
+            in_check = False
+            for move in self.white_attacks:
+                if move.new_position == self.king_positions[1]:
+                    in_check = True
+                    break
+            #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
+            if in_check:
+                if len(self.black_moves) == 0:
+                    self.check_status = -2
+                else:
+                    self.check_status = -1
+            else:
+                if len(self.black_moves) == 0:
+                    self.check_status = 0
+                else:
+                    self.check_status = None
         return self
 
-    
     def move_piece(self, rank_old: int, file_old: int, rank_new: int, file_new: int) -> "ChessBoard":
         return self._move_piece_basic(rank_old, file_old, rank_new, file_new)
     
