@@ -29,4 +29,4 @@ class Environment:
 
     def execute_next_turn(self):
         if self.chess.game_ended is False:
-            self.ai.execute_turn(self.chess.board.whites_turn, self.chess.board.value_board, self)
+            self.ai.execute_turn(self.chess.board.whites_turn, self.chess.board.piece_board, self)

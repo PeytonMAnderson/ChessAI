@@ -26,10 +26,34 @@ class GlobalChess:
         self.board = ChessBoard(ChessUtils(piece_values), board_ranks, board_files)
         self.score = ChessScore(piece_scores)
         self.history = ChessHistory()
+        self.check_status_str = "None"
         self.last_move_str = "None"
         self.last_move_tuple = None
         self.game_ended = False
         self.max_half_moves = max_half_moves
+    
+    def _calc_check_status_str(self) -> "GlobalChess":
+        """Calculates and sets the check_status_str from check_status.
+
+        Args:
+            board (ChessBoard): The board that contains the check_status
+
+        Returns:
+            GlobalChess: Self for chaining.
+        """
+        if self.board.check_status is None:
+            self.check_status_str = "None"
+        elif self.board.check_status == 2:
+            self.check_status_str = "White Checkmate"
+        elif self.board.check_status == 1:
+            self.check_status_str = "White Check"
+        elif self.board.check_status == 0:
+            self.check_status_str = "Stalemate"
+        elif self.board.check_status == -1:
+            self.check_status_str = "Black Check"
+        elif self.board.check_status == -2:
+            self.check_status_str = "Black Checkmate"
+        return self
     
     def _calc_move_str(self, move: ChessMove, board: ChessBoard) -> str:
         """Generates a Move string such as (e4, Rxf7, Qf1+, etc.)
@@ -85,9 +109,11 @@ class GlobalChess:
         self.last_move_str = self._calc_move_str(move, self.board)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
         self.board.move_piece(move)
+        self._calc_check_status_str()
 
         #Get score
         self.score.calc_score(self.board)
+
     
         #Calc if game ended
         if abs(self.board.check_status) == 2 or self.board.check_status == 0:

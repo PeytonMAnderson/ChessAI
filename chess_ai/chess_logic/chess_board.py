@@ -38,7 +38,7 @@ class ChessBoard:
         self.utils = utils
 
         #Positions for optimized searching
-        if len(self.piece_board) == 0:
+        if len(piece_board) == 0:
             self.piece_board = [None] * ranks * files
         else:
             self.piece_board = piece_board
@@ -79,7 +79,7 @@ class ChessBoard:
                 piece = rank[string_index]
                 if piece.isdigit() is False:
                     loc = rank_index * self.files + file_index
-                    if len(self.value_board) > loc:
+                    if len(self.piece_board) > loc:
                         piece_value = self.utils._calc_piece_value(piece_str=piece)
                         piece_type, piece_color = self.utils._calc_piece_type_color(piece_str=piece)
                         self.piece_board[loc] = ChessPiece(piece_value, piece_type, piece_color, (rank_index, file_index))

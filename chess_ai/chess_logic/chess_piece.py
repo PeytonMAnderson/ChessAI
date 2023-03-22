@@ -2,7 +2,6 @@
 from typing import Callable
 
 from .chess_move import ChessMove
-from .chess_board import ChessBoard
 
 class ChessPiece:
     def __init__(self, 
@@ -23,7 +22,7 @@ class ChessPiece:
         self.moves: list[ChessMove]
         self.attacks = list[ChessMove]
 
-    def _get_pawn_moves(self, board: ChessBoard) -> tuple[list, list]:
+    def _get_pawn_moves(self, board) -> tuple[list, list]:
         """Get all moves that the piece can take including captures.
 
             Returns: List of moves and list of attacks.
@@ -417,7 +416,7 @@ class ChessPiece:
             return True
         return False
 
-    def _get_type_move_function(self, piece_type: str) -> Callable:
+    def _get_type_functions(self, piece_type: str) -> tuple[Callable, Callable]:
         """Checks they type of piece located at (rank_i_old, file_i_old) and determines which types of move check function to return.
 
             Returns: Check Moves Function specific to the type of piece at (rank_i_old, file_i_old)

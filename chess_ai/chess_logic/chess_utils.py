@@ -1,9 +1,8 @@
 
 
 class ChessUtils:
-    def __init__(self, piece_values: dict, piece_scores: dict, *args, **kwargs) -> None:
+    def __init__(self, piece_values: dict, *args, **kwargs) -> None:
         self.piece_values = piece_values
-        self.piece_scores = piece_scores
 
     def _calc_piece_value(self, piece_str: str = None, piece_type: str = None, is_white: bool = None) -> int | None:
         """Calculate the piece value from the piece string alone or piece_type and is_white together.
@@ -66,7 +65,7 @@ class ChessUtils:
                 if piece_value % 10 == self.piece_values[key]:
                     return value, is_white
         elif piece_str is not None:
-            is_white = True if piece_str.upper() else False
+            is_white = True if piece_str.isupper() else False
             piece_type = piece_str.capitalize()
             return piece_type, is_white 
         return None, None

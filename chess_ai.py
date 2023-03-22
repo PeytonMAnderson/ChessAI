@@ -33,8 +33,8 @@ while env.io.running:
     clock.tick(FPS)    
 
     # gets all the events which have occured till now and keeps tab of them.
-    for event in pygame.event.get():        
-        check_events(event, env)
+    for event in pygame.event.get(): 
+        env.io.events.check_events(event, env)       
 
     ########################
 

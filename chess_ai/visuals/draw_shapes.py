@@ -1,7 +1,8 @@
 from pygame import Surface, Rect, draw, transform
 
+from ..chess_logic.chess_piece import ChessPiece
 from ..environment import Environment
-from .images import get_image_from_number
+from .images import get_image_from_piece
 from .draw_text import draw_score_text
 
 def draw_background(surface: Surface, env: Environment):
@@ -22,50 +23,41 @@ def draw_board(surface: Surface, env: Environment):
     for file in range(env.chess.board.files):
         y = yo
         for rank in range(env.chess.board.ranks):
-
             if white:
                 rect = Rect(x, y, size, size)
                 draw.rect(surface, env.visual.board_white_color, rect)
             else:
                 rect = Rect(x, y, size, size)
                 draw.rect(surface, env.visual.board_black_color, rect)
-
             white = False if white else True
             y = y + size
-
         white = False if white else True
         x = x + size
 
 def draw_pieces(surface: Surface, env: Environment):
-    rank_index = 0
-    file_index = 0
-    rank_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.ranks - 1
-    file_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.files - 1
-    per_diff = 1 if env.visual.perspective == "WHITE" else -1
-
     x, y, size = get_local_board_coords(env)
 
+    rank_index = 0
     while rank_index < env.chess.board.ranks:
         file_index = 0
-        file_index_per = 0 if env.visual.perspective == "WHITE" else env.chess.board.files - 1
         while file_index < env.chess.board.files:
 
             #Get place image from chess board
-            num = env.chess.board.value_board[rank_index * env.chess.board.files + file_index]
-            img = get_image_from_number(num, env)
-            if img is not None:
+            r, f = env.visual.adjust_perspective(rank_index, file_index, env)
+            piece: ChessPiece = env.chess.board.piece_board[r * env.chess.board.files + f]
+            if piece is not None:
+                color_str = "w_" if piece.is_white else "b_"
+                img  = env.piece_images[color_str + piece.type.lower()]
                 #Get Size of Piece
                 size = env.visual.board_square_size * env.visual.zoom
                 #Get Position of Piece
-                img_x = x + file_index_per * size
-                img_y = y + rank_index_per * size
+                img_x = x + file_index * size
+                img_y = y + rank_index * size
                 #Scale and place image on canvas
                 img = transform.scale(img, (size, size))
                 surface.blit(img, (img_x, img_y))
 
             file_index += 1
-            file_index_per += per_diff
-        rank_index_per += per_diff
         rank_index += 1
 
 def draw_square_from_position(surface: Surface, rank_i: int, file_i:int, color: tuple, env: Environment) -> None:
@@ -101,18 +93,18 @@ def draw_selected(surface: Surface, env: Environment):
 def grab_selected(surface: Surface, env: Environment):
     if env.io.selected_position is not None:
         f, r = env.io.selected_position
-        piece = env.chess.board.value_board[r * env.chess.board.files * f]
+        piece: ChessPiece = env.chess.board.piece_board[r * env.chess.board.files + f]
         if piece is not None and piece != 0:
-            img = get_image_from_number(piece, env)
-            if img is not None:
-                #Get Size of Piece
-                size = env.visual.board_square_size * env.visual.zoom
-                #Get Position of Piece
-                img_x, img_y = env.io.input_position
-                img_x, img_y = img_x - size /2, img_y - size /2
-                #Scale and place image on canvas
-                img = transform.scale(img, (size, size))
-                surface.blit(img, (img_x, img_y))
+            color_str = "w_" if piece.is_white else "b_"
+            img  = env.piece_images[color_str + piece.type.lower()]
+            #Get Size of Piece
+            size = env.visual.board_square_size * env.visual.zoom
+            #Get Position of Piece
+            img_x, img_y = env.io.input_position
+            img_x, img_y = img_x - size /2, img_y - size /2
+            #Scale and place image on canvas
+            img = transform.scale(img, (size, size))
+            surface.blit(img, (img_x, img_y))
 
 def draw_valid_moves(surface: Surface, env: Environment):
     x_o, y_o, size = get_local_board_coords(env)

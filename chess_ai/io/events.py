@@ -1,33 +1,44 @@
 import pygame
 
 from ..environment import Environment
-from .mouse_events import mouse_events
-from .keyboard_events import keyboard_events
+from .mouse_events import MouseEvents
+from .keyboard_events import KeyboardEvents
 
-def check_events(event, env: Environment):
-    ## listening for the the X button at the top
-    if event.type == pygame.QUIT:
-        env.io.running = False
-    
-    if event.type == pygame.VIDEORESIZE:
-        env.visual.w_width = event.w
-        env.visual.w_height = event.h
+class Events:
+    def __init__(self, *args, **kwargs) -> None:
+        self.keyboard = KeyboardEvents()
+        self.mouse = MouseEvents()
 
-    if event.type == pygame.MOUSEWHEEL:
+    def check_events(self, event: any, env: Environment):
+        """Checks for ALL events and updates env.
 
-        ratio_minus = round(1 - env.io.zoom_speed, 3)
-        ratio_plus = round(1 + env.io.zoom_speed, 3)
+        Args:
+            event (any): Event Oject.
+            env (Environment): The environment.
+        """
+        ## listening for the the X button at the top
+        if event.type == pygame.QUIT:
+            env.io.running = False
+        
+        if event.type == pygame.VIDEORESIZE:
+            env.visual.w_width = event.w
+            env.visual.w_height = event.h
 
-        if event.y < 0:
-            env.visual.zoom = env.visual.zoom * ratio_minus
-        elif event.y > 0:
-            env.visual.zoom = env.visual.zoom * ratio_plus
-    
-    if event.type == pygame.MOUSEMOTION:
-        env.io.input_position = pygame.mouse.get_pos()
+        if event.type == pygame.MOUSEWHEEL:
 
-    if event.type == pygame.MOUSEBUTTONDOWN:
-        mouse_events(event, env)
-    
-    if event.type == pygame.KEYDOWN:
-        keyboard_events(event, env)
+            ratio_minus = round(1 - env.io.zoom_speed, 3)
+            ratio_plus = round(1 + env.io.zoom_speed, 3)
+
+            if event.y < 0:
+                env.visual.zoom = env.visual.zoom * ratio_minus
+            elif event.y > 0:
+                env.visual.zoom = env.visual.zoom * ratio_plus
+        
+        if event.type == pygame.MOUSEMOTION:
+            env.io.input_position = pygame.mouse.get_pos()
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.mouse.mouse_events(event, env)
+        
+        if event.type == pygame.KEYDOWN:
+            self.keyboard.keyboard_events(event, env)
