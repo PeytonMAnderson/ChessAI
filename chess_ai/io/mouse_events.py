@@ -2,8 +2,6 @@
 import pygame
 
 #from ..environment import Environment
-
-from ..visuals.draw_shapes import check_bounds
 from ..chess_logic.chess_piece import ChessPiece
 from ..chess_logic.chess_move import ChessMove
 
@@ -12,22 +10,6 @@ class MouseEvents:
         """Event Handler for mouse events.
         """
         pass
-
-    def _select_square(self, mouse_position: tuple, env) -> tuple | None:
-        """Get the square that the mouse is currently selecting.
-
-        Args:
-            mouse_position (tuple): The position of the mouse.
-            env (Environment): The environment.
-
-        Returns:
-            tuple | None: A square, if any, on the chess board the mouse is over.
-        """
-        for rank in range(env.chess.board.ranks):
-            for file in range(env.chess.board.files):
-                if check_bounds(mouse_position, rank, file, env) is True:
-                    return env.visual.adjust_perspective(rank, file, env)
-        return None
 
     def _get_move(self, old_selected: tuple, new_selected: tuple, env) -> ChessMove | None:
         """Get the move from the list of available moves if they match the old_selected and new_selected positions.
@@ -59,11 +41,10 @@ class MouseEvents:
             env (Environment): The environment.
         """
         ix, iy = env.io.input_position
-        new_selected = self._select_square((ix, iy), env)
+        new_selected = env.visual.shapes._select_square(env.io.input_position, env)
         if new_selected is None:
             env.io.selected_position = None
         else:
-            
             if env.io.selected_position is None:
                 piece: ChessPiece = env.chess.board.piece_board[new_selected[0] * env.chess.board.files + new_selected[1]]
                 if piece is not None:

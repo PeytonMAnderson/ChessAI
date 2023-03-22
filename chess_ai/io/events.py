@@ -6,6 +6,8 @@ from .keyboard_events import KeyboardEvents
 
 class Events:
     def __init__(self, *args, **kwargs) -> None:
+        """Event Handler for Keyboard, Mouse, etc.
+        """
         self.keyboard = KeyboardEvents()
         self.mouse = MouseEvents()
 
