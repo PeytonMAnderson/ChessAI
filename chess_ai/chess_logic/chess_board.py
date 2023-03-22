@@ -57,6 +57,11 @@ class ChessBoard:
         """
         #Reset Board:
         self.piece_board = [None] * self.ranks * self.files
+        self.white_positions = []
+        self.black_positions = []
+        self.white_moves = []
+        self.black_moves = []
+        self.king_positions = [None, None]
         
         #Get the piece positions from the fen string
         split_string = fen_str.split(" ")
@@ -83,6 +88,15 @@ class ChessBoard:
                         piece_value = self.utils._calc_piece_value(piece_str=piece)
                         piece_type, piece_color = self.utils._calc_piece_type_color(piece_str=piece)
                         self.piece_board[loc] = ChessPiece(piece_value, piece_type, piece_color, (rank_index, file_index))
+                        if piece_color:
+                            self.white_positions.append((rank_index, file_index))
+                            if piece_type == "K":
+                                self.king_positions[0] = (rank_index, file_index)
+                        else:
+                            self.black_positions.append((rank_index, file_index))
+                            if piece_type == "K":
+                                self.king_positions[1] = (rank_index, file_index)
+
                     file_index += 1
                     string_index += 1
                 else:
@@ -127,7 +141,7 @@ class ChessBoard:
                 piece: ChessPiece = self.piece_board[loc]
 
                 #If location is a piece
-                if piece is not None:
+                if isinstance(piece, ChessPiece):
                     s = self.utils._calc_piece_str(piece_type=piece.type, is_white=piece.is_white)
                     file_str_prev = s
                     file_str_total = file_str_total + s
@@ -166,7 +180,7 @@ class ChessBoard:
         old_pos = new_move.piece.position[0] * self.files +  new_move.piece.position[1]
         new_pos = new_move.new_position[0] * self.files +  new_move.new_position[1]
         new_piece_board[new_pos] = new_piece_board[old_pos]
-        new_piece_board[old_pos] = 0
+        new_piece_board[old_pos] = None
 
         #Update Data Trackers
         if self.whites_turn:
@@ -185,12 +199,12 @@ class ChessBoard:
             old_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
             new_piece_board[new_pos] = new_piece_board[old_pos]
-            new_piece_board[old_pos] = 0
+            new_piece_board[old_pos] = None
             
         #See if move is enpassant
         elif new_move.en_passant:
             pos = new_move.en_passant_pawn.position[0] * self.files +  new_move.en_passant_pawn.position[1]
-            new_piece_board[pos] = 0
+            new_piece_board[pos] = None
             if self.whites_turn:
                 other_teams_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             else:
@@ -212,7 +226,7 @@ class ChessBoard:
         old_pos = new_move.piece.position[0] * self.files +  new_move.piece.position[1]
         new_pos = new_move.new_position[0] * self.files +  new_move.new_position[1]
         new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
-        new_board.piece_board[old_pos] = 0
+        new_board.piece_board[old_pos] = None
 
         #Update Data Trackers
         if new_board.whites_turn:
@@ -237,7 +251,7 @@ class ChessBoard:
             old_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
             new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
-            new_board.piece_board[old_pos] = 0
+            new_board.piece_board[old_pos] = None
             new_board.last_move_castle = True
             if new_board.whites_turn:
                 new_board.white_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
@@ -249,7 +263,7 @@ class ChessBoard:
         #See if move is enpassant
         elif new_move.en_passant:
             pos = new_move.en_passant_pawn.position[0] * self.files +  new_move.en_passant_pawn.position[1]
-            new_board.piece_board[pos] = 0
+            new_board.piece_board[pos] = None
             if new_board.whites_turn:
                 new_board.black_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             else:
@@ -282,7 +296,7 @@ class ChessBoard:
             in_check = False
             for r, f in self.black_positions:
                 piece: ChessPiece = self.piece_board[r * self.files + f]
-                if piece.get_piece_check(self):
+                if piece.get_piece_check(self.piece_board, self.king_positions, (self.ranks, self.files)):
                     in_check = True
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
@@ -300,7 +314,7 @@ class ChessBoard:
             in_check = False
             for r, f in self.white_positions:
                 piece: ChessPiece = self.piece_board[r * self.files + f]
-                if piece.get_piece_check(self):
+                if piece.get_piece_check(self.piece_board, self.king_positions, (self.ranks, self.files)):
                     in_check = True
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
@@ -321,6 +335,7 @@ class ChessBoard:
             for r, f in self.white_positions:
                 white_piece: ChessPiece = self.piece_board[r * self.files + f]
                 new_moves = new_moves + white_piece.calc_moves_attacks(self).moves
+            print(f"\nWHITE MOVES: {new_moves}\n")
             self.white_moves = new_moves
             self.black_moves = []
         else:
@@ -328,6 +343,7 @@ class ChessBoard:
             for r, f in self.black_positions:
                 black_piece: ChessPiece = self.piece_board[r * self.files + f]
                 new_moves = new_moves + black_piece.calc_moves_attacks(self).moves
+            print(f"\nBLACK MOVES: {new_moves}\n")
             self.black_moves = new_moves
             self.white_moves = []
         return self

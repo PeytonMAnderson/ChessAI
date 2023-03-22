@@ -48,7 +48,7 @@ class ChessUtils:
                 
         #Calculate from piece type and color
         elif piece_type is not None and is_white is not None:
-            return piece_type.capitalize() if white else piece_type
+            return piece_type.capitalize() if is_white else piece_type
         return None
     
     def _calc_piece_type_color(self, piece_value: int = None, piece_str: str = None) -> tuple:

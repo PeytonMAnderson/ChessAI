@@ -165,8 +165,8 @@ class ChessPiece:
                         moves.append(new_move)
                         attacks.append(new_move)
                     break
-                rank_i + dr
-                file_i + df
+                rank_i += dr
+                file_i += df
         return moves, attacks
 
     def _get_rook_moves(self, board) -> tuple[list, list]:
@@ -197,8 +197,8 @@ class ChessPiece:
                         moves.append(new_move)
                         attacks.append(new_move)
                     break
-                rank_i + dr
-                file_i + df
+                rank_i += dr
+                file_i += df
 
         return moves, attacks
 
@@ -224,19 +224,24 @@ class ChessPiece:
         castle_check_queen = False
         for ri in range(3):
             for fi in range(3):
-                if ri == 1 and fi == 1:
 
-                    #Filter move that causes check
-                    for _, _, rf, ff in board.black_moves:
-                        if (rf, ff) == (r, f):
-                            castle_check_queen, castle_check_king = True
+                #Filter out of bounds
                 r, f = ro + ri, fo + fi
+                if r < 0 or r >= board.ranks or f < 0 or f >= board.files:
+                    continue
+
+                if ri == 1 and fi == 1:
+                    move: ChessMove
+                    for move in board.black_moves:
+                        if (move.new_position[0], move.new_position[1]) == (r, f):
+                            castle_check_queen, castle_check_king = True
                 new_loc = r * board.files + f
                 defending_piece: ChessPiece = board.piece_board[new_loc]
 
                 #Filter move that causes check
-                for _, _, rf, ff in board.black_moves:
-                    if (rf, ff) == (r, f):
+                move: ChessMove
+                for move in board.black_moves:
+                    if (move.new_position[0], move.new_position[1]) == (r, f):
                         if r == self.position[0]:
                             #King side
                             if f > self.position[1]:
@@ -402,9 +407,9 @@ class ChessPiece:
 
         #If along a rooks path
         if king_r == self.position[0] or king_f == self.position[1]:
-            return self._get_rook_check(piece_board, king_positions)
+            return self._get_rook_check(piece_board, king_positions, board_dim)
         else:
-            return self._get_bishop_check(piece_board, king_positions)
+            return self._get_bishop_check(piece_board, king_positions, board_dim)
         
     def _get_king_check(self, piece_board: list, king_positions: list, board_dim: tuple[int, int]) -> bool:
         """Calculates if this piece can attack the king with the passed board efficiently.
@@ -412,7 +417,7 @@ class ChessPiece:
             Returns: True if the piece can take the other player's king.
         """
         king_r, king_f = king_positions[1] if self.is_white else  king_positions[0]
-        if abs(king_r - self.position[0]) <= 1 or abs(king_f - self.position[1]) <= 1:
+        if abs(king_r - self.position[0]) <= 1 and abs(king_f - self.position[1]) <= 1:
             return True
         return False
 
@@ -442,6 +447,7 @@ class ChessPiece:
             Returns self for chaining
         """
         self.moves, self.attacks = self.move_function(board)
+        return self
     
     def get_piece_check(self, piece_board: list, king_positions: list, board_dim: tuple[int, int]) -> bool:
         """Calculates if the piece is able to take the king.

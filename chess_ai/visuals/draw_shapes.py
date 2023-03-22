@@ -131,7 +131,7 @@ class VisualShapes:
             VisualShapes: Self for chaining.
         """
         rd, fd = env.visual.adjust_perspective(rank_i, file_i, env)
-        x_o, y_o, size = env.visual.get_board_origin(env)
+        x_o, y_o, size = env.visual.get_board_origin()
         x, y = x_o + fd * size, y_o + rd * size
         rect = Rect(x, y, size, size)
         draw.rect(surface, color, rect)
@@ -156,17 +156,31 @@ class VisualShapes:
             if env.chess.board.whites_turn:
                 move: ChessMove
                 for move in env.chess.board.white_moves:
-                    self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
+                    if move.piece.position == env.io.selected_position:
+                        self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
             else:
                 move: ChessMove
                 for move in env.chess.board.black_moves:
-                    self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
+                    if move.piece.position == env.io.selected_position:
+                        self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
         
         #Draw Previous Move
         if env.chess.last_move_tuple is not None:
             ro, fo, rf, ff = env.chess.last_move_tuple
             self._draw_square(surface, ro, fo, env.visual.board_last_move_from_color, env)
             self._draw_square(surface, rf, ff, env.visual.board_last_move_to_color, env)
+
+        for r, f in env.chess.board.white_positions:
+            self._draw_square(surface, r, f, env.visual.colors['ORANGE'], env)
+        for r, f in env.chess.board.black_positions:
+            self._draw_square(surface, r, f, env.visual.colors['PURPLE'], env)
+        for r, f in env.chess.board.king_positions:
+            self._draw_square(surface, r, f, env.visual.colors['YELLOW'], env)
+        # for move in env.chess.board.white_moves:
+        #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
+        # for move in env.chess.board.black_moves:
+        #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
+
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":
@@ -217,9 +231,11 @@ class VisualShapes:
         score_diff = env.chess.score.score
         score_total = env.chess.score.score_max
         score_black = score_total - score_diff
-        score_ratio = score_black / (score_total * 2)
-        if abs(score_diff) > score_total:
+        score_ratio: float
+        if abs(score_diff) > score_total or score_total == 0:
             score_ratio = 1.0
+        else:
+            score_ratio = score_black / (score_total * 2)
         black_size = score_ratio * bar_size
         black_rect = Rect(x, y, black_size, size/2)
         draw.rect(surface, env.visual.colors['GRAY'], black_rect)

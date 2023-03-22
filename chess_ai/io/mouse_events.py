@@ -50,11 +50,14 @@ class MouseEvents:
                 if piece is not None:
                     if piece.is_white == env.chess.board.whites_turn and env.ai.piece_is_playable(piece.is_white):
                         env.io.selected_position = new_selected
-            else:
+            elif env.io.selected_position != new_selected:
+
                 new_move = self._get_move(env.io.selected_position, new_selected, env)
                 if new_move is not None:
                     env.chess.move_piece(new_move)
                     env.io.selected_position = None
+            else:
+                env.io.selected_position = None
 
     def mouse_events(self, event, env):
         """Listen for all mouse events. Updates env.

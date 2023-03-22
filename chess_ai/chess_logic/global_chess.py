@@ -116,7 +116,7 @@ class GlobalChess:
 
     
         #Calc if game ended
-        if abs(self.board.check_status) == 2 or self.board.check_status == 0:
+        if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
             self.game_ended = True
         elif self.board.half_move >= self.max_half_moves:
             self.game_ended = True
@@ -168,7 +168,7 @@ class GlobalChess:
             self.board.files = settings['BOARD_FILES']
             self.board.ranks = settings['BOARD_RANKS']
             self.board.utils.piece_values = settings['PIECE_VALUES']
-            self.board.utils.piece_scores = settings['PIECE_SCORES']
+            self.score.piece_scores = settings['PIECE_SCORES']
             self.board.fen_to_board(settings['BOARD'])
             self.max_half_moves = settings['MAX_HALF_MOVES']
             self.score.set_max_score(self.board)
