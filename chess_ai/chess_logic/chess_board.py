@@ -270,6 +270,9 @@ class ChessBoard:
                 new_board.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             new_board.last_move_en_passant = True
 
+        #Update Piece
+        new_board.piece_board[new_pos].position = new_move.new_position
+
         #Update Turn
         new_board.whites_turn = False if new_board.whites_turn else True
         return new_board
@@ -335,7 +338,6 @@ class ChessBoard:
             for r, f in self.white_positions:
                 white_piece: ChessPiece = self.piece_board[r * self.files + f]
                 new_moves = new_moves + white_piece.calc_moves_attacks(self).moves
-            print(f"\nWHITE MOVES: {new_moves}\n")
             self.white_moves = new_moves
             self.black_moves = []
         else:
@@ -343,7 +345,6 @@ class ChessBoard:
             for r, f in self.black_positions:
                 black_piece: ChessPiece = self.piece_board[r * self.files + f]
                 new_moves = new_moves + black_piece.calc_moves_attacks(self).moves
-            print(f"\nBLACK MOVES: {new_moves}\n")
             self.black_moves = new_moves
             self.white_moves = []
         return self

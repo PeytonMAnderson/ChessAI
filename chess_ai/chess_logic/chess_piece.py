@@ -144,13 +144,11 @@ class ChessPiece:
         """
         moves = []
         attacks = []
-        rank_i_old, file_i_old = self.position
 
         #Check each diagonal
-        rank_i, file_i = rank_i_old, file_i_old
         direction = [(1,1), (1,-1), (-1,1), (-1,-1)]
         for dr, df in direction:
-            rank_i, file_i = rank_i + dr, file_i + df
+            rank_i, file_i = self.position[0] + dr, self.position[1] + df
             while  rank_i >= 0 and rank_i < board.ranks and file_i >= 0 and file_i < board.files:
                 #Check captures
                 new_loc = rank_i * board.files + file_i
@@ -176,13 +174,11 @@ class ChessPiece:
         """
         moves = []
         attacks = []
-        rank_i_old, file_i_old = self.position
 
         #Check each diagonal
-        rank_i, file_i = rank_i_old, file_i_old
         direction = [(1,0), (0,1), (-1,0), (0,-1)]
         for dr, df in direction:
-            rank_i, file_i = rank_i + dr, file_i + df
+            rank_i, file_i = self.position[0] + dr, self.position[1] + df
             while  rank_i >= 0 and rank_i < board.ranks and file_i >= 0 and file_i < board.files:
                 #Check captures
                 new_loc = rank_i * board.files + file_i
@@ -199,7 +195,6 @@ class ChessPiece:
                     break
                 rank_i += dr
                 file_i += df
-
         return moves, attacks
 
     def _get_queen_moves(self, board) -> tuple[list, list]:
@@ -208,7 +203,7 @@ class ChessPiece:
             Returns: List of moves and list of attacks.
         """
         moves, attacks = self._get_bishop_moves(board)
-        moves_2, attacks_2 = self._get_bishop_moves(board)
+        moves_2, attacks_2 = self._get_rook_moves(board)
         return moves + moves_2, attacks + attacks_2
 
     def _get_king_moves(self, board) -> tuple[list, list]:
@@ -234,7 +229,7 @@ class ChessPiece:
                     move: ChessMove
                     for move in board.black_moves:
                         if (move.new_position[0], move.new_position[1]) == (r, f):
-                            castle_check_queen, castle_check_king = True
+                            castle_check_queen, castle_check_king = True, True
                 new_loc = r * board.files + f
                 defending_piece: ChessPiece = board.piece_board[new_loc]
 
@@ -276,8 +271,9 @@ class ChessPiece:
 
                     #Filter move that causes check
                     castleable = True
-                    for _, _, rf, ff in board.black_moves:
-                        if (rf, ff) == (ro, fo + 2):
+                    move: ChessMove
+                    for move in board.black_moves:
+                        if (move.new_position[0], move.new_position[1]) == (r, f + 2):
                             castleable = False
                             break
                     if castleable:
@@ -304,8 +300,9 @@ class ChessPiece:
 
                     #Filter move that causes check
                     castleable = True
-                    for _, _, rf, ff in board.black_moves:
-                        if (rf, ff) == (ro, fo - 2):
+                    move: ChessMove
+                    for move in board.black_moves:
+                        if (move.new_position[0], move.new_position[1]) == (r, f - 2):
                             castleable = False
                             break
                     if castleable:

@@ -52,7 +52,7 @@ CHESS:
   MAX_HALF_MOVES: 50
   PIECE_VALUES: {"NONE": 0, "PAWN": 1, "KNIGHT": 2, "BISHOP": 3, "ROOK": 4, "QUEEN": 5, "KING": 6, "WHITE": 1, "BLACK": 2}
   PIECE_SCORES: {"PAWN": 1, "KNIGHT": 3, "BISHOP": 3, "ROOK": 4, "QUEEN": 9, "KING": 100, "CHECK": 0, "CHECKMATE": 1000}
-  BOARD: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0
+  BOARD: rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 0
 
 AI:
   PAUSED: False

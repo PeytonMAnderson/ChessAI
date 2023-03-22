@@ -170,10 +170,16 @@ class VisualShapes:
             self._draw_square(surface, ro, fo, env.visual.board_last_move_from_color, env)
             self._draw_square(surface, rf, ff, env.visual.board_last_move_to_color, env)
 
-        for r, f in env.chess.board.white_positions:
-            self._draw_square(surface, r, f, env.visual.colors['ORANGE'], env)
-        for r, f in env.chess.board.black_positions:
-            self._draw_square(surface, r, f, env.visual.colors['PURPLE'], env)
+        for i in range(len(env.chess.board.piece_board)):
+            piece: ChessPiece = env.chess.board.piece_board[i]
+            if piece is not None:
+                if piece.is_white:
+                    self._draw_square(surface, piece.position[0], piece.position[1], env.visual.colors['ORANGE'], env)
+                else:
+                    self._draw_square(surface, piece.position[0], piece.position[1], env.visual.colors['PURPLE'], env)
+
+        # for r, f in env.chess.board.black_positions:
+        #     self._draw_square(surface, r, f, env.visual.colors['PURPLE'], env)
         for r, f in env.chess.board.king_positions:
             self._draw_square(surface, r, f, env.visual.colors['YELLOW'], env)
         # for move in env.chess.board.white_moves:
