@@ -36,14 +36,13 @@ class ChessBoard:
         self.last_move_en_passant = False
 
         #Positions for optimized searching
-        self.white_attacking_positions = []
-        self.black_attacking_positions = []
+        self.white_positions = []
+        self.black_positions = []
         self.white_moves = []
         self.black_moves = []
         self.king_positions = [None, None]
-        self.white_positions = []
-        self.black_positions = []
         self.in_check = False
+        self.checking_pieces = []
 
         #Helper Functions
         self.utils = ChessUtils(piece_values, piece_scores)
@@ -188,7 +187,9 @@ class ChessBoard:
             self.black_attacking_positions = new_attacks
     
     def _set_check(self) -> "ChessBoard":
-        """Sets the in_check flag 
+        """Sets the in_check flag for the current board.
+
+            Returns: self for chaining
         """
         if self.whites_turn:
             for ro, fo, rf, ff in self.black_attacking_positions:
@@ -203,6 +204,26 @@ class ChessBoard:
                     return self
             self.in_check = False
         return self
+    
+    def _set_checking_pieces(self) -> "ChessBoard":
+        self.checking_pieces = []
+        positions = self.black_positions if self.whites_turn else self.white_positions
+        king_position = self.king_positions[0] if self.whites_turn else self.king_positions[1]
+        if self.whites_turn:
+            for r, f in self.black_positions:
+                pos = r * self.files + f
+                piece: ChessPiece = self.piece_board[pos]
+                for ro, fo, rf, ff in piece.attacks:
+                    if self.king_positions[0] == (rf, ff):
+                        self.checking_pieces.append(piece)
+        else: 
+            for r, f in self.white_positions:
+                pos = r * self.files + f
+                piece: ChessPiece = self.piece_board[pos]
+                for ro, fo, rf, ff in piece.attacks:
+                    if self.king_positions[1] == (rf, ff):
+                        self.checking_pieces.append(piece)
+
 
     def _move_piece_update(self, rank_old: int, file_old: int, rank_new: int, file_new: int, moving_piece: ChessPiece) -> "ChessBoard":
         #Perform Move
