@@ -64,7 +64,7 @@ class GlobalVisual:
         self.text = VisualText()
         self.shapes = VisualShapes()
 
-    def _get_color_from_dict(color_name: str, color_dict: dict) -> tuple:
+    def _get_color_from_dict(self, color_name: str, color_dict: dict) -> tuple:
         """Gets the color from the color dict.
 
         Args:

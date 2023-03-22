@@ -10,7 +10,7 @@ class ChessScore:
             piece_scores (dict): The values of pieces that will be used for score tracking.
         """
         self.piece_scores = piece_scores
-        self.max_score = 0
+        self.score_max = 0
         self.score = 0
 
     def _get_piece_score(self, piece: ChessPiece) -> int:
@@ -52,7 +52,7 @@ class ChessScore:
         for r, f in board.black_positions:
             piece: ChessPiece = board.piece_board[r * board.files + f]
             black_score += self._get_piece_score(piece)
-        self.max_score = max(white_score, black_score)
+        self.score_max = max(white_score, black_score)
         return self
 
     def _get_base_score(self, board: ChessBoard) -> int:

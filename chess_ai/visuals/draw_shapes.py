@@ -48,6 +48,7 @@ class VisualShapes:
                 y = y + size
             white = False if white else True
             x = x + size
+        return self
 
     def _check_bounds(self, x: int , y: int, rank_i: int, file_i: int, env) -> bool:
         """Checks if (x,y) coordinates falls within the square (rank_i, file_i).
@@ -134,6 +135,7 @@ class VisualShapes:
         x, y = x_o + fd * size, y_o + rd * size
         rect = Rect(x, y, size, size)
         draw.rect(surface, color, rect)
+        return self
     
     def _draw_highlights(self, surface: Surface, env) -> "VisualShapes":
         """Draws the Highlights on the chess board for selected piece and last move.
@@ -191,6 +193,7 @@ class VisualShapes:
                 #Scale and place image on canvas
                 img = transform.scale(img, (size, size))
                 surface.blit(img, (img_x, img_y))
+        return self
 
 
     def _draw_score_bar(self, surface: Surface, env) -> "VisualShapes":
@@ -221,6 +224,7 @@ class VisualShapes:
         black_rect = Rect(x, y, black_size, size/2)
         draw.rect(surface, env.visual.colors['GRAY'], black_rect)
         env.visual.text.draw_score_text(surface, x + black_size, y, score_diff, size/2, env)
+        return self
 
 
     def draw_all_shapes(self, surface: Surface, env) -> "VisualShapes":

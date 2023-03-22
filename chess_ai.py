@@ -41,8 +41,8 @@ while env.io.running:
     ### Your code comes here
 
     ########################
-    draw_all_shapes(screen, env)
-    draw_all_text(screen, env)
+    env.visual.shapes.draw_all_shapes(screen, env)
+    env.visual.text.draw_all_text(screen, env)
     env.execute_next_turn()
     
     ## Done after drawing everything to the screen

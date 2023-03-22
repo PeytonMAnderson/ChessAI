@@ -1,8 +1,8 @@
 import pygame
 
-from ..environment import Environment
 from .mouse_events import MouseEvents
 from .keyboard_events import KeyboardEvents
+#from ..environment import Environment
 
 class Events:
     def __init__(self, *args, **kwargs) -> None:
@@ -11,7 +11,7 @@ class Events:
         self.keyboard = KeyboardEvents()
         self.mouse = MouseEvents()
 
-    def check_events(self, event: any, env: Environment):
+    def check_events(self, event: any, env):
         """Checks for ALL events and updates env.
 
         Args:

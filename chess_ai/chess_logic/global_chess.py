@@ -171,6 +171,7 @@ class GlobalChess:
             self.board.utils.piece_scores = settings['PIECE_SCORES']
             self.board.fen_to_board(settings['BOARD'])
             self.max_half_moves = settings['MAX_HALF_MOVES']
+            self.score.set_max_score(self.board)
 
             #Start history
             self.history.pop_add({"last_move_str": "None", "last_move_tuple": None, "fen_string": settings['BOARD']})
