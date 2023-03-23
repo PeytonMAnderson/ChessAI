@@ -214,69 +214,66 @@ class ChessBoard:
         return new_piece_board, other_teams_positions, new_king_positions
         
     
-    def _new_move(self, new_move: ChessMove, create_new_board: bool = False) -> "ChessBoard":
-        """Creates a new board and performs a move on that board. Does not edit current board.
+    def _new_move(self, new_move: ChessMove) -> "ChessBoard":
+        """Updates the board with the new move. Does not update check status, castling string etc.
 
-            Returns: new board that has been edited
+            Returns: Self for chaining
         """
-        #Get new copy of board
-        new_board = deepcopy(self) if create_new_board else self
-
         #Perform Move
         old_pos = new_move.piece.position[0] * self.files +  new_move.piece.position[1]
         new_pos = new_move.new_position[0] * self.files +  new_move.new_position[1]
-        new_board.piece_board[new_pos] = new_board.piece_board[old_pos]
-        new_board.piece_board[old_pos] = None
+        self.piece_board[new_pos] = self.piece_board[old_pos]
+        self.piece_board[old_pos] = None
 
         #Update Data Trackers
-        if new_board.whites_turn:
-            new_board.white_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))
-            new_board.white_positions.append((new_move.new_position[0], new_move.new_position[1]))
-            if new_board.black_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
-                new_board.black_positions.remove((new_move.new_position[0], new_move.new_position[1]))
+        if self.whites_turn:
+            self.white_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))
+            self.white_positions.append((new_move.new_position[0], new_move.new_position[1]))
+            if self.black_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
+                self.black_positions.remove((new_move.new_position[0], new_move.new_position[1]))
             if new_move.piece.type == "K":
-                new_board.king_positions[0] = new_move.new_position
+                self.king_positions[0] = new_move.new_position
         else:
-            new_board.black_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))     
-            new_board.black_positions.append((new_move.new_position[0], new_move.new_position[1]))       
-            if new_board.white_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
-                new_board.white_positions.remove((new_move.new_position[0], new_move.new_position[1]))
+            self.black_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))     
+            self.black_positions.append((new_move.new_position[0], new_move.new_position[1]))       
+            if self.white_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
+                self.white_positions.remove((new_move.new_position[0], new_move.new_position[1]))
             if new_move.piece.type == "K":
-                new_board.king_positions[1] = new_move.new_position
+                self.king_positions[1] = new_move.new_position
 
         #See if move is castle
-        new_board.last_move_castle = False
-        new_board.last_move_en_passant = False
+        self.last_move_castle = False
+        self.last_move_en_passant = False
         if new_move.castle:
             old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
-            new_board.piece_board[new_rook_pos] = new_board.piece_board[old_rook_pos]
-            new_board.piece_board[old_rook_pos] = None
-            new_board.last_move_castle = True
-            if new_board.whites_turn:
-                new_board.white_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
-                new_board.white_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
+            self.piece_board[new_rook_pos] = self.piece_board[old_rook_pos]
+            self.piece_board[old_rook_pos] = None
+            self.last_move_castle = True
+            if self.whites_turn:
+                self.white_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
+                self.white_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
             else:
-                new_board.black_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
-                new_board.black_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
-            new_board.piece_board[new_rook_pos].position = new_move.castle_rook_move.new_position
+                self.black_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
+                self.black_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
+            self.piece_board[new_rook_pos].position = new_move.castle_rook_move.new_position
             
         #See if move is enpassant
         elif new_move.en_passant:
             pos = new_move.en_passant_pawn.position[0] * self.files +  new_move.en_passant_pawn.position[1]
-            new_board.piece_board[pos] = None
-            if new_board.whites_turn:
-                new_board.black_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
+            self.piece_board[pos] = None
+            if self.whites_turn:
+                self.black_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             else:
-                new_board.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
-            new_board.last_move_en_passant = True
+                self.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
+            self.last_move_en_passant = True
 
         #Update Piece
-        new_board.piece_board[new_pos].position = new_move.new_position
+        self.piece_board[new_pos].position = new_move.new_position
 
         #Update Turn
-        new_board.whites_turn = False if new_board.whites_turn else True
-        return new_board
+        self.whites_turn = False if self.whites_turn else True
+        return self
 
     def check_move_for_check(self, new_move: ChessMove) -> bool:
         """Creates a new board to simulate new move to see if other team is able to check.
@@ -350,50 +347,52 @@ class ChessBoard:
             self.white_moves = []
         return self
 
-    def move_piece(self, new_move: ChessMove) -> "ChessBoard":
+    def move_piece(self, new_move: ChessMove, create_new_board: bool = False) -> "ChessBoard":
+        #Get new copy of board
+        new_board = deepcopy(self) if create_new_board else self
 
         #Update Castle Str
         if new_move.piece.type == "K":
-            if self.whites_turn:
-                self.castle_avail = self.castle_avail.replace('K', '').replace('Q','')
+            if new_board.whites_turn:
+                new_board.castle_avail = new_board.castle_avail.replace('K', '').replace('Q','')
             else:
-                self.castle_avail = self.castle_avail.replace('k', '').replace('q','')
+                new_board.castle_avail = new_board.castle_avail.replace('k', '').replace('q','')
         elif new_move.piece.type == "R":
-            if self.whites_turn:
+            if new_board.whites_turn:
                 if new_move.piece.position[1] == 0:
-                    self.castle_avail = self.castle_avail.replace('Q', '')
-                elif new_move.piece.position[1] == self.files-1:
-                    self.castle_avail = self.castle_avail.replace('K', '')
+                    new_board.castle_avail = new_board.castle_avail.replace('Q', '')
+                elif new_move.piece.position[1] == new_board.files-1:
+                    new_board.castle_avail = new_board.castle_avail.replace('K', '')
             else:
                 if new_move.piece.position[1] == 0:
-                    self.castle_avail = self.castle_avail.replace('q', '')
-                elif new_move.piece.position[1] == self.files-1:
-                    self.castle_avail = self.castle_avail.replace('k', '')
+                    new_board.castle_avail = new_board.castle_avail.replace('q', '')
+                elif new_move.piece.position[1] == new_board.files-1:
+                    new_board.castle_avail = new_board.castle_avail.replace('k', '')
         
         #Update En passant str
-        self.en_passant = "-"
+        new_board.en_passant = "-"
         if new_move.piece.type == "P":
             if new_move.new_position[0] - new_move.piece.position[0] == 2:
                 r = new_move.piece.position[0] + 1
-                rank = self.utils.get_rank_from_number(r, self.ranks)
-                file = self.utils.get_file_from_number(new_move.new_position[1])
-                self.en_passant = file + rank
+                rank = new_board.utils.get_rank_from_number(r, new_board.ranks)
+                file = new_board.utils.get_file_from_number(new_move.new_position[1])
+                new_board.en_passant = file + rank
             elif new_move.new_position[0] - new_move.piece.position[0] == -2:
                 r = new_move.piece.position[0] - 1
-                rank = self.utils.get_rank_from_number(r, self.ranks)
-                file = self.utils.get_file_from_number(new_move.new_position[1])
-                self.en_passant = file + rank
+                rank = new_board.utils.get_rank_from_number(r, new_board.ranks)
+                file = new_board.utils.get_file_from_number(new_move.new_position[1])
+                new_board.en_passant = file + rank
 
         #Execute Move
-        self._new_move(new_move, False)
+        new_board._new_move(new_move)
 
         #Update Current Teams Moves
-        self._calc_new_team_moves()
+        new_board._calc_new_team_moves()
 
         #Update Check Status
-        self.calc_check_status()
+        new_board.calc_check_status()
 
-        return self
+        return new_board
     
     
 

@@ -4,6 +4,7 @@
 
 """
 import yaml
+from copy import deepcopy
 
 from .chess_move import ChessMove
 from .chess_utils import ChessUtils
@@ -55,7 +56,7 @@ class GlobalChess:
             self.check_status_str = "Black Checkmate"
         return self
     
-    def _calc_move_str(self, move: ChessMove, board: ChessBoard) -> str:
+    def _calc_move_str(self, move: ChessMove, old_board: ChessBoard, new_check_status: int = None) -> str:
         """Generates a Move string such as (e4, Rxf7, Qf1+, etc.)
 
         Args:
@@ -78,25 +79,24 @@ class GlobalChess:
 
         #Get check string
         check_str = ""
-        if self.board.check_status is not None:
-            if abs(self.board.check_status) == 2:
+        if new_check_status is not None:
+            if abs(new_check_status) == 2:
                 check_str = "#"
-            elif abs(self.board.check_status) == 1: 
+            elif abs(new_check_status) == 1: 
                 check_str = "+"
         
         #Get piece str
         piece_str = ""
-        prev_file_str = ""
         if move.piece.type != "P":
             piece_str = move.piece.type
         else:
             prev_file = self.board.utils.get_file_from_number(move.piece.position[1])
             if prev_file != file:
-                prev_file_str = prev_file
+                piece_str = prev_file
 
         #Get Piece was captured
         captured_str = ""
-        if board.piece_board[move.new_position[0] * board.files + move.new_position[1]] is not None:
+        if old_board.piece_board[move.new_position[0] * old_board.files + move.new_position[1]] is not None:
             captured_str = "x"
         return piece_str + captured_str + file + rank + check_str
 
@@ -113,13 +113,14 @@ class GlobalChess:
             return
 
         #Move Piece
-        self.last_move_str = self._calc_move_str(move, self.board)
+        old_board = deepcopy(self.board)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
         self.board.move_piece(move)
         self._calc_check_status_str()
+        self.last_move_str = self._calc_move_str(move, old_board, self.board.check_status)
 
         #Get score
-        self.score.calc_score(self.board)
+        self.score.update_score(self.board)
 
     
         #Calc if game ended
@@ -134,6 +135,8 @@ class GlobalChess:
         self.history.pop_add({"last_move_str": self.last_move_str, 
                               "last_move_tuple": self.last_move_tuple, 
                               "fen_string":fen})
+        
+
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         """Load a state of the game from history. Updates score, history, game_ended, and last move.
@@ -151,8 +154,8 @@ class GlobalChess:
         self.board.fen_to_board(frame['fen_string'])
         self.last_move_str = frame['last_move_str']
         self.last_move_tuple = frame['last_move_tuple']
-        self.score.calc_score(self.board)
-        
+        self.score.update_score(self.board)
+
         #Calc if game ended
         if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
             self.game_ended = True

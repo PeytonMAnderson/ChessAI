@@ -58,6 +58,6 @@ class Environment:
             Environment: Self for chaining.
         """
         if self.chess.game_ended is False:
-            self.ai.execute_turn(self.chess.board.whites_turn, self.chess.board.piece_board, self)
+            self.ai.execute_turn(self.chess.board, self)
     
 

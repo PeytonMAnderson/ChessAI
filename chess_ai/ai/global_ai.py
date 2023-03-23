@@ -2,6 +2,7 @@ import yaml
 
 from .base_ai import BaseAI
 from .custom_ai.custom_ai import CustomAI
+from ..chess_logic.chess_board import ChessBoard
 
 class GlobalAI:
     def __init__(self,
@@ -27,16 +28,16 @@ class GlobalAI:
         self.white_player = self.get_player_from_str(self.white_player_str, True)
         self.black_player = self.get_player_from_str(self.black_player_str, False)
 
-    def execute_player(self, player_str: str, player_value: BaseAI | None, board: list, env): 
+    def execute_player(self, player_str: str, player_value: BaseAI | None, board: ChessBoard, env): 
         if player_str == "PLAYER":
             return
         elif player_str == "CUSTOM":
             player_value.execute_turn(board, env)
         
-    def execute_turn(self, whites_turn: bool, board: list, env): 
+    def execute_turn(self, board: ChessBoard, env): 
         if env.chess.game_ended:
             return
-        if whites_turn:
+        if board.whites_turn:
             self.execute_player(self.white_player_str, self.white_player, board, env)
         else:
             self.execute_player(self.black_player_str, self.black_player, board, env)

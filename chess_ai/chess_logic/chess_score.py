@@ -34,6 +34,30 @@ class ChessScore:
             return self.piece_scores['QUEEN']
         else:
             return 0
+    def get_piece_score_king(self, piece: ChessPiece) -> int:
+        """Get the score of a piece type.
+
+        Args:
+            piece (ChessPiece): The piece on the chess board
+
+        Returns:
+            int: The value of the score of that piece.
+        """
+        if piece is None:
+            return 0
+        elif piece.type == "P":
+            return self.piece_scores['PAWN']
+        elif piece.type == "N":
+            return self.piece_scores['KNIGHT']
+        elif piece.type == 'B':
+            return self.piece_scores['BISHOP']
+        elif piece.type == "R":
+            return self.piece_scores['ROOK']
+        elif piece.type == 'Q':
+            return self.piece_scores['QUEEN']
+        elif piece.type == 'K':
+            return self.piece_scores['KING']
+
     
     def set_max_score(self, board: ChessBoard) -> "ChessScore":
         """Get the max score possible (Not including Check or Checkmate)
@@ -74,8 +98,34 @@ class ChessScore:
             black_score += self._get_piece_score(piece)
         return white_score - black_score
 
-    def calc_score(self, board: ChessBoard) -> "ChessScore":
+    def calc_score(self, board: ChessBoard) -> int:
         """Calculate the score value of the current chess board and places it in score.
+
+        Args:
+            board (ChessBoard): The chess board that will be used for score calculations
+
+        Returns:
+            ChessScore: Returns self for chaining.
+        """
+        if board.check_status is None:
+            return self._get_base_score(board)
+        else:
+            if board.check_status == 2:
+                return self.piece_scores['CHECKMATE']
+            elif board.check_status == 1:
+                base = self._get_base_score(board)
+                return base + self.piece_scores['CHECK']
+            elif board.check_status == 0:
+                return  0
+            elif board.check_status == -1:
+                base = self._get_base_score(board)
+                return base -self.piece_scores['CHECK']
+            elif board.check_status == -2:
+                return -self.piece_scores['CHECKMATE']
+        return 0
+    
+    def update_score(self, board: ChessBoard) -> "ChessScore":
+        """Updates the score value of the current chess board and places it in score.
 
         Args:
             board (ChessBoard): The chess board that will be used for score calculations
@@ -99,6 +149,7 @@ class ChessScore:
             elif board.check_status == -2:
                 self.score = -self.piece_scores['CHECKMATE']
         return self
+    
             
 
 

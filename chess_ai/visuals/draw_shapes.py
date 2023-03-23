@@ -147,6 +147,12 @@ class VisualShapes:
         Returns:
             VisualShapes: Self for chaining.
         """
+        #Draw Previous Move
+        if env.chess.last_move_tuple is not None:
+            ro, fo, rf, ff = env.chess.last_move_tuple
+            self._draw_square(surface, ro, fo, env.visual.board_last_move_from_color, env)
+            self._draw_square(surface, rf, ff, env.visual.board_last_move_to_color, env)
+
         #Draw selected position
         if env.io.selected_position is not None:
             rd, fd = env.io.selected_position[0], env.io.selected_position[1]
@@ -164,12 +170,6 @@ class VisualShapes:
                     if move.piece.position == env.io.selected_position:
                         self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
         
-        #Draw Previous Move
-        if env.chess.last_move_tuple is not None:
-            ro, fo, rf, ff = env.chess.last_move_tuple
-            self._draw_square(surface, ro, fo, env.visual.board_last_move_from_color, env)
-            self._draw_square(surface, rf, ff, env.visual.board_last_move_to_color, env)
-
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":
