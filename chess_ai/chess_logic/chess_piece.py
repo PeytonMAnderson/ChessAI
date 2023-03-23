@@ -208,6 +208,66 @@ class ChessPiece:
         moves, attacks = self._get_bishop_moves(board)
         moves_2, attacks_2 = self._get_rook_moves(board)
         return moves + moves_2, attacks + attacks_2
+    
+    def _get_king_castle(self, castle_check_king: bool, castle_check_queen: bool, board) -> list:
+        #Add Castling Moves
+        moves = []
+        ro, fo = self.position[0], self.position[1]
+        if board.check_status is not None:
+            return moves
+        if castle_check_king is False:
+            #Make sure castling is available
+            if board.castle_avail.find('K' if self.is_white else 'k') >= 0:
+                #Make sure file is open
+                open_to_rook = True
+                file = fo + 1
+                while file < board.files - 1:
+                    new_loc = ro * board.files + file
+                    defending_piece: ChessPiece = board.piece_board[new_loc]
+                    if defending_piece is not None:
+                        open_to_rook = False
+                        break
+                    file += 1
+                if open_to_rook:
+
+                    #Filter move that causes check
+                    castleable = True
+                    move: ChessMove
+                    for move in board.black_moves:
+                        if (move.new_position[0], move.new_position[1]) == (ro, fo + 2):
+                            castleable = False
+                            break
+                    if castleable:
+                        new_loc = ro * board.files + file
+                        rook: ChessPiece = board.piece_board[new_loc]
+                        moves.append(ChessMove(self, (ro, fo + 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo + 1))))
+        if castle_check_queen is False:
+            #Make sure castling is available
+            if board.castle_avail.find('Q' if self.is_white else 'q') >= 0:
+                #Make sure file is open
+                open_to_rook = True
+                file = fo - 1
+                while file > 0:
+                    new_loc = ro * board.files + file
+                    defending_piece: ChessPiece = board.piece_board[new_loc]
+                    if defending_piece is not None:
+                        open_to_rook = False
+                        break
+                    file -= 1
+                if open_to_rook:
+
+                    #Filter move that causes check
+                    castleable = True
+                    move: ChessMove
+                    for move in board.black_moves:
+                        if (move.new_position[0], move.new_position[1]) == (ro, fo - 2):
+                            castleable = False
+                            break
+                    if castleable:
+                        new_loc = ro * board.files + file
+                        rook: ChessPiece = board.piece_board[new_loc]
+                        moves.append(ChessMove(self, (ro, fo - 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo - 1))))
+        return moves
 
     def _get_king_moves(self, board) -> tuple[list, list]:
         """Get all moves that the piece can take including captures.
@@ -221,19 +281,13 @@ class ChessPiece:
         castle_check_queen = False
         for ri in range(3):
             for fi in range(3):
-
-                #Filter self, update castling avail
-                r, f = ro + ri, fo + fi
+                #Filter self
                 if ri == 1 and fi == 1:
-                    new_move = ChessMove(self, (r, f))
-                    if board.check_move_for_check(new_move) is True:
-                        castle_check_king, castle_check_queen = True, True
                     continue
-
                 #Filter out of bounds
+                r, f = ro + ri, fo + fi
                 if r < 0 or r >= board.ranks or f < 0 or f >= board.files:
                     continue
-
                 #Add moves and attacks
                 new_loc = r * board.files + f
                 defending_piece: ChessPiece = board.piece_board[new_loc]
@@ -254,63 +308,8 @@ class ChessPiece:
                         castle_check_queen = False
                     elif ri == 1 and fi == 2:
                         castle_check_king = False
-
-        #Add Castling Moves
-        ro, fo = self.position[0], self.position[1]
-        if castle_check_king is False:
-            #Make sure castling is available
-            if board.castle_avail.find('K' if self.is_white else 'k') >= 0:
-                #Make sure file is open
-                open_to_rook = True
-                file = fo + 1
-                while file < board.files - 1:
-                    new_loc = ro * board.files + file
-                    defending_piece: ChessPiece = board.piece_board[new_loc]
-                    if defending_piece is not None:
-                        open_to_rook = False
-                        break
-                    file += 1
-                if open_to_rook:
-
-                    #Filter move that causes check
-                    castleable = True
-                    move: ChessMove
-                    for move in board.black_moves:
-                        if (move.new_position[0], move.new_position[1]) == (r, f + 2):
-                            castleable = False
-                            break
-                    if castleable:
-                        new_loc = ro * board.files + file
-                        rook: ChessPiece = board.piece_board[new_loc]
-                        moves.append(ChessMove(self, (ro, fo + 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo + 1))))
-
-        if castle_check_queen is False:
-            #Make sure castling is available
-            if board.castle_avail.find('Q' if self.is_white else 'q') >= 0:
-
-                #Make sure file is open
-                open_to_rook = True
-                file = fo - 1
-                while file > 0:
-                    new_loc = ro * board.files + file
-                    defending_piece: ChessPiece = board.piece_board[new_loc]
-                    if defending_piece is not None:
-                        open_to_rook = False
-                        break
-                    file -= 1
-                if open_to_rook:
-
-                    #Filter move that causes check
-                    castleable = True
-                    move: ChessMove
-                    for move in board.black_moves:
-                        if (move.new_position[0], move.new_position[1]) == (r, f - 2):
-                            castleable = False
-                            break
-                    if castleable:
-                        new_loc = ro * board.files + file
-                        rook: ChessPiece = board.piece_board[new_loc]
-                        moves.append(ChessMove(self, (ro, fo - 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo - 1))))
+        if board.check_status is None:
+            moves = moves + self._get_king_castle(castle_check_king, castle_check_queen, board)
         return moves, attacks
 
     def _get_pawn_check(self, piece_board: list, king_positions: list, board_dim: tuple[int, int]) -> bool:

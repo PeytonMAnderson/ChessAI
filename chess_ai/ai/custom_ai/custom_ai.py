@@ -55,7 +55,7 @@ class CustomAI(BaseAI):
             if worst_prev_best_color_score is not None and prune:
                 new_color_score = new_score if board.whites_turn else -new_score
                 if new_color_score > worst_prev_best_color_score:
-                    print(f"\t\tPRUNED:\t\tOur Best: {best_color_score}, Current Score: {new_color_score} Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
+                    #print(f"\t\tPRUNED:\t\tOur Best: {best_color_score}, Current Score: {new_color_score} Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
                     return best_score, best_move, branches, True
                 
             #Recurse if their is a recurse function
@@ -72,7 +72,7 @@ class CustomAI(BaseAI):
             total_score = new_score + deep_score * self.score_falloff_ratio if deep_score is not None else new_score
             total_color_score = total_score if board.whites_turn else -total_score
 
-            print(f"\t\tOur Best: {best_color_score}, Current Score: {total_color_score} Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
+            #print(f"\t\tOur Best: {best_color_score}, Current Score: {total_color_score} Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
 
             #If their new score is their best one yet, save their values
             if best_color_score is None or total_color_score > best_color_score:
@@ -120,7 +120,7 @@ class CustomAI(BaseAI):
                 continue
             
             #Calculate new total score from our score and their best score
-            print(f"Their Worst: {worst_prev_best_color_score} Their Current: {their_best_score}, Our Best: {best_color_score}, Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
+            #print(f"Their Worst: {worst_prev_best_color_score} Their Current: {their_best_score}, Our Best: {best_color_score}, Current Move: {env.chess._calc_move_str(move, board, new_board.check_status)}")
             total_score = new_score
             if their_best_score is not None:
                 their_best_color_score = their_best_score if not board.whites_turn else 0 - their_best_score

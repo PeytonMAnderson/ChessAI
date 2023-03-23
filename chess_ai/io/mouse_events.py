@@ -54,6 +54,7 @@ class MouseEvents:
 
                 new_move = self._get_move(env.io.selected_position, new_selected, env)
                 if new_move is not None:
+                    env.ai.paused = False
                     env.chess.move_piece(new_move)
                     env.io.selected_position = None
             else:
