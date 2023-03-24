@@ -73,7 +73,6 @@ class GlobalChess:
 
         #Get Castle String
         if old_move.castle:
-            print(old_move.new_position, old_move.piece.position)
             if old_move.new_position[1] - old_move.piece.position[1] > 0:
                 return "O-O"
             else:
@@ -167,7 +166,7 @@ class GlobalChess:
         #Calc if game ended
         if self.board.state.check_status is not None and abs(self.board.state.check_status) == 2 or self.board.state.check_status == 0:
             self.game_ended = True
-        elif self.board.half_move >= self.max_half_moves:
+        elif self.board.state.half_move >= self.max_half_moves:
             self.game_ended = True
         else:
             self.game_ended = False

@@ -58,7 +58,7 @@ class CustomAI(BaseAI):
         for _, move in sorted_list:
 
             #Get new board with their move
-            new_board_state = board.move_piece(move, True)
+            new_board_state = board.move_piece(move, board_state, True)
             current_branches = 0
 
             if maximizePlayer:

@@ -231,7 +231,6 @@ class ChessBoard:
 
         #Update Data Trackers
         if chess_board_state.whites_turn:
-            print(vars(new_move), vars(new_move.piece))
             chess_board_state.white_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))
             chess_board_state.white_positions.append((new_move.new_position[0], new_move.new_position[1]))
             if chess_board_state.black_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
@@ -252,7 +251,7 @@ class ChessBoard:
         if new_move.castle:
             old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
-            chess_board_state.piece_board[new_rook_pos] = self.piece_board[old_rook_pos]
+            chess_board_state.piece_board[new_rook_pos] = chess_board_state.piece_board[old_rook_pos]
             chess_board_state.piece_board[old_rook_pos] = None
             self.last_move_castle = True if update_state_only else self.last_move_castle
             if chess_board_state.whites_turn:
@@ -365,7 +364,8 @@ class ChessBoard:
         #Get new copy of board
         new_state = None
         if create_new_state:
-            new_state = ChessBoardState(chess_board_state, self.ranks, self.files)
+            new_state = deepcopy(chess_board_state)
+            # new_state = ChessBoardState(chess_board_state, self.ranks, self.files)
         else:
             new_state = self.state
 
