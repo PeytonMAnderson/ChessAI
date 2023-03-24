@@ -28,6 +28,10 @@ class KeyboardEvents:
             next_state = env.chess.history.get_next()
             env.chess.load_from_history(next_state)
 
+        #Unpause / Pause AI
+        if event.key == pygame.K_SPACE:
+            env.ai.paused = False if env.ai.paused else True
+
     def keyboard_events(self, event, env):
         """Listen for keyboard actions. Updates Environment.
 

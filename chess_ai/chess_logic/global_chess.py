@@ -162,6 +162,7 @@ class GlobalChess:
         self.last_move_str = frame['last_move_str']
         self.last_move_tuple = frame['last_move_tuple']
         self.score.update_score(self.board)
+        self._calc_check_status_str()
 
         #Calc if game ended
         if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
