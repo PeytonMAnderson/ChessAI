@@ -236,7 +236,7 @@ class VisualShapes:
             if score_diff > 0:
                 score_ratio = 0.0
             else:
-                1.0
+                score_ratio = 1.0
         else:
             score_ratio = score_black / (score_total * 2)
 

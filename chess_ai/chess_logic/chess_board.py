@@ -222,6 +222,7 @@ class ChessBoard:
         #Perform Move
         old_pos = new_move.piece.position[0] * self.files +  new_move.piece.position[1]
         new_pos = new_move.new_position[0] * self.files +  new_move.new_position[1]
+        captured = True if self.piece_board[new_pos] is not None else False
         self.piece_board[new_pos] = self.piece_board[old_pos]
         self.piece_board[old_pos] = None
 
@@ -275,6 +276,10 @@ class ChessBoard:
 
         #Update Piece
         self.piece_board[new_pos].position = new_move.new_position
+
+        #Update half and full move
+        self.half_move = 0 if captured else self.half_move + 1
+        self.full_move = self.full_move + 1 if self.whites_turn else self.full_move 
 
         #Update Turn
         self.whites_turn = False if self.whites_turn else True
@@ -373,6 +378,7 @@ class ChessBoard:
                     new_board.castle_avail = new_board.castle_avail.replace('q', '')
                 elif new_move.piece.position[1] == new_board.files-1:
                     new_board.castle_avail = new_board.castle_avail.replace('k', '')
+        new_board.castle_avail = '-' if new_board.castle_avail == '' else new_board.castle_avail
         
         #Update En passant str
         new_board.en_passant = "-"
