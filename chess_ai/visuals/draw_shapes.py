@@ -104,7 +104,7 @@ class VisualShapes:
 
                 #Get place image from chess board
                 r, f = env.visual.adjust_perspective(rank_index, file_index, env)
-                piece: ChessPiece = env.chess.board.piece_board[r * env.chess.board.files + f]
+                piece: ChessPiece = env.chess.board.state.piece_board[r * env.chess.board.files + f]
                 if piece is not None:
                     color_str = "w_" if piece.is_white else "b_"
                     img  = env.piece_images[color_str + piece.type.lower()]
@@ -159,14 +159,14 @@ class VisualShapes:
             self._draw_square(surface, rd, fd, env.visual.board_selected_color, env)
         
             #Draw Available Positions
-            if env.chess.board.whites_turn:
+            if env.chess.board.state.whites_turn:
                 move: ChessMove
-                for move in env.chess.board.white_moves:
+                for move in env.chess.board.state.white_moves:
                     if move.piece.position == env.io.selected_position:
                         self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
             else:
                 move: ChessMove
-                for move in env.chess.board.black_moves:
+                for move in env.chess.board.state.black_moves:
                     if move.piece.position == env.io.selected_position:
                         self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
 
@@ -193,7 +193,7 @@ class VisualShapes:
         """
         if env.io.selected_position is not None:
             r, f = env.io.selected_position
-            piece: ChessPiece = env.chess.board.piece_board[r * env.chess.board.files + f]
+            piece: ChessPiece = env.chess.board.state.piece_board[r * env.chess.board.files + f]
             if piece is not None and piece != 0:
                 color_str = "w_" if piece.is_white else "b_"
                 img  = env.piece_images[color_str + piece.type.lower()]

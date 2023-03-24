@@ -37,7 +37,7 @@ class GlobalAI:
     def execute_turn(self, board: ChessBoard, env): 
         if env.chess.game_ended or self.paused:
             return
-        if board.whites_turn:
+        if board.state.whites_turn:
             self.execute_player(self.white_player_str, self.white_player, board, env)
         else:
             self.execute_player(self.black_player_str, self.black_player, board, env)

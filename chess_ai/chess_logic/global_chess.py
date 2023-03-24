@@ -43,17 +43,17 @@ class GlobalChess:
         Returns:
             GlobalChess: Self for chaining.
         """
-        if self.board.check_status is None:
+        if self.board.state.check_status is None:
             self.check_status_str = "None"
-        elif self.board.check_status == 2:
+        elif self.board.state.check_status == 2:
             self.check_status_str = "White Checkmate"
-        elif self.board.check_status == 1:
+        elif self.board.state.check_status == 1:
             self.check_status_str = "White Check"
-        elif self.board.check_status == 0:
+        elif self.board.state.check_status == 0:
             self.check_status_str = "Stalemate"
-        elif self.board.check_status == -1:
+        elif self.board.state.check_status == -1:
             self.check_status_str = "Black Check"
-        elif self.board.check_status == -2:
+        elif self.board.state.check_status == -2:
             self.check_status_str = "Black Checkmate"
         return self
     
@@ -115,21 +115,21 @@ class GlobalChess:
             return
 
         #Move Piece
-        old_piece = deepcopy(self.board.piece_board[move.new_position[0] * self.board.files + move.new_position[1]])
+        old_piece = deepcopy(self.board.state.piece_board[move.new_position[0] * self.board.files + move.new_position[1]])
         old_move = deepcopy(move)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
         self.board.move_piece(move, self.board.state)
         self._calc_check_status_str()
-        self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.check_status)
+        self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.state.check_status)
 
         #Get score
-        self.score.update_score(self.board)
+        self.score.update_score(self.board, self.board.state)
 
     
         #Calc if game ended
-        if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
+        if self.board.state.check_status is not None and abs(self.board.state.check_status) == 2 or self.board.state.check_status == 0:
             self.game_ended = True
-        elif self.board.half_move >= self.max_half_moves:
+        elif self.board.state.half_move >= self.max_half_moves:
             self.game_ended = True
         else:
             self.game_ended = False
@@ -161,11 +161,11 @@ class GlobalChess:
         self.board.fen_to_board(frame['fen_string'])
         self.last_move_str = frame['last_move_str']
         self.last_move_tuple = frame['last_move_tuple']
-        self.score.update_score(self.board)
+        self.score.update_score(self.board, self.board.state)
         self._calc_check_status_str()
 
         #Calc if game ended
-        if self.board.check_status is not None and abs(self.board.check_status) == 2 or self.board.check_status == 0:
+        if self.board.state.check_status is not None and abs(self.board.state.check_status) == 2 or self.board.state.check_status == 0:
             self.game_ended = True
         elif self.board.half_move >= self.max_half_moves:
             self.game_ended = True
@@ -192,7 +192,7 @@ class GlobalChess:
             self.score.piece_scores = settings['PIECE_SCORES']
             self.board.fen_to_board(settings['BOARD'])
             self.max_half_moves = settings['MAX_HALF_MOVES']
-            self.score.set_max_score(self.board)
+            self.score.set_max_score(self.board, self.board.state)
 
             #Start history
             self.history.pop_add({"last_move_str": "None", "last_move_tuple": None, "fen_string": settings['BOARD']})

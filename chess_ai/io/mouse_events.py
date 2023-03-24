@@ -23,12 +23,12 @@ class MouseEvents:
             ChessMove | None: The Move that matches the old and new positions.
         """
         move: ChessMove
-        if env.chess.board.whites_turn:
-            for move in env.chess.board.white_moves:
+        if env.chess.board.state.whites_turn:
+            for move in env.chess.board.state.white_moves:
                 if move.new_position == new_selected and move.piece.position == old_selected:
                     return move
         else:
-            for move in env.chess.board.black_moves:
+            for move in env.chess.board.state.black_moves:
                 if move.new_position == new_selected and move.piece.position == old_selected:
                     return move
         return None
@@ -46,9 +46,9 @@ class MouseEvents:
             env.io.selected_position = None
         else:
             if env.io.selected_position is None:
-                piece: ChessPiece = env.chess.board.piece_board[new_selected[0] * env.chess.board.files + new_selected[1]]
+                piece: ChessPiece = env.chess.board.state.piece_board[new_selected[0] * env.chess.board.files + new_selected[1]]
                 if piece is not None:
-                    if piece.is_white == env.chess.board.whites_turn and env.ai.piece_is_playable(piece.is_white):
+                    if piece.is_white == env.chess.board.state.whites_turn and env.ai.piece_is_playable(piece.is_white):
                         env.io.selected_position = new_selected
             elif env.io.selected_position != new_selected:
 

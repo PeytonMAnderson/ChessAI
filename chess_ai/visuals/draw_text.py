@@ -56,7 +56,7 @@ class VisualText:
         rf_font = font.Font('freesansbold.ttf', fontsize)
 
         #Turn
-        turn_text = rf_font.render(f"Turn: {'White' if env.chess.board.whites_turn else 'Black'}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+        turn_text = rf_font.render(f"Turn: {'White' if env.chess.board.state.whites_turn else 'Black'}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
         turn_pos = (x, y)
 
         #Last Move:

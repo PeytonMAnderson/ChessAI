@@ -5,7 +5,7 @@ from .chess_move import ChessMove
 
 def _get_pawn_attacks(piece, board, board_state) -> list[ChessMove]:
     rank_i_old, file_i_old = piece.position
-    rank_diff = -1 if board_state.is_white else 1
+    rank_diff = -1 if piece.is_white else 1
     attacks = []
 
     #enpassant
@@ -28,7 +28,7 @@ def _get_pawn_attacks(piece, board, board_state) -> list[ChessMove]:
             #Check if attackable
             if defending_piece is not None and defending_piece.is_white != piece.is_white:
                 new_move = ChessMove(piece, (rank_i_old + rank_diff, file_i_old - 1))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     if (rank_i_old + rank_diff == 0 and piece.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not piece.is_white):
                         new_move.promotion = True
                         new_move.promotion_type = "Q"
@@ -36,7 +36,7 @@ def _get_pawn_attacks(piece, board, board_state) -> list[ChessMove]:
             elif can_en_passant:
                 en_passant_piece = board_state.piece_board[(rank_i_old) * board.files + file_i_old - 1]
                 new_move = ChessMove(piece, (rank_i_old + rank_diff, file_i_old - 1), en_passant=True, en_passant_pawn=en_passant_piece)                
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     if (rank_i_old + rank_diff == 0 and piece.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not piece.is_white):
                         new_move.promotion = True
                         new_move.promotion_type = "Q"
@@ -56,12 +56,12 @@ def _get_pawn_attacks(piece, board, board_state) -> list[ChessMove]:
             #Check if attackable
             if defending_piece is not None and defending_piece.is_white != piece.is_white:
                 new_move = ChessMove(piece, (rank_i_old + rank_diff, file_i_old + 1))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     attacks.append(new_move)
             elif can_en_passant:
                 en_passant_piece = board_state.piece_board[(rank_i_old) * board.files + file_i_old + 1]  
                 new_move = ChessMove(piece, (rank_i_old + rank_diff, file_i_old + 1), en_passant=True, en_passant_pawn=en_passant_piece)             
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     attacks.append(new_move)
     return attacks
         
@@ -75,17 +75,17 @@ def _get_pawn_moves(piece, board, board_state) -> tuple[list, list]:
         moves = []
         attacks = []
         rank_i_old, file_i_old = piece.position
-        rank_diff = -1 if board_state.is_white else 1
+        rank_diff = -1 if piece.is_white else 1
 
         #Stay bounds
-        if (rank_i_old == 0 and board_state.is_white) or (rank_i_old == board.ranks - 1 and not piece.is_white):
+        if (rank_i_old == 0 and piece.is_white) or (rank_i_old == board.ranks - 1 and not piece.is_white):
             return moves, attacks
 
         #Get basic moves
         new_loc = (rank_i_old + rank_diff) * board.files + file_i_old
         if board_state.piece_board[new_loc] is None:
             new_move = ChessMove(piece, (rank_i_old + rank_diff, file_i_old))
-            if board_state.check_move_for_check(new_move) is False:
+            if board.check_move_for_check(new_move, board_state) is False:
                 if (rank_i_old + rank_diff == 0 and piece.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not piece.is_white):
                     new_move.promotion = True
                     new_move.promotion_type = "Q"
@@ -95,7 +95,7 @@ def _get_pawn_moves(piece, board, board_state) -> tuple[list, list]:
                 new_loc = (rank_i_old + rank_diff * 2) * board.files + file_i_old
                 if board_state.piece_board[new_loc] is None:
                     new_move = ChessMove(piece, (rank_i_old + rank_diff * 2, file_i_old))
-                    if board_state.check_move_for_check(new_move) is False:
+                    if board.check_move_for_check(new_move, board_state) is False:
                         if (rank_i_old + rank_diff == 0 and piece.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not piece.is_white):
                             new_move.promotion = True
                             new_move.promotion_type = "Q"
@@ -124,11 +124,11 @@ def _get_knight_moves(piece, board, board_state) -> tuple[list, list]:
         defending_piece: ChessPiece = board_state.piece_board[new_loc]
         if defending_piece is None:
             new_move = ChessMove(piece, (rank_i_old + r, file_i_old + f))
-            if board_state.check_move_for_check(new_move) is False:
+            if board.check_move_for_check(new_move, board_state) is False:
                 moves.append(new_move)
         elif defending_piece.is_white != piece.is_white:
             new_move = ChessMove(piece, (rank_i_old + r, file_i_old + f))
-            if board_state.check_move_for_check(new_move) is False:
+            if board.check_move_for_check(new_move, board_state) is False:
                 moves.append(new_move)
                 attacks.append(new_move)
     return moves, attacks
@@ -151,11 +151,11 @@ def _get_bishop_moves(piece, board, board_state) -> tuple[list, list]:
             defending_piece: ChessPiece = board_state.piece_board[new_loc]
             if defending_piece is None:
                 new_move = ChessMove(piece, (rank_i, file_i))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
             elif defending_piece.is_white != piece.is_white:
                 new_move = ChessMove(piece, (rank_i, file_i))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
                     attacks.append(new_move)
                 break
@@ -183,11 +183,11 @@ def _get_rook_moves(piece, board, board_state) -> tuple[list, list]:
             defending_piece: ChessPiece = board_state.piece_board[new_loc]
             if defending_piece is None:
                 new_move = ChessMove(piece, (rank_i, file_i))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
             elif defending_piece.is_white != piece.is_white:
                 new_move = ChessMove(piece, (rank_i, file_i))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
                     attacks.append(new_move)
                 break
@@ -202,8 +202,8 @@ def _get_queen_moves(piece, board, board_state) -> tuple[list, list]:
 
         Returns: List of moves and list of attacks.
     """
-    moves, attacks = piece._get_bishop_moves(board_state)
-    moves_2, attacks_2 = piece._get_rook_moves(board_state)
+    moves, attacks = _get_bishop_moves(piece, board, board_state)
+    moves_2, attacks_2 = _get_rook_moves(piece, board, board_state)
     return moves + moves_2, attacks + attacks_2
 
 def _get_king_castle(piece, board, board_state, castle_check_king: bool, castle_check_queen: bool) -> list:
@@ -286,7 +286,7 @@ def _get_king_moves(piece, board, board_state) -> tuple[list, list]:
             defending_piece: ChessPiece = board_state.piece_board[new_loc]
             if defending_piece is None:
                 new_move = ChessMove(piece, (r, f))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
                 elif ri == 1 and fi == 0:
                     castle_check_queen = False
@@ -294,7 +294,7 @@ def _get_king_moves(piece, board, board_state) -> tuple[list, list]:
                     castle_check_king = False
             elif defending_piece.is_white != piece.is_white:
                 new_move = ChessMove(piece, (r, f))
-                if board_state.check_move_for_check(new_move) is False:
+                if board.check_move_for_check(new_move, board_state) is False:
                     moves.append(new_move)
                     attacks.append(new_move)
                 elif ri == 1 and fi == 0:
@@ -453,7 +453,7 @@ class ChessPiece:
 
             Returns piece for chaining
         """
-        self.moves, self.attacks = self.move_functions(self, board, board_state)
+        self.moves, self.attacks = self.move_function(self, board, board_state)
         return self
     
     def get_piece_check(self, board, piece_board: list, king_positions: list) -> bool:

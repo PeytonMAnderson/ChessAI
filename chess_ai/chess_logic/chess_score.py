@@ -1,10 +1,10 @@
 
-from .chess_board import ChessBoard
+from .chess_board import ChessBoardState, ChessBoard
 from .chess_piece import ChessPiece
 
 class ChessScore:
     def __init__(self, piece_scores: dict, *args, **kwargs) -> None:
-        """Calculates the score value of a chess board.
+        """Calculates the score value of a chess board_state.
 
         Args:
             piece_scores (dict): The values of pieces that will be used for score tracking.
@@ -17,7 +17,7 @@ class ChessScore:
         """Get the score of a piece type.
 
         Args:
-            piece (ChessPiece): The piece on the chess board
+            piece (ChessPiece): The piece on the chess board_state
 
         Returns:
             int: The value of the score of that piece.
@@ -38,7 +38,7 @@ class ChessScore:
         """Get the score of a piece type.
 
         Args:
-            piece (ChessPiece): The piece on the chess board
+            piece (ChessPiece): The piece on the chess board_state
 
         Returns:
             int: The value of the score of that piece.
@@ -59,94 +59,94 @@ class ChessScore:
             return self.piece_scores['KING']
 
     
-    def set_max_score(self, board: ChessBoard) -> "ChessScore":
+    def set_max_score(self, board: ChessBoard, board_state: ChessBoardState) -> "ChessScore":
         """Get the max score possible (Not including Check or Checkmate)
 
         Args:
-            board (ChessBoard): The board that will be used to get the maximum value.
+            board_state (Chessboard_state): The board_state that will be used to get the maximum value.
 
         Returns:
             ChessScore: Self for chaining.
         """
         white_score = 0
-        for r, f in board.white_positions:
-            piece: ChessPiece = board.piece_board[r * board.files + f]
+        for r, f in board_state.white_positions:
+            piece: ChessPiece = board_state.piece_board[r * board.files + f]
             white_score += self._get_piece_score(piece)
         black_score = 0
-        for r, f in board.black_positions:
-            piece: ChessPiece = board.piece_board[r * board.files + f]
+        for r, f in board_state.black_positions:
+            piece: ChessPiece = board_state.piece_board[r * board.files + f]
             black_score += self._get_piece_score(piece)
         self.score_max = max(white_score, black_score)
         return self
 
-    def _get_base_score(self, board: ChessBoard) -> int:
+    def _get_base_score(self, board: ChessBoard, board_state: ChessBoardState) -> int:
         """Get the base score including both teams. Does not account for checking.
 
         Args:
-            board (ChessBoard): The chess board that will be used for score calculations
+            board_state (Chessboard_state): The chess board_state that will be used for score calculations
 
         Returns:
             int: The score value that was calculated.
         """
         white_score = 0
-        for r, f in board.white_positions:
-            piece: ChessPiece = board.piece_board[r * board.files + f]
+        for r, f in board_state.white_positions:
+            piece: ChessPiece = board_state.piece_board[r * board.files + f]
             white_score += self._get_piece_score(piece)
         black_score = 0
-        for r, f in board.black_positions:
-            piece: ChessPiece = board.piece_board[r * board.files + f]
+        for r, f in board_state.black_positions:
+            piece: ChessPiece = board_state.piece_board[r * board.files + f]
             black_score += self._get_piece_score(piece)
         return white_score - black_score
 
-    def calc_score(self, board: ChessBoard) -> int:
-        """Calculate the score value of the current chess board and places it in score.
+    def calc_score(self, board: ChessBoard, board_state: ChessBoardState) -> int:
+        """Calculate the score value of the current chess board_state and places it in score.
 
         Args:
-            board (ChessBoard): The chess board that will be used for score calculations
+            board_state (Chessboard_state): The chess board_state that will be used for score calculations
 
         Returns:
             ChessScore: Returns self for chaining.
         """
-        if board.check_status is None:
-            return self._get_base_score(board)
+        if board_state.check_status is None:
+            return self._get_base_score(board, board_state)
         else:
-            if board.check_status == 2:
+            if board_state.check_status == 2:
                 return self.piece_scores['CHECKMATE']
-            elif board.check_status == 1:
-                base = self._get_base_score(board)
+            elif board_state.check_status == 1:
+                base = self._get_base_score(board, board_state)
                 return base + self.piece_scores['CHECK']
-            elif board.check_status == 0:
+            elif board_state.check_status == 0:
                 return  0
-            elif board.check_status == -1:
-                base = self._get_base_score(board)
+            elif board_state.check_status == -1:
+                base = self._get_base_score(board, board_state)
                 return base -self.piece_scores['CHECK']
-            elif board.check_status == -2:
+            elif board_state.check_status == -2:
                 return -self.piece_scores['CHECKMATE']
         return 0
     
-    def update_score(self, board: ChessBoard) -> "ChessScore":
-        """Updates the score value of the current chess board and places it in score.
+    def update_score(self, board: ChessBoard, board_state: ChessBoardState) -> "ChessScore":
+        """Updates the score value of the current chess board_state and places it in score.
 
         Args:
-            board (ChessBoard): The chess board that will be used for score calculations
+            board_state (Chessboard_state): The chess board_state that will be used for score calculations
 
         Returns:
             ChessScore: Returns self for chaining.
         """
-        if board.check_status is None:
-            self.score = self._get_base_score(board)
+        if board_state.check_status is None:
+            self.score = self._get_base_score(board, board_state)
         else:
-            if board.check_status == 2:
+            if board_state.check_status == 2:
                 self.score = self.piece_scores['CHECKMATE']
-            elif board.check_status == 1:
-                base = self._get_base_score(board)
+            elif board_state.check_status == 1:
+                base = self._get_base_score(board, board_state)
                 self.score = base + self.piece_scores['CHECK']
-            elif board.check_status == 0:
+            elif board_state.check_status == 0:
                 self.score =  0
-            elif board.check_status == -1:
-                base = self._get_base_score(board)
+            elif board_state.check_status == -1:
+                base = self._get_base_score(board, board_state)
                 self.score =  base -self.piece_scores['CHECK']
-            elif board.check_status == -2:
+            elif board_state.check_status == -2:
                 self.score = -self.piece_scores['CHECKMATE']
         return self
     

@@ -115,8 +115,8 @@ class ChessBoard:
         self.state.full_move = int(full_move)
         
         #Update
-        self._calc_new_team_moves()
-        self.calc_check_status()
+        self._calc_new_team_moves(self.state)
+        self.calc_check_status(self.state)
 
         #Return self
         return self
@@ -231,6 +231,7 @@ class ChessBoard:
 
         #Update Data Trackers
         if chess_board_state.whites_turn:
+            print(vars(new_move), vars(new_move.piece))
             chess_board_state.white_positions.remove((new_move.piece.position[0], new_move.piece.position[1]))
             chess_board_state.white_positions.append((new_move.new_position[0], new_move.new_position[1]))
             if chess_board_state.black_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
@@ -353,8 +354,8 @@ class ChessBoard:
             chess_board_state.black_moves = []
         else:
             new_moves = []
-            for r, f in self.black_positions:
-                black_piece: ChessPiece = self.piece_board[r * self.files + f]
+            for r, f in chess_board_state.black_positions:
+                black_piece: ChessPiece = chess_board_state.piece_board[r * self.files + f]
                 new_moves = new_moves + black_piece.calc_moves_attacks(self, chess_board_state).moves
             chess_board_state.black_moves = new_moves
             chess_board_state.white_moves = []
@@ -378,12 +379,12 @@ class ChessBoard:
             if new_state.whites_turn:
                 if new_move.piece.position[1] == 0:
                     new_state.castle_avail = new_state.castle_avail.replace('Q', '')
-                elif new_move.piece.position[1] == new_state.files-1:
+                elif new_move.piece.position[1] == self.files-1:
                     new_state.castle_avail = new_state.castle_avail.replace('K', '')
             else:
                 if new_move.piece.position[1] == 0:
                     new_state.castle_avail = new_state.castle_avail.replace('q', '')
-                elif new_move.piece.position[1] == new_state.files-1:
+                elif new_move.piece.position[1] == self.files-1:
                     new_state.castle_avail = new_state.castle_avail.replace('k', '')
         new_state.castle_avail = '-' if new_state.castle_avail == '' else new_state.castle_avail
         
@@ -392,13 +393,13 @@ class ChessBoard:
         if new_move.piece.type == "P":
             if new_move.new_position[0] - new_move.piece.position[0] == 2:
                 r = new_move.piece.position[0] + 1
-                rank = new_state.utils.get_rank_from_number(r, new_state.ranks)
-                file = new_state.utils.get_file_from_number(new_move.new_position[1])
+                rank = self.utils.get_rank_from_number(r, self.ranks)
+                file = self.utils.get_file_from_number(new_move.new_position[1])
                 new_state.en_passant = file + rank
             elif new_move.new_position[0] - new_move.piece.position[0] == -2:
                 r = new_move.piece.position[0] - 1
-                rank = new_state.utils.get_rank_from_number(r, new_state.ranks)
-                file = new_state.utils.get_file_from_number(new_move.new_position[1])
+                rank = self.utils.get_rank_from_number(r, self.ranks)
+                file = self.utils.get_file_from_number(new_move.new_position[1])
                 new_state.en_passant = file + rank
 
         #Execute Move
