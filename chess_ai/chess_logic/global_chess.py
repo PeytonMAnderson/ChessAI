@@ -100,7 +100,7 @@ class GlobalChess:
             captured_str = "x"
         return piece_str + captured_str + file + rank + check_str
 
-    def move_piece(self, move: ChessMove) -> "GlobalChess":
+    def move_piece(self, move: ChessMove, env = None) -> "GlobalChess":
         """Moves a piece on the board assuming the move if valid. Updates score, history, game_ended, and last move.
 
         Args:
@@ -136,7 +136,11 @@ class GlobalChess:
                               "last_move_tuple": self.last_move_tuple, 
                               "fen_string":fen})
         
-
+        if env is not None:
+            if self.last_move_str.count("x") > 0:
+                env.sound.play("capture", env)
+            else:
+                env.sound.play("move-self", env)
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
         """Load a state of the game from history. Updates score, history, game_ended, and last move.

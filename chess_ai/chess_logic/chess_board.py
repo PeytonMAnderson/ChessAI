@@ -245,7 +245,6 @@ class ChessBoard:
         self.last_move_castle = False
         self.last_move_en_passant = False
         if new_move.castle:
-            print(f"{vars(new_move)}")
             old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
             self.piece_board[new_rook_pos] = self.piece_board[old_rook_pos]

@@ -155,4 +155,4 @@ class CustomAI(BaseAI):
         best_score, best_move, branches = self.calc_best_recursion(board, env, self.max_depth)
         if best_move is not None:
             print(f"DONE! Branches Checked: {branches} and found Best Move: {env.chess._calc_move_str(best_move, env.chess.board)} with best score: {best_score}")
-            env.chess.move_piece(best_move)
+            env.chess.move_piece(best_move, env)
