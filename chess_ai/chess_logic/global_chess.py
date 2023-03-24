@@ -118,7 +118,7 @@ class GlobalChess:
         old_piece = deepcopy(self.board.piece_board[move.new_position[0] * self.board.files + move.new_position[1]])
         old_move = deepcopy(move)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
-        self.board.move_piece(move)
+        self.board.move_piece(move, self.board.state)
         self._calc_check_status_str()
         self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.check_status)
 
