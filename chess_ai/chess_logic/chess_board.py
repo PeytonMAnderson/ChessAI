@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .chess_piece import ChessPiece
+from .chess_piece import ChessPiece, get_type_functions
 from .chess_utils import ChessUtils
 from .chess_move import ChessMove
 
@@ -134,8 +134,8 @@ class ChessBoard:
         while rank_index < self.ranks:
 
             #Go Through Files
-            file_str_total = ""
-            file_str_prev = ''
+            file_str_total: str = ""
+            file_str_prev: str = ''
             file_index = 0
             while file_index < self.files:
 
@@ -274,8 +274,9 @@ class ChessBoard:
 
         #Pawn Promotion
         if new_move.promotion:
-            chess_board_state.piece_board[new_pos].type = new_move.promotion_type
-            chess_board_state.piece_board[new_pos].set_type_functions()
+            piece: ChessPiece = chess_board_state.piece_board[new_pos]
+            piece.type = new_move.promotion_type
+            piece.move_function, piece.check_function = get_type_functions(new_move.promotion_type)
 
         #Update Piece
         chess_board_state.piece_board[new_pos].position = new_move.new_position

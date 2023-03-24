@@ -60,6 +60,7 @@ class CustomAI(BaseAI):
         sorted_list = self._order_move_list(board_state, move_list, env)
         
         #If depth == 0, return score of game
+        print(len(sorted_list))
         for _, move in sorted_list:
             start = time.time() if depth == self.max_depth else 0
 
@@ -77,7 +78,8 @@ class CustomAI(BaseAI):
 
                 #Prune if other player got a good score
                 if current_score > new_beta and prune:
-                    return best_score, best_move_list + deep_move_list, branches
+                    print(f"Pruned: {current_score} > {new_beta} max({maximizePlayer})")
+                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
                 
                 #Maximize
                 if current_score > best_score:
@@ -100,7 +102,8 @@ class CustomAI(BaseAI):
 
                 #Prune if other player got a good score
                 if current_score < new_alpha and prune:
-                    return best_score, best_move_list + deep_move_list, branches
+                    print(f"Pruned: {current_score} < {new_alpha} max({maximizePlayer})")
+                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
 
                 #Minimize
                 if current_score < best_score:
@@ -119,13 +122,14 @@ class CustomAI(BaseAI):
             if depth == self.max_depth:
                 end = time.time()
                 e = round((end - start) * 1000, 3)
-                move_str = ""
-                for move in current_move_list:
-                    if move is not None:
-                        move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
-                    else:
-                        move_str = move_str + " NONE"
-                print(f"Depth: {depth}, Best Score: {best_score}, Total Branches: {branches} Current Branches: {current_branches}, Current Score: {current_score} (Move: {move_str}) Time Elapsed: {e} ms Alpha: {new_alpha}, Beta: {new_beta}")
+                if e > 1000:
+                    move_str = ""
+                    for move in current_move_list:
+                        if move is not None:
+                            move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
+                        else:
+                            move_str = move_str + " NONE"
+                    print(f"Depth: {depth}, Best Score: {best_score}, Total Branches: {branches} Current Branches: {current_branches}, Current Score: {current_score} (Move: {move_str}) Time Elapsed: {e} ms Alpha: {new_alpha}, Beta: {new_beta}")
 
         #Return new Data
         return best_score, best_move_list + deep_move_list, branches
@@ -145,4 +149,4 @@ class CustomAI(BaseAI):
                 else:
                     move_str = move_str + " NONE"
             print(f"DONE! Branches Checked: {branches} and found Best Move: {move_str} with best score: {best_score} in {e} ms")
-            env.chess.move_piece(best_move, env)
+            env.chess.move_piece(best_move_list[0], env)

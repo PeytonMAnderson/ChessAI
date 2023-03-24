@@ -145,7 +145,7 @@ class ChessScore:
                 self.score =  0
             elif board_state.check_status == -1:
                 base = self._get_base_score(board, board_state)
-                self.score =  base -self.piece_scores['CHECK']
+                self.score =  base - self.piece_scores['CHECK']
             elif board_state.check_status == -2:
                 self.score = -self.piece_scores['CHECKMATE']
         return self

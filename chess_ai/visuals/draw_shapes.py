@@ -170,13 +170,13 @@ class VisualShapes:
                     if move.piece.position == env.io.selected_position:
                         self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
 
-        # for position in env.chess.board.white_positions:
+        # for position in env.chess.board.state.white_positions:
         #     self._draw_square(surface, position[0], position[1], env.visual.colors['ORANGE'], env)
-        # for position in env.chess.board.black_positions:
+        # for position in env.chess.board.state.black_positions:
         #     self._draw_square(surface, position[0], position[1], env.visual.colors['PURPLE'], env)
-        # for move in env.chess.board.white_moves:
+        # for move in env.chess.board.state.white_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
-        # for move in env.chess.board.black_moves:
+        # for move in env.chess.board.state.black_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
         
         return self

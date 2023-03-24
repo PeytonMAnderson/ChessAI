@@ -393,7 +393,7 @@ def _get_king_check(piece, board, piece_board: list, king_positions: list) -> bo
         return True
     return False
 
-def set_type_functions(piece_type: str = None) -> tuple[Callable, Callable]:
+def get_type_functions(piece_type: str = None) -> tuple[Callable, Callable]:
     """Checks they type of piece located at (rank_i_old, file_i_old) and determines which types of move check function to return.
 
         Returns: Check Moves Function specific to the type of piece at (rank_i_old, file_i_old)
@@ -428,7 +428,7 @@ class ChessPiece:
         self.position = position
         self.moves: list[ChessMove]
         self.attacks = list[ChessMove]
-        self.move_function, self.check_function = set_type_functions(type)
+        self.move_function, self.check_function = get_type_functions(type)
 
     def calc_moves_attacks(self, board, board_state) -> "ChessPiece":
         """Calculates all moves and all attacks the piece is able to make.
