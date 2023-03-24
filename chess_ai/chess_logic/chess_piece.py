@@ -237,7 +237,7 @@ def _get_king_castle(piece, board, board_state, can_castle: tuple[bool, bool]) -
                     break
 
         #If castle_safe, create castle move
-        if castle_safe:
+        if castle_safe and rook is not None:
             moves.append(ChessMove(piece, (k_r, k_f + f_diff * 2), castle=True, castle_rook_move=ChessMove(rook, (k_r, k_f + f_diff))))
         king_side = True
     return moves

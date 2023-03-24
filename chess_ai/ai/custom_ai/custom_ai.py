@@ -1,11 +1,12 @@
 
 import random
-
+import time
 
 from ..base_ai import BaseAI
 from ...chess_logic.chess_move import ChessMove
 from ...chess_logic.chess_piece import ChessPiece
 from ...chess_logic.chess_board import ChessBoardState, ChessBoard
+
 #from ...environment import Environment
 
 BIG_NUMBER = 10000000
@@ -34,7 +35,8 @@ class CustomAI(BaseAI):
                 board: ChessBoard, 
                 board_state: ChessBoardState, 
                 depth: int, 
-                maximizePlayer: bool, 
+                maximizePlayer: bool,
+                prune: bool = True, 
                 alpha: int = -BIG_NUMBER, 
                 beta: int = BIG_NUMBER
     ):
@@ -48,7 +50,10 @@ class CustomAI(BaseAI):
         
         #Get Variables
         best_score = -BIG_NUMBER if maximizePlayer else BIG_NUMBER
-        best_move: ChessMove = None
+        new_alpha, new_beta = alpha, beta
+        best_move_list: list = [None]
+        deep_move_list = [None]
+        deep_move_list_temp = [None]
         branches: int = 0
 
         move_list = board_state.white_moves if maximizePlayer else board_state.black_moves
@@ -56,6 +61,7 @@ class CustomAI(BaseAI):
         
         #If depth == 0, return score of game
         for _, move in sorted_list:
+            start = time.time() if depth == self.max_depth else 0
 
             #Get new board with their move
             new_board_state = board.move_piece(move, board_state, True)
@@ -66,44 +72,77 @@ class CustomAI(BaseAI):
                 if depth == 0:
                     current_score = env.chess.score.calc_score(board, new_board_state)
                 else:
-                    current_score, _, current_branches = self.minimax(env, board, new_board_state, depth - 1, False, alpha, beta)
+                    current_score, deep_move_list_temp, current_branches = self.minimax(env, board, new_board_state, depth - 1, False, prune, new_alpha, new_beta)
                 current_branches += 1
+
+                #Prune if other player got a good score
+                if current_score > new_beta and prune:
+                    return best_score, best_move_list + deep_move_list, branches
                 
                 #Maximize
                 if current_score > best_score:
                     best_score = current_score
-                    best_move = move
+                    best_move_list[0] = move
+                    deep_move_list = deep_move_list_temp
                 elif current_score == best_score and random.random() < self.random_chance:
                     best_score = current_score
-                    best_move = move
-                alpha = max(alpha, best_score)
+                    best_move_list[0] = move
+                    deep_move_list = deep_move_list_temp
+                new_alpha = max(new_alpha, best_score)
 
             else:
                 #Recurse to a depth of 0
                 if depth == 0:
                     current_score = env.chess.score.calc_score(board, new_board_state)
                 else:
-                    current_score, _, current_branches = self.minimax(env, board, new_board_state, depth - 1, True, alpha, beta)
+                    current_score, deep_move_list_temp, current_branches = self.minimax(env, board, new_board_state, depth - 1, True, prune, new_alpha, new_beta)
                 current_branches += 1
+
+                #Prune if other player got a good score
+                if current_score < new_alpha and prune:
+                    return best_score, best_move_list + deep_move_list, branches
 
                 #Minimize
                 if current_score < best_score:
                     best_score = current_score
-                    best_move = move
+                    best_move_list[0] = move
+                    deep_move_list = deep_move_list_temp
                 elif current_score == best_score and random.random() < self.random_chance:
                     best_score = current_score
-                    best_move = move
-                beta = min(beta, best_score)
+                    best_move_list[0] = move
+                    deep_move_list = deep_move_list_temp
+                new_beta = min(new_beta, best_score)
 
             branches += current_branches
+            current_move_list = [move] + deep_move_list
+
+            if depth == self.max_depth:
+                end = time.time()
+                e = round((end - start) * 1000, 3)
+                move_str = ""
+                for move in current_move_list:
+                    if move is not None:
+                        move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
+                    else:
+                        move_str = move_str + " NONE"
+                print(f"Depth: {depth}, Best Score: {best_score}, Total Branches: {branches} Current Branches: {current_branches}, Current Score: {current_score} (Move: {move_str}) Time Elapsed: {e} ms Alpha: {new_alpha}, Beta: {new_beta}")
 
         #Return new Data
-        return best_score, best_move, branches
+        return best_score, best_move_list + deep_move_list, branches
         
     def execute_turn(self, board: ChessBoard, env):
         print(f"Calculating next move...")
         best_move: ChessMove
-        best_score, best_move, branches = self.minimax(env, board, board.state, self.max_depth, True if env.chess.board.state.whites_turn else False)
-        if best_move is not None:
-            print(f"DONE! Branches Checked: {branches} and found Best Move: {env.chess._calc_move_str(best_move, env.chess.board)} with best score: {best_score}")
+        start = time.time()
+        best_score, best_move_list, branches = self.minimax(env, board, board.state, self.max_depth, True if env.chess.board.state.whites_turn else False, True)
+        end = time.time()
+        e = round((end-start) * 1000, 3)
+        if best_move_list[0] is not None:
+            move_str = ""
+            for move in best_move_list:
+                if move is not None:
+                    move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
+                else:
+                    move_str = move_str + " NONE"
+            print(f"DONE! Branches Checked: {branches} and found Best Move: {move_str} with best score: {best_score} in {e} ms")
             env.chess.move_piece(best_move, env)
