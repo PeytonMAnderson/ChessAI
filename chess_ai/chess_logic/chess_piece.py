@@ -16,11 +16,11 @@ class ChessPiece:
         self.is_white = is_white
         self.position = position
         self.flags = flags
-        move_function, check_function = self._get_type_functions(type)
-        self.move_function = move_function
-        self.check_function = check_function
+        self.move_function = None
+        self.check_function = None
         self.moves: list[ChessMove]
         self.attacks = list[ChessMove]
+        self.set_type_functions(type)
 
     def _get_pawn_moves(self, board) -> tuple[list, list]:
         """Get all moves that the piece can take including captures.
@@ -32,29 +32,36 @@ class ChessPiece:
         rank_i_old, file_i_old = self.position
         rank_diff = -1 if self.is_white else 1
 
+        #Stay bounds
+        if (rank_i_old == 0 and self.is_white) or (rank_i_old == board.ranks - 1 and not self.is_white):
+            return moves, attacks
+        
         #enpassant
         e_r, e_f = None, None
         if len(board.en_passant) == 2:
             e_r = board.utils.get_number_from_rank(board.en_passant[1], board.ranks)
             e_f = board.utils.get_number_from_file(board.en_passant[0])
 
-        #Stay bounds
-        if rank_i_old == 0 or rank_i_old == board.ranks - 1:
-            return moves, attacks
-
         #Get basic moves
         new_loc = (rank_i_old + rank_diff) * board.files + file_i_old
         if board.piece_board[new_loc] is None:
             new_move = ChessMove(self, (rank_i_old + rank_diff, file_i_old))
             if board.check_move_for_check(new_move) is False:
+                if (rank_i_old + rank_diff == 0 and self.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not self.is_white):
+                    new_move.promotion = True
+                    new_move.promotion_type = "Q"
                 moves.append(new_move)
         if len(moves) == 1:
-            if rank_i_old == 1 or rank_i_old == board.ranks - 2:
+            if (rank_i_old == 1 and not self.is_white) or (rank_i_old == board.ranks - 2 and self.is_white):
                 new_loc = (rank_i_old + rank_diff * 2) * board.files + file_i_old
                 if board.piece_board[new_loc] is None:
                     new_move = ChessMove(self, (rank_i_old + rank_diff * 2, file_i_old))
                     if board.check_move_for_check(new_move) is False:
+                        if (rank_i_old + rank_diff == 0 and self.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not self.is_white):
+                            new_move.promotion = True
+                            new_move.promotion_type = "Q"
                         moves.append(new_move)
+
         #Get attack left
         if file_i_old - 1 >= 0:
             defending_piece: ChessPiece = board.piece_board[(rank_i_old + rank_diff) * board.files + file_i_old - 1]
@@ -70,12 +77,18 @@ class ChessPiece:
             if defending_piece is not None and defending_piece.is_white != self.is_white:
                 new_move = ChessMove(self, (rank_i_old + rank_diff, file_i_old - 1))
                 if board.check_move_for_check(new_move) is False:
+                    if (rank_i_old + rank_diff == 0 and self.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not self.is_white):
+                        new_move.promotion = True
+                        new_move.promotion_type = "Q"
                     moves.append(new_move)
                     attacks.append(new_move)
             elif can_en_passant:
                 en_passant_piece: ChessPiece = board.piece_board[(rank_i_old) * board.files + file_i_old - 1]
                 new_move = ChessMove(self, (rank_i_old + rank_diff, file_i_old - 1), en_passant=True, en_passant_pawn=en_passant_piece)                
                 if board.check_move_for_check(new_move) is False:
+                    if (rank_i_old + rank_diff == 0 and self.is_white) or (rank_i_old + rank_diff == board.ranks - 1 and not self.is_white):
+                        new_move.promotion = True
+                        new_move.promotion_type = "Q"
                     moves.append(new_move)
                     attacks.append(new_move)
 
@@ -120,7 +133,6 @@ class ChessPiece:
             new_r, new_f = rank_i_old + r, file_i_old + f
             if new_r < 0 or new_r >= board.ranks or new_f < 0 or new_f >= board.files:
                 continue
-
             #Check captures
             new_loc = (rank_i_old + r) * board.files + file_i_old + f
             defending_piece: ChessPiece = board.piece_board[new_loc]
@@ -133,7 +145,6 @@ class ChessPiece:
                 if board.check_move_for_check(new_move) is False:
                     moves.append(new_move)
                     attacks.append(new_move)
-        
         return moves, attacks
 
     def _get_bishop_moves(self, board) -> tuple[list, list]:
@@ -219,17 +230,17 @@ class ChessPiece:
             #Make sure castling is available
             if board.castle_avail.find('K' if self.is_white else 'k') >= 0:
                 #Make sure file is open
-                open_to_rook = True
+                rook: ChessPiece = None
                 file = fo + 1
-                while file < board.files - 1:
+                while file < board.files:
                     new_loc = ro * board.files + file
                     defending_piece: ChessPiece = board.piece_board[new_loc]
                     if defending_piece is not None:
-                        open_to_rook = False
+                        if defending_piece.type == "R" and defending_piece.is_white == self.is_white and file == board.files - 1:
+                            rook = defending_piece
                         break
                     file += 1
-                if open_to_rook:
-
+                if rook is not None:
                     #Filter move that causes check
                     castleable = True
                     move: ChessMove
@@ -238,24 +249,22 @@ class ChessPiece:
                             castleable = False
                             break
                     if castleable:
-                        new_loc = ro * board.files + file
-                        rook: ChessPiece = board.piece_board[new_loc]
                         moves.append(ChessMove(self, (ro, fo + 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo + 1))))
         if castle_check_queen is False:
             #Make sure castling is available
             if board.castle_avail.find('Q' if self.is_white else 'q') >= 0:
                 #Make sure file is open
-                open_to_rook = True
+                rook: ChessPiece = None
                 file = fo - 1
-                while file > 0:
+                while file >= 0:
                     new_loc = ro * board.files + file
                     defending_piece: ChessPiece = board.piece_board[new_loc]
                     if defending_piece is not None:
-                        open_to_rook = False
+                        if defending_piece.type == "R" and defending_piece.is_white == self.is_white and file == 0:
+                            rook = defending_piece
                         break
                     file -= 1
-                if open_to_rook:
-
+                if rook is not None:
                     #Filter move that causes check
                     castleable = True
                     move: ChessMove
@@ -264,9 +273,7 @@ class ChessPiece:
                             castleable = False
                             break
                     if castleable:
-                        new_loc = ro * board.files + file
-                        rook: ChessPiece = board.piece_board[new_loc]
-                        moves.append(ChessMove(self, (ro, fo - 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo - 1))))
+                        moves.append(ChessMove(self, (ro, fo + 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo + 1))))
         return moves
 
     def _get_king_moves(self, board) -> tuple[list, list]:
@@ -370,14 +377,14 @@ class ChessPiece:
 
             Returns: True if the piece can take the other player's king.
         """
-        king_r, king_f = king_positions[1] if self.is_white else  king_positions[0]
+        king_r, king_f = king_positions[1] if self.is_white else king_positions[0]
 
         #Get Rook Direction
         r_d, f_d = 1, 0
         if king_r < self.position[0]:
             r_d, f_d = -1, 0
         elif king_f != self.position[1]:
-            if king_r < self.position[1]:
+            if king_f < self.position[1]:
                 r_d, f_d = 0, -1
             else:
                 r_d, f_d = 0, 1
@@ -402,7 +409,6 @@ class ChessPiece:
             Returns: True if the piece can take the other player's king.
         """
         king_r, king_f = king_positions[1] if self.is_white else  king_positions[0]
-
         #If along a rooks path
         if king_r == self.position[0] or king_f == self.position[1]:
             return self._get_rook_check(piece_board, king_positions, board_dim)
@@ -419,25 +425,25 @@ class ChessPiece:
             return True
         return False
 
-    def _get_type_functions(self, piece_type: str) -> tuple[Callable, Callable]:
+    def set_type_functions(self, piece_type: str = None) -> tuple[Callable, Callable]:
         """Checks they type of piece located at (rank_i_old, file_i_old) and determines which types of move check function to return.
 
             Returns: Check Moves Function specific to the type of piece at (rank_i_old, file_i_old)
         """
-        move_function, check_function = self._get_pawn_moves, self._get_pawn_check
-        if piece_type == "P":
-            return move_function, check_function 
-        elif piece_type == "N":
-            move_function, check_function  = self._get_knight_moves, self._get_knight_check
-        elif piece_type == "B":
-            move_function, check_function  = self._get_bishop_moves, self._get_bishop_check
-        elif piece_type == "R":
-            move_function, check_function  = self._get_rook_moves, self._get_rook_check
-        elif piece_type == "Q":
-            move_function, check_function  = self._get_queen_moves, self._get_queen_check
-        elif piece_type == "K":
-            move_function, check_function  = self._get_king_moves, self._get_king_check
-        return move_function, check_function 
+        p_str = piece_type if piece_type is not None else self.type
+        self.move_function, self.check_function = self._get_pawn_moves, self._get_pawn_check
+        if p_str == "P":
+            return
+        elif p_str == "N":
+            self.move_function, self.check_function  = self._get_knight_moves, self._get_knight_check
+        elif p_str == "B":
+            self.move_function, self.check_function  = self._get_bishop_moves, self._get_bishop_check
+        elif p_str == "R":
+            self.move_function, self.check_function  = self._get_rook_moves, self._get_rook_check
+        elif p_str == "Q":
+            self.move_function, self.check_function  = self._get_queen_moves, self._get_queen_check
+        elif p_str == "K":
+            self.move_function, self.check_function  = self._get_king_moves, self._get_king_check
 
     def calc_moves_attacks(self, board) -> "ChessPiece":
         """Calculates all moves and all attacks the piece is able to make.

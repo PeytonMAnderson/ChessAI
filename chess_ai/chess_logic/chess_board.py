@@ -245,6 +245,7 @@ class ChessBoard:
         self.last_move_castle = False
         self.last_move_en_passant = False
         if new_move.castle:
+            print(f"{vars(new_move)}")
             old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
             self.piece_board[new_rook_pos] = self.piece_board[old_rook_pos]
@@ -267,6 +268,11 @@ class ChessBoard:
             else:
                 self.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             self.last_move_en_passant = True
+
+        #Pawn Promotion
+        if new_move.promotion:
+            self.piece_board[new_pos].type = new_move.promotion_type
+            self.piece_board[new_pos].set_type_functions()
 
         #Update Piece
         self.piece_board[new_pos].position = new_move.new_position

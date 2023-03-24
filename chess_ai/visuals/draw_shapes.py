@@ -169,6 +169,15 @@ class VisualShapes:
                 for move in env.chess.board.black_moves:
                     if move.piece.position == env.io.selected_position:
                         self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
+
+        for position in env.chess.board.white_positions:
+            self._draw_square(surface, position[0], position[1], env.visual.colors['ORANGE'], env)
+        for position in env.chess.board.black_positions:
+            self._draw_square(surface, position[0], position[1], env.visual.colors['PURPLE'], env)
+        for move in env.chess.board.white_moves:
+            self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
+        for move in env.chess.board.black_moves:
+            self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
         
         return self
         
@@ -220,7 +229,7 @@ class VisualShapes:
         score_diff = env.chess.score.score
         score_total = env.chess.score.score_max
         score_black = score_total - score_diff
-        score_ratio: float
+        score_ratio: float = 0.5
 
         #Get score ratio, clamped to max score
         if abs(score_diff) > score_total or score_total == 0:
