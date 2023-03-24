@@ -60,7 +60,6 @@ class CustomAI(BaseAI):
         sorted_list = self._order_move_list(board_state, move_list, env)
         
         #If depth == 0, return score of game
-        print(len(sorted_list))
         for _, move in sorted_list:
             start = time.time() if depth == self.max_depth else 0
 
@@ -78,7 +77,6 @@ class CustomAI(BaseAI):
 
                 #Prune if other player got a good score
                 if current_score > new_beta and prune:
-                    print(f"Pruned: {current_score} > {new_beta} max({maximizePlayer})")
                     return current_score, best_move_list + deep_move_list_temp, branches + current_branches
                 
                 #Maximize
@@ -102,7 +100,6 @@ class CustomAI(BaseAI):
 
                 #Prune if other player got a good score
                 if current_score < new_alpha and prune:
-                    print(f"Pruned: {current_score} < {new_alpha} max({maximizePlayer})")
                     return current_score, best_move_list + deep_move_list_temp, branches + current_branches
 
                 #Minimize
