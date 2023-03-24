@@ -273,7 +273,7 @@ class ChessPiece:
                             castleable = False
                             break
                     if castleable:
-                        moves.append(ChessMove(self, (ro, fo + 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo + 1))))
+                        moves.append(ChessMove(self, (ro, fo - 2), castle=True, castle_rook_move=ChessMove(rook, (ro, fo - 1))))
         return moves
 
     def _get_king_moves(self, board) -> tuple[list, list]:
