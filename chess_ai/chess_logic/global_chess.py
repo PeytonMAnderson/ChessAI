@@ -7,6 +7,7 @@ import yaml
 from copy import deepcopy
 
 from .chess_move import ChessMove
+from .chess_piece import ChessPiece
 from .chess_utils import ChessUtils
 from .chess_board import ChessBoard
 from .chess_history import ChessHistory
@@ -56,7 +57,7 @@ class GlobalChess:
             self.check_status_str = "Black Checkmate"
         return self
     
-    def _calc_move_str(self, move: ChessMove, old_board: ChessBoard, new_check_status: int = None) -> str:
+    def _calc_move_str(self, old_move: ChessMove, old_piece: ChessPiece | None, new_check_status: int = None) -> str:
         """Generates a Move string such as (e4, Rxf7, Qf1+, etc.)
 
         Args:
@@ -67,12 +68,13 @@ class GlobalChess:
             str: A Move string detailing the move that will be taken.
         """
         #Get rank and file str
-        rank = self.board.utils.get_rank_from_number(move.new_position[0], self.board.ranks)
-        file = self.board.utils.get_file_from_number(move.new_position[1])
+        rank = self.board.utils.get_rank_from_number(old_move.new_position[0], self.board.ranks)
+        file = self.board.utils.get_file_from_number(old_move.new_position[1])
 
         #Get Castle String
-        if move.castle:
-            if move.new_position[1] - move.piece.position[1] > 0:
+        if old_move.castle:
+            print(old_move.new_position, old_move.piece.position)
+            if old_move.new_position[1] - old_move.piece.position[1] > 0:
                 return "O-O"
             else:
                 return "O-O-O"
@@ -87,16 +89,16 @@ class GlobalChess:
         
         #Get piece str
         piece_str = ""
-        if move.piece.type != "P":
-            piece_str = move.piece.type
+        if old_move.piece.type != "P":
+            piece_str = old_move.piece.type
         else:
-            prev_file = self.board.utils.get_file_from_number(move.piece.position[1])
+            prev_file = self.board.utils.get_file_from_number(old_move.piece.position[1])
             if prev_file != file:
                 piece_str = prev_file
 
         #Get Piece was captured
         captured_str = ""
-        if old_board.piece_board[move.new_position[0] * old_board.files + move.new_position[1]] is not None:
+        if old_piece is not None:
             captured_str = "x"
         return piece_str + captured_str + file + rank + check_str
 
@@ -113,11 +115,12 @@ class GlobalChess:
             return
 
         #Move Piece
-        old_board = deepcopy(self.board)
+        old_piece = deepcopy(self.board.piece_board[move.new_position[0] * self.board.files + move.new_position[1]])
+        old_move = deepcopy(move)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
         self.board.move_piece(move)
         self._calc_check_status_str()
-        self.last_move_str = self._calc_move_str(move, old_board, self.board.check_status)
+        self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.check_status)
 
         #Get score
         self.score.update_score(self.board)
