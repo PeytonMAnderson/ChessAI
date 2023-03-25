@@ -191,6 +191,7 @@ class GlobalChess:
             self.score.piece_scores = settings['PIECE_SCORES']
             self.board.fen_to_board(settings['BOARD'])
             self.max_half_moves = settings['MAX_HALF_MOVES']
+            self.score.calc_position_bias(self.board)
             self.score.set_max_score(self.board, self.board.state)
 
             #Start history
