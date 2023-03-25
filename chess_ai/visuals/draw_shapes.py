@@ -190,8 +190,7 @@ class VisualShapes:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
         # for move in env.chess.board.state.black_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
-        self._draw_heatmap(surface, "P", env)
-        
+        #self._draw_heatmap(surface, "B", env)
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":

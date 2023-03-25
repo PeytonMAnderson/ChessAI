@@ -25,7 +25,7 @@ class CustomAI(BaseAI):
         move: ChessMove
         for move in moves:
             piece: ChessPiece = board_state.piece_board[move.new_position[0] * env.chess.board.files + 1]
-            piece_score = env.chess.score.get_piece_score_king(piece)
+            piece_score = env.chess.score.get_piece_score_king(piece, env.chess.board)
             move_list.append((piece_score, move))
         move_list.sort(key=self._sort_move)
         return move_list

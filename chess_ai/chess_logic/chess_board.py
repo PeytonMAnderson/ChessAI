@@ -1,5 +1,4 @@
-from copy import deepcopy, copy
-
+from copy import copy
 from .chess_piece import ChessPiece, get_type_functions
 from .chess_utils import ChessUtils
 from .chess_move import ChessMove
@@ -177,7 +176,6 @@ class ChessBoard:
     def _simulate_move(self, new_move: ChessMove, chess_board_state: ChessBoardState) -> tuple[list, list, list, list, bool]:
 
         new_piece_board = chess_board_state.piece_board.copy()
-        other_teams_positions = chess_board_state.white_positions.copy() if not chess_board_state.whites_turn else chess_board_state.black_positions.copy()
         new_king_positions = chess_board_state.king_positions.copy()
 
         #Perform Move
@@ -188,13 +186,9 @@ class ChessBoard:
 
         #Update Data Trackers
         if chess_board_state.whites_turn:
-            if other_teams_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
-                other_teams_positions.remove((new_move.new_position[0], new_move.new_position[1]))
             if new_move.piece.type == "K":
                 new_king_positions[0] = new_move.new_position
         else:     
-            if other_teams_positions.count((new_move.new_position[0], new_move.new_position[1])) > 0:
-                other_teams_positions.remove((new_move.new_position[0], new_move.new_position[1]))
             if new_move.piece.type == "K":
                 new_king_positions[1] = new_move.new_position
 
@@ -209,13 +203,9 @@ class ChessBoard:
         elif new_move.en_passant:
             pos = new_move.en_passant_pawn.position[0] * self.files +  new_move.en_passant_pawn.position[1]
             new_piece_board[pos] = None
-            if chess_board_state.whites_turn:
-                other_teams_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
-            else:
-                other_teams_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
 
         #Update Turn
-        return new_piece_board, other_teams_positions, new_king_positions
+        return new_piece_board, new_king_positions
         
     
     def _new_move(self, new_move: ChessMove,  chess_board_state: ChessBoardState, update_self: bool) -> "ChessBoardState":
@@ -313,18 +303,75 @@ class ChessBoard:
         #Update Turn
         chess_board_state.whites_turn = False if chess_board_state.whites_turn else True
         return chess_board_state
+    
+    def _get_king_vision(self, piece_board: list, king_positions: list, whites_turn: bool):
+        #Get Simulated Move
+        king_position = king_positions[0] if whites_turn else king_positions[1]
+        #Check Rook, Queen, King type Moves
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        for rd, fd in directions:
+            rank_i, file_i = king_position[0] + rd, king_position[1] + fd
+            while rank_i >= 0 and rank_i < self.ranks and file_i >= 0 and file_i < self.files:
+                new_loc = rank_i * self.files + file_i
+                defending_piece: ChessPiece = piece_board[new_loc]
+                if defending_piece is not None:
+                    if defending_piece.is_white != whites_turn:
+                        #If a rook or queen exist in the unblocked rank/file, they are causing check.
+                        if defending_piece.type == "R" or defending_piece.type == "Q":
+                            return True
+                        #If the other King is able to "attack"
+                        elif defending_piece.type == "K" and abs(rank_i - king_position[0]) <= 1 and abs(file_i - king_position[1]) <= 1:
+                            return True
+                    break
+                rank_i, file_i = rank_i + rd, file_i + fd
+
+        #Check Bishop, Queen, Pawn, King Type moves
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        for rd, fd in directions:
+            rank_i, file_i = king_position[0] + rd, king_position[1] + fd
+            while rank_i >= 0 and rank_i < self.ranks and file_i >= 0 and file_i < self.files:
+                new_loc = rank_i * self.files + file_i
+                defending_piece: ChessPiece = piece_board[new_loc]
+                if defending_piece is not None:
+                    if defending_piece.is_white != whites_turn:
+                        #If an enemy bishop or Q exist in the unblocked diagonal, they are causing check.
+                        if defending_piece.type == "B" or defending_piece.type == "Q":
+                            return True
+                        elif defending_piece.type == "P":
+                            #Black can attack with pawn if black pawn is 1 rank up, and 1 file over left or right
+                            if whites_turn and king_position[0] == rank_i + 1 and abs(king_position[1] - file_i) == 1:
+                                return True
+                            #White can attack with pawn if black king is 1 rank down and 1 file over left or right
+                            elif king_position[1] == rank_i - 1 and abs(king_position[1] - file_i) == 1:
+                                return True
+                        #If the other King is able to "attack"
+                        elif defending_piece.type == "K" and abs(rank_i - king_position[0]) <= 1 and abs(file_i - king_position[1]) <= 1:
+                            return True
+                    break
+                rank_i, file_i = rank_i + rd, file_i + fd
+        #Check Knight
+        possible_locations = [(2,1), (1,2), (2,-1), (1,-2), (-2,1), (-1,2), (-2,-1), (-1,-2)]
+        rank_i, file_i = king_position
+        for rd, fd in possible_locations:
+            r, f = king_position[0]+ rd, king_position[1] + fd
+            if r >= 0 and r < self.ranks and f >= 0 and f < self.files:
+                new_loc = r * self.files + f
+                defending_piece: ChessPiece = piece_board[new_loc]
+                if defending_piece is None or defending_piece.is_white == whites_turn:
+                    continue
+                if defending_piece.type == "N":
+                    return True
+        return False
 
     def check_move_for_check(self, new_move: ChessMove, chess_board_state: ChessBoardState) -> bool:
         """Creates a new board to simulate new move to see if other team is able to check.
 
             Returns: True if other team is able to check our king.
         """
-        new_piece_board, other_teams_positions, new_king_positions = self._simulate_move(new_move, chess_board_state)
-        for r, f in other_teams_positions:
-            piece: ChessPiece = new_piece_board[r * self.files + f]
-            if piece.get_piece_check(self, new_piece_board, new_king_positions):
-                return True
-        return False
+        #Get Simulated Move
+        new_piece_board, new_king_positions = self._simulate_move(new_move, chess_board_state)
+        return self._get_king_vision(new_piece_board, new_king_positions, chess_board_state.whites_turn)
+
     
     def calc_check_status(self, chess_board_state: ChessBoardState) -> "ChessBoardState":
         """Calculates the check status of the current board. The move list must be up to date.

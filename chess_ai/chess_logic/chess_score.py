@@ -13,29 +13,6 @@ class ChessScore:
         self.score_max = 0
         self.score = 0
         self.position_bias = {}
-
-    def _get_piece_score(self, piece: ChessPiece, board: ChessBoard) -> int:
-        """Get the score of a piece type.
-
-        Args:
-            piece (ChessPiece): The piece on the chess board_state
-
-        Returns:
-            int: The value of the score of that piece.
-        """
-        position = piece.position if piece.is_white else (board.ranks - piece.position[0] - 1, board.files - piece.position[1] - 1)
-        if piece.type == "P":
-            return self.piece_scores['PAWN'] + self.position_bias['P'][position[0] * board.ranks + position[1]]
-        elif piece.type == "N":
-            return self.piece_scores['KNIGHT'] + self.position_bias['N'][position[0] * board.ranks + piece.position[1]]
-        elif piece.type == 'B':
-            return self.piece_scores['BISHOP']
-        elif piece.type == "R":
-            return self.piece_scores['ROOK'] + self.position_bias['R'][position[0] * board.ranks + position[1]]
-        elif piece.type == 'Q':
-            return self.piece_scores['QUEEN'] + self.position_bias['Q'][position[0] * board.ranks + position[1]]
-        else:
-            return 0
         
     def get_piece_score_king(self, piece: ChessPiece, board: ChessBoard = None) -> int:
         """Get the score of a piece type.
@@ -48,18 +25,22 @@ class ChessScore:
         """
         if piece is None:
             return 0
-        elif piece.type == "P":
-            return self.piece_scores['PAWN']
+        
+        position = piece.position if piece.is_white else (board.ranks - piece.position[0] - 1, piece.position[1])
+        if piece.type == "P":
+            return self.piece_scores['PAWN'] + self.position_bias['P'][position[0] * board.ranks + position[1]]
         elif piece.type == "N":
-            return self.piece_scores['KNIGHT']
+            return self.piece_scores['KNIGHT'] + self.position_bias['N'][position[0] * board.ranks + piece.position[1]]
         elif piece.type == 'B':
-            return self.piece_scores['BISHOP']
+            return self.piece_scores['BISHOP'] + self.position_bias['B'][position[0] * board.ranks + position[1]]
         elif piece.type == "R":
-            return self.piece_scores['ROOK']
+            return self.piece_scores['ROOK'] + self.position_bias['R'][position[0] * board.ranks + position[1]]
         elif piece.type == 'Q':
-            return self.piece_scores['QUEEN']
-        elif piece.type == 'K':
+            return self.piece_scores['QUEEN'] + self.position_bias['Q'][position[0] * board.ranks + position[1]]
+        elif piece.type == "K":
             return self.piece_scores['KING']
+        else:
+            return 0
 
     
     def set_max_score(self, board: ChessBoard, board_state: ChessBoardState) -> "ChessScore":
@@ -74,11 +55,11 @@ class ChessScore:
         white_score = 0
         for r, f in board_state.white_positions:
             piece: ChessPiece = board_state.piece_board[r * board.files + f]
-            white_score += self._get_piece_score(piece, board)
+            white_score += self.get_piece_score_king(piece, board)
         black_score = 0
         for r, f in board_state.black_positions:
             piece: ChessPiece = board_state.piece_board[r * board.files + f]
-            black_score += self._get_piece_score(piece, board)
+            black_score += self.get_piece_score_king(piece, board)
         self.score_max = max(round(white_score, 3), round(white_score, 3))
         return self
 
@@ -94,11 +75,11 @@ class ChessScore:
         white_score = 0
         for r, f in board_state.white_positions:
             piece: ChessPiece = board_state.piece_board[r * board.files + f]
-            white_score += self._get_piece_score(piece, board)
+            white_score += self.get_piece_score_king(piece, board)
         black_score = 0
         for r, f in board_state.black_positions:
             piece: ChessPiece = board_state.piece_board[r * board.files + f]
-            black_score += self._get_piece_score(piece, board)
+            black_score += self.get_piece_score_king(piece, board)
         return round(white_score - black_score, 3)
 
     def calc_score(self, board: ChessBoard, board_state: ChessBoardState) -> int:
@@ -209,6 +190,83 @@ class ChessScore:
         self.position_bias['N'] = score_map
         return self
     
+    def _calc_pb_bishop(self, board: ChessBoard) -> "ChessScore":
+        """Calculates the Position Bias Map for a knight.
+
+        Returns:
+            ChessScore: Returns self for chaining.
+        """
+        score_map = [0] * board.ranks * board.files
+        r_m, f_m = board.ranks / 2 - 0.5, board.files / 2 - 0.5
+        rank_i = 0
+        while rank_i < board.ranks:
+            file_i = 0
+            while file_i < board.files:
+                dis_r, dis_f = abs(r_m - rank_i), abs(f_m - file_i)
+                score = 0.0
+                if file_i > 0 and file_i < board.files - 1:
+                    score += 0.15
+                if rank_i > 0 and rank_i < board.ranks - 1:
+                    score += 0.15
+                if rank_i > 1 and rank_i < board.ranks - 2 and file_i > 1 and file_i < board.files - 2:
+                    score += 0.05
+                if rank_i > 1 and rank_i < board.ranks - 3 and file_i > 2 and file_i < board.files - 3:
+                    score += 0.10
+                if rank_i == board.ranks - 3 and file_i > 0 and file_i < board.files - 1:
+                    score += 0.10
+                if rank_i == r_m or rank_i == r_m - 1 and file_i > 0 and file_i < board.files - 1:
+                    if file_i < 3:
+                        score += 0.10
+                    elif file_i > board.files - 4:
+                        score += 0.10
+
+                score_map[rank_i * board.files + file_i] = score
+                file_i += 1
+            rank_i += 1
+        for r, f in board.state.white_positions:
+            piece: ChessPiece = board.state.piece_board[r * board.files + f]
+            if piece.type == "B":
+                r, f = r - 3, f
+                score_map[r * board.files + f] += 0.1
+                if f > f_m:
+                    r, f = r, f + 1
+                    score_map[r * board.files + f] -= 0.05
+                else:
+                    r, f = r, f - 1
+                    score_map[r * board.files + f] -= 0.05
+
+        self.position_bias['B'] = score_map
+        return self
+    
+    def _calc_pb_rook(self, board: ChessBoard) -> "ChessScore":
+        """Calculates the Position Bias Map for a knight.
+
+        Returns:
+            ChessScore: Returns self for chaining.
+        """
+        score_map = [0] * board.ranks * board.files
+        r_m, f_m = board.ranks / 2 - 0.5, board.files / 2 - 0.5
+        rank_i = 0
+        while rank_i < board.ranks:
+            file_i = 0
+            while file_i < board.files:
+                if rank_i > 1 and rank_i < board.ranks - 1 and file_i > 0 and file_i < board.files - 1:
+                    score_map[rank_i * board.files + file_i] = 0.5
+                elif rank_i < 2:
+                    if rank_i == 1 and file_i > 0 and file_i < board.files - 1:
+                        score_map[rank_i * board.files + file_i] = 1.0
+                    else:
+                        score_map[rank_i * board.files + file_i] = 0.75
+                elif rank_i == board.ranks - 1:
+                    score_f = f_m - abs(f_m - file_i)
+                    score_map[rank_i * board.files + file_i] = score_f / (f_m * 2) + 0.25
+
+                file_i += 1
+            rank_i += 1
+        self.position_bias['R'] = score_map
+        return self
+    
+    
     def _calc_pb_queen(self, board: ChessBoard) -> "ChessScore":
         """Calculates the Position Bias Map for a queen.
 
@@ -239,34 +297,6 @@ class ChessScore:
             rank_i += 1
         self.position_bias['Q'] = score_map
         return self
-    
-    def _calc_pb_rook(self, board: ChessBoard) -> "ChessScore":
-        """Calculates the Position Bias Map for a knight.
-
-        Returns:
-            ChessScore: Returns self for chaining.
-        """
-        score_map = [0] * board.ranks * board.files
-        r_m, f_m = board.ranks / 2 - 0.5, board.files / 2 - 0.5
-        rank_i = 0
-        while rank_i < board.ranks:
-            file_i = 0
-            while file_i < board.files:
-                if rank_i > 1 and rank_i < board.ranks - 1 and file_i > 0 and file_i < board.files - 1:
-                    score_map[rank_i * board.files + file_i] = 0.5
-                elif rank_i < 2:
-                    if rank_i == 1 and file_i > 0 and file_i < board.files - 1:
-                        score_map[rank_i * board.files + file_i] = 1.0
-                    else:
-                        score_map[rank_i * board.files + file_i] = 0.75
-                elif rank_i == board.ranks - 1:
-                    score_f = f_m - abs(f_m - file_i)
-                    score_map[rank_i * board.files + file_i] = score_f / (f_m * 2) + 0.25
-
-                file_i += 1
-            rank_i += 1
-        self.position_bias['R'] = score_map
-        return self
 
     
     def calc_position_bias(self, board: ChessBoard) -> "ChessScore":
@@ -277,8 +307,10 @@ class ChessScore:
         """
         self._calc_pb_pawn(board)
         self._calc_pb_knight(board)
-        self._calc_pb_queen(board)
+        self._calc_pb_bishop(board)
         self._calc_pb_rook(board)
+        self._calc_pb_queen(board)
+        
     
             
 

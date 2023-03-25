@@ -29,6 +29,7 @@ N = 1000
 UTILS = ChessUtils({"NONE": 0, "PAWN": 1, "KNIGHT": 2, "BISHOP": 3, "ROOK": 4, "QUEEN": 5, "KING": 6, "WHITE": 1, "BLACK": 2})
 board = ChessBoard(UTILS).fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 0")
 score = ChessScore({"PAWN": 1, "KNIGHT": 3, "BISHOP": 3, "ROOK": 4, "QUEEN": 9, "KING": 100, "CHECK": 0, "CHECKMATE": 1000})
+score.calc_position_bias(board)
 
 print("\n")
 
@@ -164,7 +165,7 @@ for _ in range(N):
     board.state = board._new_move(ChessMove(piece2, (7, 7)), board.state, True)
 end = time.time()
 e = round((end - start)*1000, 3)
-print(f"New Move (Update Self): \t\t\t{e} ms")
+print(f"New Move (Update Self): \t\t{e} ms")
 
 start = time.time()
 for _ in range(N):
