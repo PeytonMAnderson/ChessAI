@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from .chess_piece import ChessPiece, get_type_functions
 from .chess_utils import ChessUtils
@@ -26,12 +26,12 @@ class ChessBoardState:
             self.half_move = board_state.half_move
             self.full_move = board_state.full_move
             self.whites_turn = board_state.whites_turn
-            self.piece_board = deepcopy(board_state.piece_board)
-            self.white_positions = board_state.white_positions.copy()
-            self.black_positions = board_state.black_positions.copy()
-            self.white_moves = board_state.white_moves.copy()
-            self.black_moves = board_state.black_moves.copy()
-            self.king_positions = board_state.king_positions.copy()
+            self.piece_board = board_state.piece_board[:]
+            self.white_positions = board_state.white_positions[:]
+            self.black_positions = board_state.black_positions[:]
+            self.white_moves = board_state.white_moves[:]
+            self.black_moves = board_state.black_moves[:]
+            self.king_positions = board_state.king_positions[:]
 
 
 class ChessBoard:
@@ -175,6 +175,7 @@ class ChessBoard:
         return rank_str + " " + color_str + " " + self.state.castle_avail + " " + self.state.en_passant + " " + str(self.state.half_move) + " " + str(self.state.full_move)
 
     def _simulate_move(self, new_move: ChessMove, chess_board_state: ChessBoardState) -> tuple[list, list, list, list, bool]:
+
         new_piece_board = chess_board_state.piece_board.copy()
         other_teams_positions = chess_board_state.white_positions.copy() if not chess_board_state.whites_turn else chess_board_state.black_positions.copy()
         new_king_positions = chess_board_state.king_positions.copy()
@@ -217,7 +218,7 @@ class ChessBoard:
         return new_piece_board, other_teams_positions, new_king_positions
         
     
-    def _new_move(self, new_move: ChessMove,  chess_board_state: ChessBoardState, update_state_only: bool = False) -> "ChessBoardState":
+    def _new_move(self, new_move: ChessMove,  chess_board_state: ChessBoardState, update_self: bool) -> "ChessBoardState":
         """Updates the board with the new move. Does not update check status, castling string etc.
 
             Returns: Self for chaining
@@ -246,21 +247,28 @@ class ChessBoard:
                 chess_board_state.king_positions[1] = new_move.new_position
 
         #See if move is castle
-        self.last_move_castle = False if update_state_only else self.last_move_castle
-        self.last_move_en_passant = False if update_state_only else self.last_move_en_passant 
+        self.last_move_castle = self.last_move_castle if update_self else False
+        self.last_move_en_passant = self.last_move_en_passant if update_self else False
         if new_move.castle:
             old_rook_pos = new_move.castle_rook_move.piece.position[0] * self.files +  new_move.castle_rook_move.piece.position[1]
             new_rook_pos = new_move.castle_rook_move.new_position[0] * self.files +  new_move.castle_rook_move.new_position[1]
             chess_board_state.piece_board[new_rook_pos] = chess_board_state.piece_board[old_rook_pos]
             chess_board_state.piece_board[old_rook_pos] = None
-            self.last_move_castle = True if update_state_only else self.last_move_castle
+            self.last_move_castle = self.last_move_castle if update_self else True
             if chess_board_state.whites_turn:
                 chess_board_state.white_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
                 chess_board_state.white_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
             else:
                 chess_board_state.black_positions.remove((new_move.castle_rook_move.piece.position[0], new_move.castle_rook_move.piece.position[1]))
                 chess_board_state.black_positions.append((new_move.castle_rook_move.new_position[0], new_move.castle_rook_move.new_position[1]))
-            chess_board_state.piece_board[new_rook_pos].position = new_move.castle_rook_move.new_position
+
+            #Update Piece
+            if update_self:
+                chess_board_state.piece_board[new_rook_pos].position = new_move.castle_rook_move.new_position
+            #Create a new piece and replace the old reference
+            else:
+                rook: ChessPiece = chess_board_state.piece_board[new_pos]
+                chess_board_state.piece_board[new_rook_pos] = ChessPiece(rook.value, rook.type, rook.is_white, new_move.castle_rook_move.new_position)
             
         #See if move is enpassant
         elif new_move.en_passant:
@@ -270,16 +278,33 @@ class ChessBoard:
                 chess_board_state.black_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
             else:
                 chess_board_state.white_positions.remove((new_move.en_passant_pawn.position[0], new_move.en_passant_pawn.position[1]))
-            self.last_move_en_passant = True if update_state_only else self.last_move_en_passant 
+            self.last_move_en_passant = self.last_move_en_passant  if update_self else True
+        
+        #Update this board, else update the copy
+        if update_self:
 
-        #Pawn Promotion
-        if new_move.promotion:
-            piece: ChessPiece = chess_board_state.piece_board[new_pos]
-            piece.type = new_move.promotion_type
-            piece.move_function, piece.check_function = get_type_functions(new_move.promotion_type)
-
-        #Update Piece
-        chess_board_state.piece_board[new_pos].position = new_move.new_position
+            #Pawn Promotion
+            if new_move.promotion:
+                piece: ChessPiece = chess_board_state.piece_board[new_pos]
+                piece.position = new_move.new_position
+                piece.type = new_move.promotion_type
+                piece.move_function, piece.check_function = get_type_functions(new_move.promotion_type)
+            #Create a new Piece and replace the old reference
+            else:
+                piece: ChessPiece = chess_board_state.piece_board[new_pos]
+                chess_board_state.piece_board[new_pos] = ChessPiece(piece.value, piece.type, piece.is_white, new_move.new_position)
+            
+        else:
+            
+            #Pawn Promotion
+            if new_move.promotion:
+                piece: ChessPiece = chess_board_state.piece_board[new_pos]
+                value = self.utils._calc_piece_value(piece_type=new_move.promotion_type, is_white=piece.is_white)
+                chess_board_state.piece_board[new_pos] = ChessPiece(value, new_move.promotion_type, piece.is_white, new_move.new_position)
+            #Create a new Piece and replace the old reference
+            else:
+                piece: ChessPiece = chess_board_state.piece_board[new_pos]
+                chess_board_state.piece_board[new_pos] = ChessPiece(piece.value, piece.type, piece.is_white, new_move.new_position)
 
         #Update half and full move
         chess_board_state.half_move = 0 if captured else chess_board_state.half_move + 1
@@ -365,8 +390,7 @@ class ChessBoard:
         #Get new copy of board
         new_state = None
         if create_new_state:
-            new_state = deepcopy(chess_board_state)
-            # new_state = ChessBoardState(chess_board_state, self.ranks, self.files)
+            new_state = ChessBoardState(chess_board_state, self.ranks, self.files)
         else:
             new_state = self.state
 
@@ -404,7 +428,7 @@ class ChessBoard:
                 new_state.en_passant = file + rank
 
         #Execute Move
-        new_state = self._new_move(new_move, new_state, create_new_state)
+        new_state = self._new_move(new_move, new_state, not create_new_state)
 
         #Update Current Teams Moves
         new_state = self._calc_new_team_moves(new_state)
