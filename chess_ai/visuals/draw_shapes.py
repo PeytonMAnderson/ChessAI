@@ -142,7 +142,7 @@ class VisualShapes:
         while rank_i < env.chess.board.ranks:
             file_i = 0
             while file_i < env.chess.board.files:
-                value = env.chess.score.position_bias[piece_str][rank_i * env.chess.board.files + file_i]
+                value = env.chess.score.calc_piece_pos_bias(piece_str, (rank_i, file_i), env.chess.board, env.chess.board.state)
                 color_value = value * 255
                 self._draw_square(surface, rank_i, file_i, (color_value, color_value, color_value), env)
                 file_i += 1
@@ -190,7 +190,7 @@ class VisualShapes:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
         # for move in env.chess.board.state.black_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
-        #self._draw_heatmap(surface, "B", env)
+        self._draw_heatmap(surface, "K", env)
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":
