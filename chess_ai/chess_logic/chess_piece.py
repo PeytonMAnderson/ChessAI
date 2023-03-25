@@ -287,133 +287,26 @@ def _get_king_moves(piece, board, board_state) -> tuple[list, list]:
     moves = moves + _get_king_castle(piece, board, board_state, can_castle)
     return moves, attacks
 
-def _get_pawn_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else  king_positions[0]
-    r_diff = -1 if piece.is_white else 1
-    if king_r == piece.position[0] + r_diff:
-        if king_f == piece.position[1] + 1 or king_f == piece.position[1] - 1:
-            return True
-    return False
-
-def _get_knight_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else  king_positions[0]
-    if abs(king_r - piece.position[0]) <= 2:
-        if abs(king_f - piece.position[1]) <= 2:
-            #Top or bottom
-            r1, r2 = 1, 2
-            if king_r < piece.position[0]:
-                r1, r2 = -1, -2
-            #Left or right
-            f1, f2 = 2, 1
-            if king_f < piece.position[1]:
-                f1, f2 = -2, -1
-            if (piece.position[0] + r1, piece.position[1] + f1) == (king_r, king_f) or (piece.position[0] + r2, piece.position[1] + f2) == (king_r, king_f):
-                return True
-    return False
-
-def _get_bishop_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else  king_positions[0]
-    r_d = 1 if king_r > piece.position[0] else -1
-    f_d = 1 if king_f > piece.position[1] else -1
-    rank_i, file_i = piece.position[0] + r_d, piece.position[1] + f_d
-    while rank_i >= 0 and rank_i < board.ranks and file_i >= 0 and file_i < board.files:
-        #If Piece Blocked
-        new_loc = rank_i * board.files + file_i
-        defending_piece: ChessPiece = piece_board[new_loc]
-        if defending_piece is not None:
-            if (rank_i, file_i) == (king_r, king_f):
-                return True
-            else:
-                return False
-        rank_i, file_i = rank_i + r_d, file_i + f_d
-    return False
-
-def _get_rook_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else king_positions[0]
-
-    #Get Rook Direction
-    r_d, f_d = 1, 0
-    if king_r < piece.position[0]:
-        r_d, f_d = -1, 0
-    elif king_f != piece.position[1]:
-        if king_f < piece.position[1]:
-            r_d, f_d = 0, -1
-        else:
-            r_d, f_d = 0, 1
-
-    #Find King in valid moves
-    rank_i, file_i = piece.position[0] + r_d, piece.position[1] + f_d
-    while rank_i >= 0 and rank_i < board.ranks and file_i >= 0 and file_i < board.files:
-        #If Piece Blocked
-        new_loc = rank_i * board.files + file_i
-        defending_piece: ChessPiece = piece_board[new_loc]
-        if defending_piece is not None:
-            if (rank_i, file_i) == (king_r, king_f):
-                return True
-            else:
-                return False
-        rank_i, file_i = rank_i + r_d, file_i + f_d
-    return False
-
-def _get_queen_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else  king_positions[0]
-    #If along a rooks path
-    if king_r == piece.position[0] or king_f == piece.position[1]:
-        return _get_rook_check(piece, board, piece_board, king_positions)
-    else:
-        return _get_bishop_check(piece, board, piece_board, king_positions)
-    
-def _get_king_check(piece, board, piece_board: list, king_positions: list) -> bool:
-    """Calculates if this piece can attack the king with the passed board_state efficiently.
-
-        Returns: True if the piece can take the other player's king.
-    """
-    king_r, king_f = king_positions[1] if piece.is_white else  king_positions[0]
-    if abs(king_r - piece.position[0]) <= 1 and abs(king_f - piece.position[1]) <= 1:
-        return True
-    return False
-
 def get_type_functions(piece_type: str = None) -> tuple[Callable, Callable]:
     """Checks they type of piece located at (rank_i_old, file_i_old) and determines which types of move check function to return.
 
         Returns: Check Moves Function specific to the type of piece at (rank_i_old, file_i_old)
     """
     p_str = piece_type if piece_type is not None else "P"
-    move_function, check_function = _get_pawn_moves, _get_pawn_check
+    move_function = _get_pawn_moves
     if p_str == "P":
-        return move_function, check_function 
+        return move_function
     elif p_str == "N":
-        move_function, check_function  = _get_knight_moves, _get_knight_check
+        move_function  = _get_knight_moves
     elif p_str == "B":
-        move_function, check_function  = _get_bishop_moves, _get_bishop_check
+        move_function  = _get_bishop_moves
     elif p_str == "R":
-        move_function, check_function  = _get_rook_moves, _get_rook_check
+        move_function  = _get_rook_moves
     elif p_str == "Q":
-        move_function, check_function  = _get_queen_moves, _get_queen_check
+        move_function  = _get_queen_moves
     elif p_str == "K":
-        move_function, check_function  = _get_king_moves, _get_king_check
-    return move_function, check_function
-
+        move_function  = _get_king_moves
+    return move_function
 
 class ChessPiece:
     def __init__(self, 
@@ -428,7 +321,7 @@ class ChessPiece:
         self.position = position
         self.moves: list[ChessMove]
         self.attacks = list[ChessMove]
-        self.move_function, self.check_function = get_type_functions(type)
+        self.move_function = get_type_functions(type)
 
     def calc_moves_attacks(self, board, board_state) -> "ChessPiece":
         """Calculates all moves and all attacks the piece is able to make.
@@ -437,11 +330,4 @@ class ChessPiece:
         """
         self.moves, self.attacks = self.move_function(self, board, board_state)
         return self
-    
-    def get_piece_check(self, board, piece_board: list, king_positions: list) -> bool:
-        """Calculates if the piece is able to take the king.
-
-            Returns True if the piece can take the king in the passed board_state, False if otherwise.
-        """
-        return self.check_function(self, board, piece_board, king_positions)
     

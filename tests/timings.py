@@ -132,13 +132,6 @@ print(f"Simulate Move: \t\t\t\t{e} ms")
 
 start = time.time()
 for _ in range(N):
-    score.calc_score(board, board.state)
-end = time.time()
-e = round((end - start)*1000, 3)
-print(f"Calc Score: \t\t\t\t{e} ms")
-
-start = time.time()
-for _ in range(N):
     piece: ChessPiece = board.state.piece_board[0]
     new_board = board.calc_check_status(board.state)
 end = time.time()
@@ -177,12 +170,28 @@ print(f"Calc Moves Attacks: \t\t\t{e} ms")
 
 start = time.time()
 for _ in range(N):
+    score.calc_score(board, board.state)
+end = time.time()
+e = round((end - start)*1000, 3)
+print(f"Calc Score: \t\t\t\t{e} ms")
+
+start = time.time()
+for _ in range(N):
     piece: ChessPiece = board.state.piece_board[0]
     new_board = board._calc_new_team_moves(board.state)
 end = time.time()
 e = round((end - start)*1000, 3)
 print(f"Calc New Team moves: \t\t\t{e} ms")
 
+start = time.time()
+different1 = False
+for _ in range(N):
+    piece: ChessPiece = board.state.piece_board[0]
+    new_board = board.move_piece(ChessMove(piece, (2, 0)), board.state, True)
+    different1 = True if new_board.black_positions != board.state.black_positions else False
+end = time.time()
+e = round((end - start)*1000, 3)
+print(f"Move Piece (Copy): \t\t\t{e} ms\tDifferent Board: {different1}")
 
 start = time.time()
 for _ in range(N):
@@ -198,17 +207,5 @@ end = time.time()
 e = round((end - start)*1000, 3)
 print(f"Move Piece (no copy): \t\t\t{e / 4} ms")
 
-
-
-start = time.time()
-different1 = False
-for _ in range(N):
-    piece: ChessPiece = board.state.piece_board[0]
-    new_board = board.move_piece(ChessMove(piece, (2, 0)), board.state, True)
-    different1 = True if new_board.black_positions != board.state.black_positions else False
-end = time.time()
-e = round((end - start)*1000, 3)
-print(f"Move Piece (Copy): \t\t\t{e} ms\tDifferent Board: {different1}")
 print("\n")
-
 

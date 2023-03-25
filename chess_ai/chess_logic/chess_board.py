@@ -278,7 +278,7 @@ class ChessBoard:
                 piece: ChessPiece = chess_board_state.piece_board[new_pos]
                 piece.position = new_move.new_position
                 piece.type = new_move.promotion_type
-                piece.move_function, piece.check_function = get_type_functions(new_move.promotion_type)
+                piece.move_function = get_type_functions(new_move.promotion_type)
             #Create a new Piece and replace the old reference
             else:
                 piece: ChessPiece = chess_board_state.piece_board[new_pos]
@@ -304,7 +304,7 @@ class ChessBoard:
         chess_board_state.whites_turn = False if chess_board_state.whites_turn else True
         return chess_board_state
     
-    def _get_king_vision(self, piece_board: list, king_positions: list, whites_turn: bool):
+    def _get_king_vision_in_check(self, piece_board: list, king_positions: list, whites_turn: bool):
         #Get Simulated Move
         king_position = king_positions[0] if whites_turn else king_positions[1]
         #Check Rook, Queen, King type Moves
@@ -370,7 +370,7 @@ class ChessBoard:
         """
         #Get Simulated Move
         new_piece_board, new_king_positions = self._simulate_move(new_move, chess_board_state)
-        return self._get_king_vision(new_piece_board, new_king_positions, chess_board_state.whites_turn)
+        return self._get_king_vision_in_check(new_piece_board, new_king_positions, chess_board_state.whites_turn)
 
     
     def calc_check_status(self, chess_board_state: ChessBoardState) -> "ChessBoardState":
@@ -380,11 +380,7 @@ class ChessBoard:
         """
         if chess_board_state.whites_turn:
             #Get in check
-            in_check = False
-            for r, f in chess_board_state.black_positions:
-                piece: ChessPiece = chess_board_state.piece_board[r * self.files + f]
-                if piece.get_piece_check(self, chess_board_state.piece_board, chess_board_state.king_positions):
-                    in_check = True
+            in_check = self._get_king_vision_in_check(chess_board_state.piece_board, chess_board_state.king_positions, chess_board_state.whites_turn)
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
                 if len(chess_board_state.white_moves) == 0:
@@ -398,11 +394,7 @@ class ChessBoard:
                     chess_board_state.check_status = None
         else:
             #Get in check
-            in_check = False
-            for r, f in chess_board_state.white_positions:
-                piece: ChessPiece = chess_board_state.piece_board[r * self.files + f]
-                if piece.get_piece_check(self, chess_board_state.piece_board, chess_board_state.king_positions):
-                    in_check = True
+            in_check = self._get_king_vision_in_check(chess_board_state.piece_board, chess_board_state.king_positions, chess_board_state.whites_turn)
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
                 if len(chess_board_state.black_moves) == 0:
