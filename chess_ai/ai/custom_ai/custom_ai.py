@@ -20,15 +20,84 @@ class CustomAI(BaseAI):
     def _sort_move(self, move_tuple: tuple) -> int:
         return -move_tuple[0]
 
-    def _order_move_list(self, board_state: ChessBoardState, moves: list, env) -> list:
+    def _order_move_list(self, board: ChessBoard, board_state: ChessBoardState, moves: list, env) -> list:
         move_list = []
         move: ChessMove
         for move in moves:
-            piece: ChessPiece = board_state.piece_board[move.new_position[0] * env.chess.board.files + 1]
-            piece_score = env.chess.score.get_piece_score_king(piece, env.chess.board, board_state)
-            move_list.append((piece_score, move))
+
+            #Add If taking a piece
+            piece_taking: ChessPiece = board_state.piece_board[move.new_position[0] * board.files + move.new_position[1]]
+            piece_taking_value = env.chess.score.get_piece_worth(piece_taking)
+
+            #Add if new positions has better bias
+            piece_moving: ChessPiece = board_state.piece_board[move.piece.position[0] * board.files + move.piece.position[1]]
+            move_difference = env.chess.score.get_position_difference(piece_moving, move.piece.position, move.new_position, board, board_state)
+
+            #Remove if new position can be taken by a pawn
+            this_piece_worth = env.chess.score.get_piece_worth(piece_moving)
+            pawn_takes_value = 0
+            r_diff = -1 if board_state.whites_turn else 1
+            r, f = move.new_position[0] + r_diff, move.new_position[1] - 1
+            if r >= 0 and r < board.ranks and f >= 0 and f < board.files:
+                left_pawn: ChessPiece = board_state.piece_board[r * board.files + f]
+                pawn_takes_value = this_piece_worth if left_pawn is not None and left_pawn.is_white != board_state.whites_turn and left_pawn.type == "P" else pawn_takes_value
+            r, f = move.new_position[0] + r_diff, move.new_position[1] + 1
+            if r >= 0 and r < board.ranks and f >= 0 and f < board.files:
+                right_pawn: ChessPiece = board_state.piece_board[r * board.files + f]
+                pawn_takes_value = this_piece_worth if right_pawn is not None and right_pawn.is_white != board_state.whites_turn and right_pawn.type == "P" else pawn_takes_value
+
+            #Add all scores together
+            score = piece_taking_value + move_difference - pawn_takes_value
+            move_list.append((score, move))
+
         move_list.sort(key=self._sort_move)
         return move_list
+    
+    def _order_move_list_simple(self, board_state: ChessBoardState, moves: list, env) -> list:
+        move_list = []
+        move: ChessMove
+        for move in moves:
+            piece_taking: ChessPiece = board_state.piece_board[move.new_position[0] * env.chess.board.files + move.new_position[1]]
+            piece_taking_value = env.chess.score.get_piece_worth(piece_taking)
+            move_list.append((piece_taking_value, move))
+        move_list.sort(key=self._sort_move)
+        return move_list
+    
+    def _calc_attacks(self, env, board: ChessBoard, board_state: ChessBoardState, attacks: list, maximizePlayer: bool, alpha: int, beta: int, prune: bool):
+
+        #Check each attack for their best move.
+        best_score = -BIG_NUMBER if maximizePlayer else BIG_NUMBER
+        new_alpha, new_beta = alpha, beta
+        branches: int = 0
+        sorted_list = self._order_move_list_simple(board_state, attacks, env)
+        for _, move in sorted_list:
+            new_board_state = board.move_piece(move, board_state, True)
+            current_score = env.chess.score.calc_score(board, new_board_state)
+
+            #Maximize
+            if maximizePlayer:
+                #Prune if other player got a good score
+                if current_score > new_beta and prune:
+                    return current_score, branches
+                #Maximize
+                if current_score > best_score:
+                    best_score = current_score
+                elif current_score == best_score and random.random() < self.random_chance:
+                    best_score = current_score
+                new_alpha = max(new_alpha, best_score)
+            #Minimize
+            else:
+                #Prune if other player got a good score
+                if current_score < new_alpha and prune:
+                    return current_score, branches
+                #Minimize
+                if current_score < best_score:
+                    best_score = current_score
+                elif current_score == best_score and random.random() < self.random_chance:
+                    best_score = current_score
+                new_beta = min(new_beta, best_score)
+            branches += 1
+        return best_score, branches
     
     def minimax(self, 
                 env, 
@@ -57,7 +126,7 @@ class CustomAI(BaseAI):
         branches: int = 0
 
         move_list = board_state.white_moves if maximizePlayer else board_state.black_moves
-        sorted_list = self._order_move_list(board_state, move_list, env)
+        sorted_list = self._order_move_list(board, board_state, move_list, env)
         
         #If depth == 0, return score of game
         for _, move in sorted_list:
@@ -70,7 +139,14 @@ class CustomAI(BaseAI):
             if maximizePlayer:
                 #Recurse to a depth of 0
                 if depth == 0:
-                    current_score = env.chess.score.calc_score(board, new_board_state)
+                    attacks = []
+                    for r, f in new_board_state.black_positions:
+                        piece: ChessPiece = new_board_state.piece_board[r * board.ranks + f]
+                        attacks += piece.attacks
+                    if len(attacks) != 0:
+                        current_score, current_branches = self._calc_attacks(env, board, new_board_state, attacks, False, new_alpha, new_beta, prune)
+                    else:
+                        current_score = env.chess.score.calc_score(board, new_board_state)
                 else:
                     current_score, deep_move_list_temp, current_branches = self.minimax(env, board, new_board_state, depth - 1, False, prune, new_alpha, new_beta)
                 current_branches += 1
@@ -93,7 +169,14 @@ class CustomAI(BaseAI):
             else:
                 #Recurse to a depth of 0
                 if depth == 0:
-                    current_score = env.chess.score.calc_score(board, new_board_state)
+                    attacks = []
+                    for r, f in new_board_state.white_positions:
+                        piece: ChessPiece = new_board_state.piece_board[r * board.ranks + f]
+                        attacks += piece.attacks
+                    if len(attacks) != 0:
+                        current_score, current_branches = self._calc_attacks(env, board, new_board_state, attacks, True, new_alpha, new_beta, prune)
+                    else:
+                        current_score = env.chess.score.calc_score(board, new_board_state)
                 else:
                     current_score, deep_move_list_temp, current_branches = self.minimax(env, board, new_board_state, depth - 1, True, prune, new_alpha, new_beta)
                 current_branches += 1

@@ -14,7 +14,31 @@ class ChessScore:
         self.score = 0
         self.position_bias = {}
         self.max_pieces = 0
+        self.max_half_moves = 0
+
+    def get_piece_worth(self, piece: ChessPiece):
+        if piece is None:
+            return 0
+        if piece.type == "P":
+            return self.piece_scores['PAWN']
+        elif piece.type == "N":
+            return self.piece_scores['KNIGHT']
+        elif piece.type == 'B':
+            return self.piece_scores['BISHOP']
+        elif piece.type == "R":
+            return self.piece_scores['ROOK']
+        elif piece.type == 'Q':
+            return self.piece_scores['QUEEN']
+        elif piece.type == "K":
+            return self.piece_scores['KING']
+        else:
+            return 0
         
+    def get_position_difference(self, piece: ChessPiece, old_position: tuple, new_position: tuple, board: ChessBoard, board_state: ChessBoardState) -> int:
+        position_old = old_position if piece.is_white else (board.ranks - old_position[0] - 1, old_position[1])
+        position_new = new_position if piece.is_white else (board.ranks - new_position[0] - 1, new_position[1])
+        return self.calc_piece_pos_bias(piece.type, position_new, board, board_state) - self.calc_piece_pos_bias(piece.type, position_old, board, board_state)
+
     def get_piece_score_king(self, piece: ChessPiece, board: ChessBoard, board_state: ChessBoardState) -> int:
         """Get the score of a piece type.
 
@@ -94,7 +118,10 @@ class ChessScore:
         Returns:
             ChessScore: Returns self for chaining.
         """
-        if board_state.check_status is None:
+
+        if board_state.half_move >= self.max_half_moves:
+            return 0
+        elif board_state.check_status is None:
             return self._get_base_score(board, board_state)
         else:
             if board_state.check_status == 2:
@@ -120,7 +147,9 @@ class ChessScore:
         Returns:
             ChessScore: Returns self for chaining.
         """
-        if board_state.check_status is None:
+        if board_state.half_move >= self.max_half_moves:
+            self.score = 0
+        elif board_state.check_status is None:
             self.score = self._get_base_score(board, board_state)
         else:
             if board_state.check_status == 2:
