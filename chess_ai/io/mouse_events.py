@@ -9,7 +9,9 @@ class MouseEvents:
     def __init__(self, *args, **kwargs) -> None:
         """Event Handler for mouse events.
         """
-        pass
+        self.mouse_down = False
+        self.original_position = (0,0)
+        self.old_world_origin = (0,0)
 
     def _get_move(self, old_selected: tuple, new_selected: tuple, env) -> ChessMove | None:
         """Get the move from the list of available moves if they match the old_selected and new_selected positions.
@@ -60,13 +62,19 @@ class MouseEvents:
             else:
                 env.io.selected_position = None
 
-    def mouse_events(self, event, env):
+    def mouse_events(self, event, mouse_down: bool, env):
         """Listen for all mouse events. Updates env.
 
         Args:
             event (_type_): The event object.
             env (Environment): The environment.
         """
-        if event.button == 1:
+        if event.button == 1 and mouse_down:
             self._mouse_left_click_events(event, env)
+        if mouse_down:
+            self.mouse_down = True
+            self.original_position = env.io.input_position
+            self.old_world_origin = env.visual.world_origin
+        else:
+            self.mouse_down = False
 

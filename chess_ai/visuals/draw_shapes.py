@@ -47,12 +47,13 @@ class VisualShapes:
         for file in range(env.chess.board.files):
             y = yo
             for rank in range(env.chess.board.ranks):
-                if white:
-                    rect = Rect(x, y, size, size)
-                    draw.rect(surface, env.visual.board_white_color, rect)
-                else:
-                    rect = Rect(x, y, size, size)
-                    draw.rect(surface, env.visual.board_black_color, rect)
+                if x + size >= 0 and x <= env.visual.w_width and y + size >= 0 and y <= env.visual.w_height:
+                    if white:
+                        rect = Rect(x, y, size, size)
+                        draw.rect(surface, env.visual.board_white_color, rect)
+                    else:
+                        rect = Rect(x, y, size, size)
+                        draw.rect(surface, env.visual.board_black_color, rect)
                 white = False if white else True
                 y = y + size
             white = False if white else True
@@ -112,19 +113,19 @@ class VisualShapes:
             while file_index < env.chess.board.files:
 
                 #Get place image from chess board
-                r, f = env.visual.adjust_perspective(rank_index, file_index, env)
-                piece: ChessPiece = env.chess.board.state.piece_board[r * env.chess.board.files + f]
-                if piece is not None:
-                    color_str = "w_" if piece.is_white else "b_"
-                    img  = env.piece_images[color_str + piece.type.lower()]
-                    #Get Size of Piece
-                    size = env.visual.board_square_size * env.visual.zoom
-                    #Get Position of Piece
-                    img_x = x + file_index * size
-                    img_y = y + rank_index * size
-                    #Scale and place image on canvas
-                    img = transform.scale(img, (size, size))
-                    surface.blit(img, (img_x, img_y))
+                img_x = x + file_index * size
+                img_y = y + rank_index * size
+                if img_x + size >= 0 and img_x <= env.visual.w_width and img_y + size >= 0 and img_y <= env.visual.w_height:
+                    r, f = env.visual.adjust_perspective(rank_index, file_index, env)
+                    piece: ChessPiece = env.chess.board.state.piece_board[r * env.chess.board.files + f]
+                    if piece is not None:
+                        color_str = "w_" if piece.is_white else "b_"
+                        img  = env.piece_images[color_str + piece.type.lower()]
+                        #Get Size of Piece
+                        size = env.visual.board_square_size * env.visual.zoom
+                        #Scale and place image on canvas
+                        img = transform.scale(img, (size, size))
+                        surface.blit(img, (img_x, img_y))
                 file_index += 1
             rank_index += 1
         return self
@@ -314,7 +315,8 @@ class VisualShapes:
             color = env.visual.colors["WHITE"]
             xn, yn = node.screen_position[0], node.screen_position[1]
             x, y = xo + xn * env.visual.zoom, yo + yn * env.visual.zoom
-            draw.circle(surface, color, (x,y), self.width/2 * env.visual.zoom)
+            if x >= 0 and x <= env.visual.w_width:
+                draw.circle(surface, color, (x,y), self.width/2 * env.visual.zoom)
             for child_pos in node.child_positions:
                 x1, y1 = xo + node.screen_position[0] * env.visual.zoom, yo + node.screen_position[1] * env.visual.zoom
                 x2, y2 = xo + child_pos[0] * env.visual.zoom, yo + child_pos[1] * env.visual.zoom
@@ -336,6 +338,9 @@ class VisualShapes:
         self._draw_background(surface, env)._draw_board(surface, env)._draw_highlights(surface, env)._draw_pieces(surface, env)
         self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
         self.draw_tree(surface, env)
+        board_origin = env.visual.get_board_origin()
+        draw.circle(surface, env.visual.colors["GREEN"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
+        draw.circle(surface, env.visual.colors["RED"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
         return self
     
 
