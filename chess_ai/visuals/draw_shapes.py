@@ -1,13 +1,14 @@
-from pygame import Surface, Rect, draw, transform
+from pygame import Surface, Rect, draw, transform, font
 
 from ..chess_logic.chess_piece import ChessPiece
 from ..chess_logic.chess_move import ChessMove
 #from ..environment import Environment
 
 class Node:
-    def __init__(self, score: int, move: ChessMove, screen_position: tuple, *args, **kwargs) -> None:
+    def __init__(self, score: int, move: ChessMove, maximize: bool, screen_position: tuple, *args, **kwargs) -> None:
         self.score = score
         self.move = move
+        self.maximize = maximize
         self.screen_position = screen_position
         self.child_positions = []
 
@@ -15,8 +16,8 @@ class VisualShapes:
     def __init__(self, *args, **kwargs) -> None:
         """Draws Shapes on the sreeen.
         """
-        self.height = 400
-        self.width = 20
+        self.height = 100
+        self.width = 80
         self.tree = []
 
     def _draw_background(self, surface: Surface, env) -> "VisualShapes":
@@ -42,7 +43,7 @@ class VisualShapes:
         Returns:
             VisualShapes: Self for chaining.
         """
-        white = False
+        white = True
         x, yo, size = env.visual.get_board_origin()
         for file in range(env.chess.board.files):
             y = yo
@@ -273,54 +274,84 @@ class VisualShapes:
         node_list = []
         this_node_value = sub_tree_node[0]
         this_node_sub_tree = sub_tree_node[1]
-        this_node = Node(this_node_value[0], this_node_value[1], (0, 0))
+        this_node = Node(this_node_value[0], this_node_value[1], this_node_value[2], (0, 0))
         node_list.append(this_node)
         width = len(this_node_sub_tree)
-        mid = int(width/2)
         
         #Loop over children
         child_x_diff =  self.width 
         child_x, child_y = origin_x, origin_y + self.height 
         count = 0
+        sqrt = int(len(this_node_sub_tree)**0.5)
+        biggest_x = child_x
+        smallest_x = 1000000
+        biggest_y = child_y
         for node in this_node_sub_tree:
             #Depth > 0: [(best_score, best_move_list[0]), current_tree]
             if isinstance(node, list):
-                sub_node_list, child_x = self._tree_recurse(node, env, child_x, child_y)
+                sub_node_list, new_child_x, new_child_y = self._tree_recurse(node, env, child_x + child_x_diff , child_y+self.height )
                 this_node.child_positions.append((sub_node_list[0].screen_position))
                 node_list += sub_node_list
+                smallest_x = new_child_x if new_child_x < smallest_x else smallest_x
+                biggest_x = new_child_x if new_child_x > biggest_x else biggest_x
+                biggest_y = new_child_y if new_child_y > biggest_y else biggest_y
+                if count == sqrt:
+                    child_x = origin_x
+                    child_y = biggest_y
+                    count = 0
+                else:
+                    child_x = new_child_x + child_x_diff 
+                    count += 1
             #Depth == 0 (score, move)
             else:
-                new_node = Node(node[0], node[1], (child_x, child_y))
+                new_node = Node(node[0], node[1], node[2], (child_x, child_y))
                 this_node.child_positions.append((child_x, child_y))
                 node_list.append(new_node)
-                if count == mid:
-                    child_x = origin_x + self.width /2
-                    child_y += self.width * 2
-            child_x += child_x_diff
-            count += 1
-        this_node.screen_position = origin_x + (child_x-origin_x)/2, origin_y
-        return node_list, child_x
+                smallest_x = origin_x if origin_x < smallest_x else smallest_x
+                biggest_y = child_y if child_y > biggest_y else biggest_y
+                if count == sqrt:
+                    biggest_x = child_x
+                    child_x = origin_x
+                    child_y += self.width
+                    count = 0
+                else:
+                    child_x += child_x_diff 
+                    count += 1
+        this_node.screen_position = smallest_x + (biggest_x-smallest_x)/2, origin_y
+        return node_list, biggest_x, biggest_y
     
     def generate_tree(self, env):
         tree = env.chess.tree
         if len(tree) > 0:
-            node_list, _ = self._tree_recurse(tree, env, 0, 0)
+            node_list, _, _ = self._tree_recurse(tree, env, 0, 0)
             self.tree = node_list
 
     def draw_tree(self, surface: Surface, env):
         node: Node
         xo, yo, size = env.visual.get_board_origin()
         yo = yo + size * (env.chess.board.ranks + 2)
+        fontsize = int(env.visual.fontsize * env.visual.zoom * 0.5)
+        rf_font = font.Font('freesansbold.ttf', fontsize)
         for node in self.tree:
-            color = env.visual.colors["WHITE"]
+            color = env.visual.colors["BOARD_DARK"] if len(node.child_positions) == 0 else env.visual.colors["WHITE"] if node.maximize else env.visual.colors["GRAY"]
             xn, yn = node.screen_position[0], node.screen_position[1]
             x, y = xo + xn * env.visual.zoom, yo + yn * env.visual.zoom
-            if x >= 0 and x <= env.visual.w_width:
-                draw.circle(surface, color, (x,y), self.width/2 * env.visual.zoom)
+            xt, yt = x - self.width * env.visual.zoom * 0.25, y - self.width * env.visual.zoom * 0.25
             for child_pos in node.child_positions:
                 x1, y1 = xo + node.screen_position[0] * env.visual.zoom, yo + node.screen_position[1] * env.visual.zoom
                 x2, y2 = xo + child_pos[0] * env.visual.zoom, yo + child_pos[1] * env.visual.zoom
                 draw.line(surface, color, (x1, y1), (x2, y2))
+            if x >= 0 and x <= env.visual.w_width:
+                draw.circle(surface, color, (x,y), self.width/2 * env.visual.zoom)
+                if node.move is not None:
+                    text2 = f"{node.move.piece.position}->{node.move.new_position}"
+                    turn_text2 = rf_font.render(text2, False, env.visual.colors["BLUE"])
+                    surface.blit(turn_text2, (xt, yt+fontsize))            
+                text1 = f"{node.score}"        
+                turn_text = rf_font.render(text1, False, env.visual.colors["BLUE"])
+                surface.blit(turn_text, (xt, yt))
+                
+
 
 
 

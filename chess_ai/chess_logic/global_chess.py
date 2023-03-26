@@ -37,7 +37,7 @@ class GlobalChess:
         self.game_ended = False
         self.max_half_moves = max_half_moves
         self.tree = []
-        self.max_depth = 1
+        self.max_depth = 2
         self.random_chance = 0.2
     
     def _calc_check_status_str(self) -> "GlobalChess":
@@ -150,17 +150,17 @@ class GlobalChess:
             else:
                 env.sound.play("move-self", env)
         
-        moves = self.board.state.white_moves if self.board.state.whites_turn else self.board.state.black_moves
-        best_score, best_move_list, branches = self.minimax(env, self.board, self.board.state, self.max_depth, self.board.state.whites_turn, False, create_tree=True)
-        if best_move_list[0] is not None:
-            move_str = ""
-            for move in best_move_list:
-                if move is not None:
-                    move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
-                else:
-                    move_str = move_str + " NONE"
-            print(f"DONE! Branches Checked: {branches} and found Best Move: {move_str} with best score: {best_score}")
-        env.visual.shapes.generate_tree(env)
+        # moves = self.board.state.white_moves if self.board.state.whites_turn else self.board.state.black_moves
+        # best_score, best_move_list, branches = self.minimax(env, self.board, self.board.state, self.max_depth, self.board.state.whites_turn, True, create_tree=True)
+        # if best_move_list[0] is not None:
+        #     move_str = ""
+        #     for move in best_move_list:
+        #         if move is not None:
+        #             move_str = move_str + " " + env.chess._calc_move_str(move, None, None)
+        #         else:
+        #             move_str = move_str + " NONE"
+        #     print(f"DONE! Branches Checked: {branches} and found Best Move: {move_str} with best score: {best_score}")
+        # env.visual.shapes.generate_tree(env)
 
 
     def load_from_history(self, frame: dict) -> "GlobalChess":
@@ -352,7 +352,7 @@ class GlobalChess:
                     else:
                         current_score = env.chess.score.calc_score(board, new_board_state)
                     if create_tree:
-                        current_tree.append((current_score, move))
+                        current_tree.append((current_score, move, maximizePlayer))
                 else:
                     current_score, deep_move_list_temp, current_branches, branch_tree = self.minimax(env, board, new_board_state, depth - 1, False, prune, new_alpha, new_beta, create_tree)
                     if create_tree:
@@ -361,7 +361,8 @@ class GlobalChess:
 
                 #Prune if other player got a good score
                 if current_score > new_beta and prune:
-                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
+                    worst_score = BIG_NUMBER if maximizePlayer else -BIG_NUMBER
+                    return worst_score, best_move_list + deep_move_list_temp, branches + current_branches, [(worst_score, best_move_list[0], maximizePlayer), current_tree]
                 
                 #Maximize
                 if current_score > best_score:
@@ -386,7 +387,7 @@ class GlobalChess:
                     else:
                         current_score = env.chess.score.calc_score(board, new_board_state)
                     if create_tree:
-                        current_tree.append((current_score, move))
+                        current_tree.append((current_score, move, maximizePlayer))
                 else:
                     current_score, deep_move_list_temp, current_branches, branch_tree = self.minimax(env, board, new_board_state, depth - 1, True, prune, new_alpha, new_beta, create_tree)
                     if create_tree:
@@ -395,7 +396,8 @@ class GlobalChess:
 
                 #Prune if other player got a good score
                 if current_score < new_alpha and prune:
-                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
+                    worst_score = BIG_NUMBER if maximizePlayer else -BIG_NUMBER
+                    return worst_score, best_move_list + deep_move_list_temp, branches + current_branches, [(worst_score, best_move_list[0], maximizePlayer), current_tree]
 
                 #Minimize
                 if current_score < best_score:
@@ -426,7 +428,7 @@ class GlobalChess:
         #Return new Data
         if depth == self.max_depth:
             if create_tree:
-                self.tree = [(best_score, best_move_list[0]), current_tree]
+                self.tree = [(best_score, best_move_list[0], maximizePlayer), current_tree]
             return best_score, best_move_list + deep_move_list, branches
         else:
-            return best_score, best_move_list + deep_move_list, branches, [(best_score, best_move_list[0]), current_tree]
+            return best_score, best_move_list + deep_move_list, branches, [(best_score, best_move_list[0], maximizePlayer), current_tree]

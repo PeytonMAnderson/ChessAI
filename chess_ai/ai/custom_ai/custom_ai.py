@@ -108,7 +108,6 @@ class CustomAI(BaseAI):
                 prune: bool = True, 
                 alpha: int = -BIG_NUMBER, 
                 beta: int = BIG_NUMBER,
-                create_tree: bool = False
     ):
         """Find the best move using minimax with Alpha-Beta Pruning.
 
@@ -119,8 +118,6 @@ class CustomAI(BaseAI):
         """
         
         #Get Variables
-        if create_tree:
-            self.tree = [] if depth == self.max_depth else self.tree
         current_tree = []
         best_score = -BIG_NUMBER if maximizePlayer else BIG_NUMBER
         new_alpha, new_beta = alpha, beta
@@ -151,17 +148,14 @@ class CustomAI(BaseAI):
                         current_score, current_branches = self._calc_attacks(env, board, new_board_state, attacks, False, new_alpha, new_beta, prune)
                     else:
                         current_score = env.chess.score.calc_score(board, new_board_state)
-                    if create_tree:
-                        current_tree.append((current_score, move))
                 else:
-                    current_score, deep_move_list_temp, current_branches, branch_tree = self.minimax(env, board, new_board_state, depth - 1, False, prune, new_alpha, new_beta)
-                    if create_tree:
-                        current_tree.append(branch_tree)
+                    current_score, deep_move_list_temp, current_branches = self.minimax(env, board, new_board_state, depth - 1, False, prune, new_alpha, new_beta)
                 current_branches += 1
 
                 #Prune if other player got a good score
                 if current_score > new_beta and prune:
-                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
+                    worst_score = BIG_NUMBER if maximizePlayer else -BIG_NUMBER
+                    return worst_score, best_move_list + deep_move_list_temp, branches + current_branches
                 
                 #Maximize
                 if current_score > best_score:
@@ -191,7 +185,8 @@ class CustomAI(BaseAI):
 
                 #Prune if other player got a good score
                 if current_score < new_alpha and prune:
-                    return current_score, best_move_list + deep_move_list_temp, branches + current_branches
+                    worst_score = BIG_NUMBER if maximizePlayer else -BIG_NUMBER
+                    return worst_score, best_move_list + deep_move_list_temp, branches + current_branches
 
                 #Minimize
                 if current_score < best_score:
@@ -220,12 +215,7 @@ class CustomAI(BaseAI):
                     print(f"Depth: {depth}, Best Score: {best_score}, Total Branches: {branches} Current Branches: {current_branches}, Current Score: {current_score} (Move: {move_str}) Time Elapsed: {e} ms Alpha: {new_alpha}, Beta: {new_beta}")
 
         #Return new Data
-        if depth == self.max_depth:
-            if create_tree:
-                self.tree = current_tree
-            return best_score, best_move_list + deep_move_list, branches
-        else:
-            return best_score, best_move_list + deep_move_list, branches, current_tree
+        return best_score, best_move_list + deep_move_list, branches
         
     def execute_turn(self, board: ChessBoard, env):
         print(f"Calculating next move...")
