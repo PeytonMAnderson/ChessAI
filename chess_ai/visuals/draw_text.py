@@ -67,10 +67,30 @@ class VisualText:
         check_text = rf_font.render(f"Check: {env.chess.check_status_str}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
         check_pos = (x, y + fontsize * 4)
 
+        #Castle Status
+        castle_text = rf_font.render(f"Castle Availability: {env.chess.board.state.castle_avail}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+        castle_pos = (x, y + fontsize * 6)
+
+        #En Passant Status
+        enpass_text = rf_font.render(f"En Passant Availability: {env.chess.board.state.en_passant}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+        enpass_pos = (x, y + fontsize * 8)
+
+        #Half Move Status
+        half_text = rf_font.render(f"Half Clock: {env.chess.board.state.half_move} / {env.chess.max_half_moves}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+        half_pos = (x, y + fontsize * 10)
+
+        #Half Move Status
+        full_text = rf_font.render(f"Full Moves: {env.chess.board.state.full_move}", True, env.visual.colors['WHITE'], env.visual.colors['BLACK'])
+        full_pos = (x, y + fontsize * 12)
+
         #Blit
         surface.blit(turn_text, turn_pos)
         surface.blit(lm_text, lm_pos)
         surface.blit(check_text, check_pos)
+        surface.blit(castle_text, castle_pos)
+        surface.blit(enpass_text, enpass_pos)
+        surface.blit(half_text, half_pos)
+        surface.blit(full_text, full_pos)
         return self  
 
     def draw_score_text(self, surface: Surface, xo: int, yo: int, score: int, size: int, env) -> "VisualText":

@@ -4,11 +4,20 @@ from ..chess_logic.chess_piece import ChessPiece
 from ..chess_logic.chess_move import ChessMove
 #from ..environment import Environment
 
+class Node:
+    def __init__(self, score: int, move: ChessMove, screen_position: tuple, *args, **kwargs) -> None:
+        self.score = score
+        self.move = move
+        self.screen_position = screen_position
+        self.child_positions = []
+
 class VisualShapes:
     def __init__(self, *args, **kwargs) -> None:
         """Draws Shapes on the sreeen.
         """
-        pass
+        self.height = 400
+        self.width = 20
+        self.tree = []
 
     def _draw_background(self, surface: Surface, env) -> "VisualShapes":
         """Draws the background.
@@ -258,6 +267,59 @@ class VisualShapes:
         draw.rect(surface, env.visual.colors['GRAY'], black_rect)
         env.visual.text.draw_score_text(surface, x + black_size, y, score_diff, size/2, env)
         return self
+    
+    def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
+        node_list = []
+        this_node_value = sub_tree_node[0]
+        this_node_sub_tree = sub_tree_node[1]
+        this_node = Node(this_node_value[0], this_node_value[1], (0, 0))
+        node_list.append(this_node)
+        width = len(this_node_sub_tree)
+        mid = int(width/2)
+        
+        #Loop over children
+        child_x_diff =  self.width 
+        child_x, child_y = origin_x, origin_y + self.height 
+        count = 0
+        for node in this_node_sub_tree:
+            #Depth > 0: [(best_score, best_move_list[0]), current_tree]
+            if isinstance(node, list):
+                sub_node_list, child_x = self._tree_recurse(node, env, child_x, child_y)
+                this_node.child_positions.append((sub_node_list[0].screen_position))
+                node_list += sub_node_list
+            #Depth == 0 (score, move)
+            else:
+                new_node = Node(node[0], node[1], (child_x, child_y))
+                this_node.child_positions.append((child_x, child_y))
+                node_list.append(new_node)
+                if count == mid:
+                    child_x = origin_x + self.width /2
+                    child_y += self.width * 2
+            child_x += child_x_diff
+            count += 1
+        this_node.screen_position = origin_x + (child_x-origin_x)/2, origin_y
+        return node_list, child_x
+    
+    def generate_tree(self, env):
+        tree = env.chess.tree
+        if len(tree) > 0:
+            node_list, _ = self._tree_recurse(tree, env, 0, 0)
+            self.tree = node_list
+
+    def draw_tree(self, surface: Surface, env):
+        node: Node
+        xo, yo, size = env.visual.get_board_origin()
+        yo = yo + size * (env.chess.board.ranks + 2)
+        for node in self.tree:
+            color = env.visual.colors["WHITE"]
+            xn, yn = node.screen_position[0], node.screen_position[1]
+            x, y = xo + xn * env.visual.zoom, yo + yn * env.visual.zoom
+            draw.circle(surface, color, (x,y), self.width/2 * env.visual.zoom)
+            for child_pos in node.child_positions:
+                x1, y1 = xo + node.screen_position[0] * env.visual.zoom, yo + node.screen_position[1] * env.visual.zoom
+                x2, y2 = xo + child_pos[0] * env.visual.zoom, yo + child_pos[1] * env.visual.zoom
+                draw.line(surface, color, (x1, y1), (x2, y2))
+
 
 
     def draw_all_shapes(self, surface: Surface, env) -> "VisualShapes":
@@ -273,6 +335,7 @@ class VisualShapes:
         #Draw Background
         self._draw_background(surface, env)._draw_board(surface, env)._draw_highlights(surface, env)._draw_pieces(surface, env)
         self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
+        self.draw_tree(surface, env)
         return self
     
 

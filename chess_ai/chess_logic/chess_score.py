@@ -53,17 +53,17 @@ class ChessScore:
         
         position = piece.position if piece.is_white else (board.ranks - piece.position[0] - 1, piece.position[1])
         if piece.type == "P":
-            return self.piece_scores['PAWN'] + self.calc_piece_pos_bias("P", position, board, board_state)
+            return self.piece_scores['PAWN'] + self.calc_piece_pos_bias("P", position, board, board_state) * 0.1
         elif piece.type == "N":
-            return self.piece_scores['KNIGHT'] + self.calc_piece_pos_bias("N", position, board, board_state)
+            return self.piece_scores['KNIGHT'] + self.calc_piece_pos_bias("N", position, board, board_state) * 0.1
         elif piece.type == 'B':
-            return self.piece_scores['BISHOP'] + self.calc_piece_pos_bias("B", position, board, board_state)
+            return self.piece_scores['BISHOP'] + self.calc_piece_pos_bias("B", position, board, board_state) * 0.1
         elif piece.type == "R":
-            return self.piece_scores['ROOK'] + self.calc_piece_pos_bias("R", position, board, board_state)
+            return self.piece_scores['ROOK'] + self.calc_piece_pos_bias("R", position, board, board_state) * 0.1
         elif piece.type == 'Q':
-            return self.piece_scores['QUEEN'] + self.calc_piece_pos_bias("Q", position, board, board_state)
+            return self.piece_scores['QUEEN'] + self.calc_piece_pos_bias("Q", position, board, board_state) * 0.1
         elif piece.type == "K":
-            return self.piece_scores['KING'] + self.calc_piece_pos_bias("K", position, board, board_state)
+            return self.piece_scores['KING'] + self.calc_piece_pos_bias("K", position, board, board_state) * 0.1
         else:
             return 0
 
