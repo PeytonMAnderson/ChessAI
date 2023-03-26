@@ -100,6 +100,27 @@ class GlobalVisual:
             print("WARNING: The color type is not supported.")
             return (0, 0, 0)
         
+    def _scale_transform(self, scale_factor: float, x: float, y: float, scale_xo: float, scale_yo: float) -> tuple[float, float]:
+        """Scale Transforms a point to a new location based off the scaling factor and the origin of the scale.
+        Returns:
+            tuple[float, float]: (x, y)
+        """
+        temp_x, temp_y = x - scale_xo, y - scale_yo
+        return temp_x * scale_factor, temp_y * scale_factor
+    
+    def _translation_transform(self, float, x: float, y, new_origin_x: int, new_origin_y: int) -> tuple[float, float]:
+        """Traslates a point to a new location based off the new world origin.
+        Returns:
+            tuple[float, float]: (x, y)
+        """
+        return new_origin_x + x, new_origin_y + y
+    
+    def translate_world(self, new_origin_x: int, new_origin_y: int) -> None:
+        pass
+    
+    def scale_world(self, scale_factor: float, scale_xo: float, scale_yo: float) -> None:
+        pass
+
     def get_board_origin(self) -> tuple[int, int, int]:
         """Gets the board origin from the world origin offset and board origin offset, and the size of the squares.
         Returns:
@@ -108,7 +129,7 @@ class GlobalVisual:
         x0, y0 = self.world_origin
         x_b, y_b = self.board_origin
         size = self.board_square_size * self.zoom
-        x, y = x0 + x_b, y0 + y_b
+        x, y = x0 + x_b * self.zoom, y0 + y_b * self.zoom
         return x, y, size
 
     def set_from_yaml(self, yaml_path: str) -> "GlobalVisual":

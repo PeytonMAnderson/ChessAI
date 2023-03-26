@@ -29,22 +29,7 @@ class Events:
 
         #Mouse Events
         if event.type == pygame.MOUSEWHEEL:
-            ratio_minus = round(1 - env.io.zoom_speed, 3)
-            ratio_plus = round(1 + env.io.zoom_speed, 3)
-            if event.y < 0:
-                xo, yo = env.io.input_position[0] * env.visual.zoom, env.io.input_position[1] * env.visual.zoom
-                env.visual.zoom = env.visual.zoom * ratio_minus
-                xf, yf = env.io.input_position[0] * env.visual.zoom, env.io.input_position[1] * env.visual.zoom
-                xd, yd = xf - xo, yf - yo
-                xw, yw = env.visual.world_origin
-                env.visual.world_origin = xw - xd, yw - yd
-            elif event.y > 0:
-                xo, yo = env.io.input_position[0] * env.visual.zoom, env.io.input_position[1] * env.visual.zoom
-                env.visual.zoom = env.visual.zoom * ratio_plus
-                xf, yf = env.io.input_position[0] * env.visual.zoom, env.io.input_position[1] * env.visual.zoom
-                xd, yd = xf - xo, yf - yo
-                xw, yw = env.visual.world_origin
-                env.visual.world_origin = xw - xd, yw - yd
+            self.mouse.scroll_event(event, env)
         if event.type == pygame.MOUSEMOTION:
             env.io.input_position = pygame.mouse.get_pos()
             if self.mouse.mouse_down and env.io.selected_position is None:

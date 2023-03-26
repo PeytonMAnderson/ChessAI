@@ -370,8 +370,11 @@ class VisualShapes:
         self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
         self.draw_tree(surface, env)
         board_origin = env.visual.get_board_origin()
-        draw.circle(surface, env.visual.colors["GREEN"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
-        draw.circle(surface, env.visual.colors["RED"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
+        draw.circle(surface, env.visual.colors["RED"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
+        draw.circle(surface, env.visual.colors["GREEN"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
+        xb = board_origin[0] + env.visual.board_square_size * env.visual.zoom * env.chess.board.files
+        yb = board_origin[1] + env.visual.board_square_size * env.visual.zoom * env.chess.board.ranks
+        draw.circle(surface, env.visual.colors["BLUE"], (xb, yb), self.width/2 * env.visual.zoom)
         return self
     
 

@@ -78,3 +78,31 @@ class MouseEvents:
         else:
             self.mouse_down = False
 
+    def scroll_event(self, event, env):
+        ratio_minus = round(1 - env.io.zoom_speed, 3)
+        ratio_plus = round(1 + env.io.zoom_speed, 3)
+        if event.y < 0:
+            old_zoom = env.visual.zoom
+            new_zoom = env.visual.zoom * ratio_minus
+            env.visual.zoom = new_zoom
+
+            xw, yw = env.visual.world_origin[0], env.visual.world_origin[1]
+            xo, yo = xw + env.io.input_position[0] * old_zoom, yw + env.io.input_position[1] * old_zoom
+            xf, yf = xw + env.io.input_position[0] * new_zoom, yw + env.io.input_position[1] * new_zoom
+            xd, yd = int(xf - xo), int(yf - yo)
+            env.visual.world_origin = xw - xd * (1/ratio_minus), yw
+            print(f"{env.io.input_position}, {xo, yo} -> {xf, yf} ({xd, yd}) = {xf - xd, yf - yd}")
+
+        elif event.y > 0:
+            old_zoom = env.visual.zoom
+            new_zoom = env.visual.zoom * ratio_plus
+            env.visual.zoom = new_zoom
+            
+            xw, yw = env.visual.world_origin[0], env.visual.world_origin[1]
+            xo, yo = xw + env.io.input_position[0] * old_zoom, yw + env.io.input_position[1] * old_zoom
+            xf, yf = xw + env.io.input_position[0] * new_zoom, yw + env.io.input_position[1] * new_zoom
+            xd, yd = xf - xo, yf - yo
+            env.visual.world_origin = int(xw - xd * (1/ratio_plus)), yw
+            print(f"{env.io.input_position}, {xo, yo} -> {xf, yf} ({xd, yd}) = {int(xf - xd), int(yf - yd)}")
+            
+
