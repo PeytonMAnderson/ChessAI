@@ -342,7 +342,7 @@ class ChessBoard:
                             if whites_turn and king_position[0] == rank_i + 1 and abs(king_position[1] - file_i) == 1:
                                 return True
                             #White can attack with pawn if black king is 1 rank down and 1 file over left or right
-                            elif king_position[1] == rank_i - 1 and abs(king_position[1] - file_i) == 1:
+                            elif not whites_turn and king_position[0] == rank_i - 1 and abs(king_position[1] - file_i) == 1:
                                 return True
                         #If the other King is able to "attack"
                         elif defending_piece.type == "K" and abs(rank_i - king_position[0]) <= 1 and abs(file_i - king_position[1]) <= 1:
@@ -373,14 +373,21 @@ class ChessBoard:
         return self._get_king_vision_in_check(new_piece_board, new_king_positions, chess_board_state.whites_turn)
 
     
-    def calc_check_status(self, chess_board_state: ChessBoardState) -> "ChessBoardState":
+    def calc_check_status(self, chess_board_state: ChessBoardState, check_status_semi_updated: bool = False) -> "ChessBoardState":
         """Calculates the check status of the current board. The move list must be up to date.
 
             Returns: Self for chaining.
         """
-        if chess_board_state.whites_turn:
-            #Get in check
+        #Get If Currently In Check
+        in_check:bool
+        if check_status_semi_updated:
+            #If Check status is in favor of Black and currently whites turn, or Check Status in favor of white and currently blacks turn, else no check
+            in_check = True if chess_board_state.check_status == 1 else False
+        else:
+            #Calculate check status manually
             in_check = self._get_king_vision_in_check(chess_board_state.piece_board, chess_board_state.king_positions, chess_board_state.whites_turn)
+
+        if chess_board_state.whites_turn:
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
                 if len(chess_board_state.white_moves) == 0:
@@ -393,8 +400,6 @@ class ChessBoard:
                 else:
                     chess_board_state.check_status = None
         else:
-            #Get in check
-            in_check = self._get_king_vision_in_check(chess_board_state.piece_board, chess_board_state.king_positions, chess_board_state.whites_turn)
             #Calc check status 0 = Stale, 1 = Check, 2 = Checkmate
             if in_check:
                 if len(chess_board_state.black_moves) == 0:
@@ -469,11 +474,15 @@ class ChessBoard:
         #Execute Move
         new_state = self._new_move(new_move, new_state, not create_new_state)
 
+        #Get Check status for generating new moves
+        in_check = self._get_king_vision_in_check(new_state.piece_board, new_state.king_positions, new_state.whites_turn)
+        new_state.check_status = 1 if in_check else None
+
         #Update Current Teams Moves
         new_state = self._calc_new_team_moves(new_state)
 
         #Update Check Status
-        new_state = self.calc_check_status(new_state)
+        new_state = self.calc_check_status(new_state, True)
 
         return new_state
     

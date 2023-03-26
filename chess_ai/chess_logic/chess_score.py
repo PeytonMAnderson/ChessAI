@@ -216,7 +216,7 @@ class ChessScore:
                 score_r = r_m - dis_r
                 score_f = f_m - dis_f
                 score = score_r + score_f
-                score_map[rank_i * board.files + file_i] = score / (r_m + f_m)
+                score_map[rank_i * board.files + file_i] = (score / (r_m + f_m)) * 0.5 + 0.5
                 file_i += 1
             rank_i += 1
         self.position_bias['N'] = score_map

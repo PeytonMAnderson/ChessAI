@@ -209,7 +209,7 @@ def _get_king_castle(piece, board, board_state, can_castle: tuple[bool, bool]) -
         #See if lane is open to rook
         rook: ChessPiece = None
         f_diff = 1 if king_side else -1
-        f_r = board.files - 1 if king_side else 0
+        f_rook = board.files - 1 if king_side else 0
         r, f = k_r, k_f + f_diff
         while f >= 0 and f < board.files:
             #If location is empty
@@ -219,26 +219,15 @@ def _get_king_castle(piece, board, board_state, can_castle: tuple[bool, bool]) -
                 f += f_diff
                 continue
             #If piece is rook, and the rook is the same color, and the rook is on the edge
-            if defending_piece.type == "R" and defending_piece.is_white == piece.is_white and f_r == f:
+            if defending_piece.type == "R" and defending_piece.is_white == piece.is_white and f_rook == f:
                 rook = defending_piece
             break
         
         #Check if new king position is safe
-        castle_safe = True
-        if piece.is_white:
-            for move in board_state.black_moves:
-                if (move.new_position[0], move.new_position[1]) == (k_r, k_f + f_diff * 2):
-                    castle_safe = False
-                    break
-        else:
-            for move in board_state.white_moves:
-                if (move.new_position[0], move.new_position[1]) == (k_r, k_f + f_diff * 2):
-                    castle_safe = False
-                    break
-
-        #If castle_safe, create castle move
-        if castle_safe and rook is not None:
-            moves.append(ChessMove(piece, (k_r, k_f + f_diff * 2), castle=True, castle_rook_move=ChessMove(rook, (k_r, k_f + f_diff))))
+        if rook is not None:
+            castle_move: ChessMove = ChessMove(piece, (k_r, k_f + f_diff * 2), castle=True, castle_rook_move=ChessMove(rook, (k_r, k_f + f_diff)))
+            if board.check_move_for_check(castle_move, board_state) is False:
+                moves.append(castle_move)
         king_side = True
     return moves
 
