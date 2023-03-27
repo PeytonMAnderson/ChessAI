@@ -95,18 +95,18 @@ class VisualShapes:
         )
 
     def _generate_board(self, board_origin: tuple, board_square_size: int, board_white_color: tuple, board_black_color: tuple, env) -> list:
-        x, yo = board_origin
+        xo, y = board_origin
         white = True
         board_list = []
-        for file in range(env.chess.board.files):
-            y = yo
-            for rank in range(env.chess.board.ranks):
+        for rank in range(env.chess.board.ranks):
+            x = xo
+            for file in range(env.chess.board.files):
                 color = board_white_color if white else board_black_color
                 board_list.append(Square(x, y, board_square_size, color))
                 white = False if white else True
-                y = y + board_square_size
+                x += board_square_size
             white = False if white else True
-            x = x + board_square_size
+            y += board_square_size
         return board_list
     
     def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
@@ -168,6 +168,18 @@ class VisualShapes:
             node_list, _, _ = self._tree_recurse(tree, env, x, y)
             self.tree = node_list
 
+    def draw_pieces(self, surface: Surface, env):
+        for rank_i in range(env.chess.board.ranks):
+            for file_i in range(env.chess.board.files):
+                    piece: ChessPiece = env.chess.board.state.piece_board[rank_i * env.chess.board.files + file_i]
+                    if piece is not None:
+                        pers_r, pers_f = (rank_i, file_i) if env.visual.perspective == "WHITE" else (env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1)
+                        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
+                        color_str = "w_" if piece.is_white else "b_"
+                        img  = env.piece_images[color_str + piece.type.lower()]
+                        img = transform.scale(img, (square.size, square.size))
+                        surface.blit(img, (square.x, square.y))
+            
     def _draw_background(self, surface: Surface, env) -> "VisualShapes":
         """Draws the background.
 
@@ -464,6 +476,9 @@ class VisualShapes:
         square: Square
         for square in self.board:
             square.draw(surface)
+
+        #Draw Pieces on board
+        self.draw_pieces(surface, env)
         
         #Draw Bar
         if self.score_bar is not None:
