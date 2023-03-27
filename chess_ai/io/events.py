@@ -35,12 +35,12 @@ class Events:
         if event.type == pygame.MOUSEMOTION:
             env.io.input_position = pygame.mouse.get_pos()
             if self.mouse.mouse_down and env.io.selected_position is None:
+                #Translate world if mouse moves while old down.
                 xd, yd = env.io.input_position[0] - self.mouse.original_position[0], env.io.input_position[1] - self.mouse.original_position[1]
                 if self.oxd != xd or self.oyd != yd:
                     xdd, ydd = xd - self.oxd, yd - self.oyd
                     self.oxd, self.oyd = xd, yd 
                     env.visual.translate_world(xdd, ydd)
-                env.visual.world_origin = self.mouse.old_world_origin[0] + xd, self.mouse.old_world_origin[1] + yd
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.mouse.mouse_events(event, True, env)
         if event.type == pygame.MOUSEBUTTONUP:

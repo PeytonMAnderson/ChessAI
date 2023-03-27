@@ -121,9 +121,22 @@ class GlobalVisual:
         square: Square
         for square in self.shapes.board:
             square.x, square.y = self._translation_transform(square.x, square.y, new_origin_x, new_origin_y)
+
+        #Translate Score Bar
+        self.shapes.score_bar.x, self.shapes.score_bar.y = self._translation_transform(self.shapes.score_bar.x, self.shapes.score_bar.y, new_origin_x, new_origin_y)
+        
     
     def scale_world(self, scale_factor: float, scale_xo: float, scale_yo: float) -> None:
-        pass
+        #Scale board
+        square: Square
+        for square in self.shapes.board:
+            square.x, square.y = self._scale_transform(scale_factor, square.x, square.y, scale_xo, scale_yo)
+            square.size = square.size * scale_factor
+
+        #Scale Score Bar
+        self.shapes.score_bar.x, self.shapes.score_bar.y = self._scale_transform(scale_factor, self.shapes.score_bar.x, self.shapes.score_bar.y, scale_xo, scale_yo)
+        self.shapes.score_bar.width = self.shapes.score_bar.width * scale_factor
+        self.shapes.score_bar.height = self.shapes.score_bar.height * scale_factor
 
     def get_board_origin(self) -> tuple[int, int, int]:
         """Gets the board origin from the world origin offset and board origin offset, and the size of the squares.
@@ -175,7 +188,7 @@ class GlobalVisual:
             self.board_valid_moves_color = self._get_color(settings['BOARD_VALID_MOVES_COLOR'], self.colors)
             self.fontcolor = self._get_color(settings['FONT_COLOR'], self.colors)
             self.shapes.create_board(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
-            self.shapes.create_score_bar(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
+            self.shapes.create_score_bar(self.board_origin, self.board_square_size, self.colors["WHITE"], self.colors["GRAY"], env)
 
         return self
     
