@@ -2,11 +2,49 @@ from pygame import Surface, Rect, draw, transform, font
 
 #from ..environment import Environment
 
+class TextObject:
+    def __init__(self, text: str, x: int, y: int, fontsize: int, color: int, *args, **kwargs) -> None:
+        self.text = text
+        self.x = x
+        self.y = y
+        self.size = fontsize
+        self.color = color
+
+    def draw(self, surface: Surface) -> None:
+        text_font = font.Font('freesansbold.ttf', int(self.size))
+        text = text_font.render(self.text, False, self.color)
+        surface.blit(text, (self.x, self.y))
+
 class VisualText:
     def __init__(self, *args, **kwargs) -> None:
         """Draws Text on the screen.
         """
-        pass
+        self.texts = []
+
+    def generate_rank_files(self, 
+                            board_origin: tuple, 
+                            board_square_size: int, 
+                            ranks: int, 
+                            files: int, 
+                            white_perspective: bool,
+                            fontsize: int,
+                            color: tuple
+                            ) -> None:
+        xo, yo = board_origin[0] - board_square_size/2, board_origin[1] + board_square_size/4
+        text_list = []
+        #Ranks
+        for i in range(ranks):
+            x, y = xo, yo + board_square_size * i
+            rank_str = str(ranks - i) if white_perspective else str(ranks + 1)
+            text_list.append(TextObject(rank_str, x, y, fontsize, color))
+        #Files
+        xo, yo = board_origin[0] + board_square_size/4, board_origin[1] - board_square_size/2
+        for i in range(files):
+            x, y = xo + board_square_size * i, yo 
+            file_str = chr(ord('a') + i) if white_perspective else chr(ord('a') + (files - i))
+            text_list.append(TextObject(file_str, x, y, fontsize, color))
+        self.texts += text_list
+
 
     def _draw_ranks_files(self, surface: Surface, env) -> "VisualText":
         """Draws the ranks and files labels on the screen.
@@ -128,4 +166,7 @@ class VisualText:
             VisualText: Self for chaining.
         """
         # self._draw_ranks_files(surface, env)._draw_game_stats(surface, env)
+        text: TextObject
+        for text in self.texts:
+            text.draw(surface)
         return self

@@ -5,7 +5,7 @@
 """
 import yaml
 
-from .draw_text import VisualText
+from .draw_text import VisualText, TextObject
 from .draw_shapes import VisualShapes, Square, Node, ScoreBar
 
 #Global Variable Class
@@ -124,6 +124,11 @@ class GlobalVisual:
 
         #Translate Score Bar
         self.shapes.score_bar.x, self.shapes.score_bar.y = self._translation_transform(self.shapes.score_bar.x, self.shapes.score_bar.y, new_origin_x, new_origin_y)
+
+        #Translate Text
+        text: TextObject
+        for text in self.text.texts:
+            text.x, text.y = self._translation_transform(text.x, text.y, new_origin_x, new_origin_y)
         
     
     def scale_world(self, scale_factor: float, scale_xo: float, scale_yo: float) -> None:
@@ -137,6 +142,12 @@ class GlobalVisual:
         self.shapes.score_bar.x, self.shapes.score_bar.y = self._scale_transform(scale_factor, self.shapes.score_bar.x, self.shapes.score_bar.y, scale_xo, scale_yo)
         self.shapes.score_bar.width = self.shapes.score_bar.width * scale_factor
         self.shapes.score_bar.height = self.shapes.score_bar.height * scale_factor
+
+        #Scale Text
+        text: TextObject
+        for text in self.text.texts:
+            text.x, text.y = self._scale_transform(scale_factor, text.x, text.y, scale_xo, scale_yo)
+            text.size = text.size * scale_factor
 
     def get_board_origin(self) -> tuple[int, int, int]:
         """Gets the board origin from the world origin offset and board origin offset, and the size of the squares.
@@ -177,6 +188,8 @@ class GlobalVisual:
             self.perspective = settings['PERSPECTIVE']
             self.world_origin = tuple(settings['WORLD_ORIGIN'])
             self.board_origin = tuple(settings['BOARD_ORIGIN'])
+
+            white_perspective = True if self.perspective == "WHITE" else False
             
             #Set Colors for certain visuals
             self.background_color = self._get_color(settings['BACKGROUND_COLOR'], self.colors)
@@ -189,6 +202,7 @@ class GlobalVisual:
             self.fontcolor = self._get_color(settings['FONT_COLOR'], self.colors)
             self.shapes.create_board(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
             self.shapes.create_score_bar(self.board_origin, self.board_square_size, self.colors["WHITE"], self.colors["GRAY"], env)
+            self.text.generate_rank_files(self.board_origin, self.board_square_size, env.chess.board.ranks, env.chess.board.files, white_perspective, self.fontsize_title, self.colors['WHITE'])
 
         return self
     
