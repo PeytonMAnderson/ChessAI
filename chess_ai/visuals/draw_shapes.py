@@ -5,12 +5,72 @@ from ..chess_logic.chess_move import ChessMove
 #from ..environment import Environment
 
 class Node:
-    def __init__(self, score: int, move: ChessMove, maximize: bool, screen_position: tuple, *args, **kwargs) -> None:
+    def __init__(self, x: int, y: int, radius: int, color: tuple, child_positions: tuple, score: int, move: ChessMove, *args, **kwargs) -> None:
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.xt = self.x - self.radius * 0.25
+        self.yt = self.y - self.radius * 0.25
+        self.color = color
         self.score = score
         self.move = move
-        self.maximize = maximize
-        self.screen_position = screen_position
         self.child_positions = []
+
+    def draw(self, surface: Surface, font: font.Font) -> None:
+        for child_pos in self.child_positions:
+            x2, y2 = child_pos
+            draw.line(surface, self.color, (self.x, self.y), (x2, y2))
+        if self.x >= 0:
+            draw.circle(surface, self.color, (self.x, self.y), self.radius)
+            if self.move is not None:
+                text2 = f"{self.move.piece.position}->{self.move.new_position}"
+                turn_text2 = font.render(text2, False, (100, 100, 255))
+                surface.blit(turn_text2, (self.xt, self.yt + font.get_height()))            
+            text1 = f"{self.score}"        
+            turn_text = font.render(text1, False, (100, 100, 255))
+            surface.blit(turn_text, (self.xt, self.yt))
+
+class Square:
+    def __init__(self, xo: int, yo: int, size: int, color: tuple, *args, **kwargs) -> None:
+        self.x = xo
+        self.y = yo
+        self.size = size
+        self.color = color
+
+    def draw(self, surface: Surface) -> None:
+        rect = Rect(self.x, self.y, self.size, self.size)
+        draw.rect(surface, self.color, rect)
+
+class ScoreBar:
+    def __init__(self, xo: int, yo: int, width: int, height: int, white_color: tuple, black_color: tuple, *args, **kwargs) -> None:
+        self.x = xo
+        self.y = yo
+        self.width = width
+        self.height = height
+        self.white_color = white_color
+        self.black_color = black_color
+        self.ratio = 0.5
+    
+    def calc_ratio(self, env) -> None:
+        score_diff = env.chess.score.score
+        score_total = env.chess.score.score_max
+        score_black = score_total - score_diff
+        score_ratio: float = 0.5
+
+        #Get score ratio, clamped to max score
+        if abs(score_diff) > score_total or score_total == 0:
+            score_ratio = 0.0 if score_diff > 0 else 1.0
+        else:
+            score_ratio = score_black / (score_total * 2)
+        self.ratio = score_ratio
+    
+    def draw(self, surface: Surface) -> None:
+        #Draw bars
+        white_rect = Rect(self.x, self.y, self.width, self.height)
+        draw.rect(surface, self.white_color, white_rect)
+        black_size = self.ratio * self.width
+        black_rect = Rect(self.x, self.y, black_size, self.height)
+        draw.rect(surface, self.black_color, black_rect)
 
 class VisualShapes:
     def __init__(self, *args, **kwargs) -> None:
@@ -19,6 +79,94 @@ class VisualShapes:
         self.height = 100
         self.width = 80
         self.tree = []
+        self.board = []
+        self.score_bar = None
+    
+    def create_board(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
+        self.board = self._generate_board(board_origin, board_square_size, board_white_color, board_black_color, env)
+    
+    def create_score_bar(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
+        self.score_bar = ScoreBar(board_origin[0], 
+                            board_origin[1] + board_square_size * (env.chess.board.ranks + 1), 
+                            board_square_size * env.chess.board.files, 
+                            board_square_size/2,
+                            board_white_color,
+                            board_black_color
+        )
+
+    def _generate_board(self, board_origin: tuple, board_square_size: int, board_white_color: tuple, board_black_color: tuple, env) -> list:
+        x, yo = board_origin
+        white = True
+        board_list = []
+        for file in range(env.chess.board.files):
+            y = yo
+            for rank in range(env.chess.board.ranks):
+                color = board_white_color if white else board_black_color
+                board_list.append(Square(x, y, board_square_size, color))
+                white = False if white else True
+                y = y + board_square_size
+            white = False if white else True
+            x = x + board_square_size
+        return board_list
+    
+    def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
+        node_list = []
+        this_node_value = sub_tree_node[0]
+        this_node_sub_tree = sub_tree_node[1]
+        this_node = Node(0, 0, self.width , (0,0,0), [], this_node_value[0], this_node_value[1])
+        node_list.append(this_node)
+        
+        #Loop over children
+        child_x_diff =  self.width 
+        child_x, child_y = origin_x, origin_y + self.height 
+        count = 0
+        sqrt = int(len(this_node_sub_tree)**0.5)
+        biggest_x = child_x
+        smallest_x = 1000000
+        biggest_y = child_y
+        for node in this_node_sub_tree:
+            #Depth > 0: [(best_score, best_move_list[0]), current_tree]
+            if isinstance(node, list):
+                sub_node_list, new_child_x, new_child_y = self._tree_recurse(node, env, child_x + child_x_diff , child_y+self.height )
+                this_node.child_positions.append((sub_node_list[0].x, sub_node_list[0].y))
+                node_list += sub_node_list
+                smallest_x = new_child_x if new_child_x < smallest_x else smallest_x
+                biggest_x = new_child_x if new_child_x > biggest_x else biggest_x
+                biggest_y = new_child_y if new_child_y > biggest_y else biggest_y
+                if count == sqrt:
+                    child_x = origin_x
+                    child_y = biggest_y
+                    count = 0
+                else:
+                    child_x = new_child_x + child_x_diff 
+                    count += 1
+            #Depth == 0 (score, move)
+            else:
+                new_node = Node(child_x, child_y, self.width, env.visual.colors["BOARD_DARK"], [], node[0], node[1])
+                this_node.child_positions.append((child_x, child_y))
+                node_list.append(new_node)
+                smallest_x = origin_x if origin_x < smallest_x else smallest_x
+                biggest_y = child_y if child_y > biggest_y else biggest_y
+                if count == sqrt:
+                    biggest_x = child_x
+                    child_x = origin_x
+                    child_y += self.width
+                    count = 0
+                else:
+                    child_x += child_x_diff 
+                    count += 1
+        this_node.x, this_node.y = smallest_x + (biggest_x-smallest_x)/2, origin_y
+        this_node.color = env.visual.colors["WHITE"] if this_node_value[2] else env.visual.colors["GRAY"]
+        return node_list, biggest_x, biggest_y
+    
+    def generate_tree(self, env):
+        tree = env.chess.tree
+        board_origin = env.visual.board_origin
+        board_score_height = env.visual.board_square_size * (env.chess.board.ranks + 2)
+        x, y = env.visual.board_origin[0], env.visual.board_origin[1] + board_score_height
+        if len(tree) > 0:
+            node_list, _, _ = self._tree_recurse(tree, env, x, y)
+            self.tree = node_list
 
     def _draw_background(self, surface: Surface, env) -> "VisualShapes":
         """Draws the background.
@@ -201,7 +349,7 @@ class VisualShapes:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['RED'], env)
         # for move in env.chess.board.state.black_moves:
         #     self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.colors['BLUE'], env)
-        #self._draw_heatmap(surface, "P", env)
+        #self._draw_heatmap(surface, "K", env)
         return self
         
     def _draw_selected_piece(self, surface: Surface, env) -> "VisualShapes":
@@ -269,62 +417,6 @@ class VisualShapes:
         draw.rect(surface, env.visual.colors['GRAY'], black_rect)
         env.visual.text.draw_score_text(surface, x + black_size, y, score_diff, size/2, env)
         return self
-    
-    def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
-        node_list = []
-        this_node_value = sub_tree_node[0]
-        this_node_sub_tree = sub_tree_node[1]
-        this_node = Node(this_node_value[0], this_node_value[1], this_node_value[2], (0, 0))
-        node_list.append(this_node)
-        width = len(this_node_sub_tree)
-        
-        #Loop over children
-        child_x_diff =  self.width 
-        child_x, child_y = origin_x, origin_y + self.height 
-        count = 0
-        sqrt = int(len(this_node_sub_tree)**0.5)
-        biggest_x = child_x
-        smallest_x = 1000000
-        biggest_y = child_y
-        for node in this_node_sub_tree:
-            #Depth > 0: [(best_score, best_move_list[0]), current_tree]
-            if isinstance(node, list):
-                sub_node_list, new_child_x, new_child_y = self._tree_recurse(node, env, child_x + child_x_diff , child_y+self.height )
-                this_node.child_positions.append((sub_node_list[0].screen_position))
-                node_list += sub_node_list
-                smallest_x = new_child_x if new_child_x < smallest_x else smallest_x
-                biggest_x = new_child_x if new_child_x > biggest_x else biggest_x
-                biggest_y = new_child_y if new_child_y > biggest_y else biggest_y
-                if count == sqrt:
-                    child_x = origin_x
-                    child_y = biggest_y
-                    count = 0
-                else:
-                    child_x = new_child_x + child_x_diff 
-                    count += 1
-            #Depth == 0 (score, move)
-            else:
-                new_node = Node(node[0], node[1], node[2], (child_x, child_y))
-                this_node.child_positions.append((child_x, child_y))
-                node_list.append(new_node)
-                smallest_x = origin_x if origin_x < smallest_x else smallest_x
-                biggest_y = child_y if child_y > biggest_y else biggest_y
-                if count == sqrt:
-                    biggest_x = child_x
-                    child_x = origin_x
-                    child_y += self.width
-                    count = 0
-                else:
-                    child_x += child_x_diff 
-                    count += 1
-        this_node.screen_position = smallest_x + (biggest_x-smallest_x)/2, origin_y
-        return node_list, biggest_x, biggest_y
-    
-    def generate_tree(self, env):
-        tree = env.chess.tree
-        if len(tree) > 0:
-            node_list, _, _ = self._tree_recurse(tree, env, 0, 0)
-            self.tree = node_list
 
     def draw_tree(self, surface: Surface, env):
         node: Node
@@ -366,15 +458,33 @@ class VisualShapes:
             VisualShapes: Self for chaining.
         """
         #Draw Background
-        self._draw_background(surface, env)._draw_board(surface, env)._draw_highlights(surface, env)._draw_pieces(surface, env)
-        self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
-        self.draw_tree(surface, env)
-        board_origin = env.visual.get_board_origin()
-        draw.circle(surface, env.visual.colors["RED"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
-        draw.circle(surface, env.visual.colors["GREEN"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
-        xb = board_origin[0] + env.visual.board_square_size * env.visual.zoom * env.chess.board.files
-        yb = board_origin[1] + env.visual.board_square_size * env.visual.zoom * env.chess.board.ranks
-        draw.circle(surface, env.visual.colors["BLUE"], (xb, yb), self.width/2 * env.visual.zoom)
+        self._draw_background(surface, env)
+
+        #Draw Board
+        square: Square
+        for square in self.board:
+            square.draw(surface)
+        
+        #Draw Bar
+        if self.score_bar is not None:
+            self.score_bar.draw(surface)
+
+        #Draw Tree
+        node: Node
+        rf_font = font.Font('freesansbold.ttf', int(env.visual.fontsize * env.visual.zoom * 0.5))
+        for node in self.tree:
+            node.draw(surface, rf_font)
+        
+        
+        # self._draw_board(surface, env)._draw_highlights(surface, env)._draw_pieces(surface, env)
+        # self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
+        # self.draw_tree(surface, env)
+        # board_origin = env.visual.get_board_origin()
+        # draw.circle(surface, env.visual.colors["RED"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
+        # draw.circle(surface, env.visual.colors["GREEN"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
+        # xb = board_origin[0] + env.visual.board_square_size * env.visual.zoom * env.chess.board.files
+        # yb = board_origin[1] + env.visual.board_square_size * env.visual.zoom * env.chess.board.ranks
+        # draw.circle(surface, env.visual.colors["BLUE"], (xb, yb), self.width/2 * env.visual.zoom)
         return self
     
 

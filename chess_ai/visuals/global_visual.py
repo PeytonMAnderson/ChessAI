@@ -67,7 +67,7 @@ class GlobalVisual:
     def _get_color_from_dict(self, color_name: str, color_dict: dict) -> tuple:
         """Gets the color from the color dict.
 
-        Args:
+        Args:s
             color_name (str): Key string of the color
             color_dict (dict): Color dict full of keys and colors.
 
@@ -132,7 +132,7 @@ class GlobalVisual:
         x, y = x0 + x_b * self.zoom, y0 + y_b * self.zoom
         return x, y, size
 
-    def set_from_yaml(self, yaml_path: str) -> "GlobalVisual":
+    def set_from_yaml(self, yaml_path: str, env) -> "GlobalVisual":
         """Updates the visuals from a yaml config file.
 
         Args:
@@ -170,6 +170,8 @@ class GlobalVisual:
             self.board_last_move_from_color = self._get_color(settings['BOARD_LAST_MOVE_FROM_COLOR'], self.colors)
             self.board_valid_moves_color = self._get_color(settings['BOARD_VALID_MOVES_COLOR'], self.colors)
             self.fontcolor = self._get_color(settings['FONT_COLOR'], self.colors)
+            self.shapes.create_board(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
+            self.shapes.create_score_bar(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
 
         return self
     

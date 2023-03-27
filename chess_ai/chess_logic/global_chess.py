@@ -37,7 +37,7 @@ class GlobalChess:
         self.game_ended = False
         self.max_half_moves = max_half_moves
         self.tree = []
-        self.max_depth = 2
+        self.max_depth = 0
         self.random_chance = 0.2
     
     def _calc_check_status_str(self) -> "GlobalChess":

@@ -22,10 +22,10 @@ class Environment:
         #Set Variables
         if config_dir is not None:
             self.io = GlobalIO().set_from_yaml(config_dir)
-            self.visual = GlobalVisual().set_from_yaml(config_dir)
             self.chess = GlobalChess().set_from_yaml(config_dir)
             self.ai = GlobalAI().set_from_yaml(config_dir)
             self.sound = GlobalSound().set_from_yaml(config_dir)
+            self.visual = GlobalVisual().set_from_yaml(config_dir, self)
         else:
             self.io = GlobalIO()
             self.visual = GlobalVisual()

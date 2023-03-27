@@ -127,5 +127,5 @@ class VisualText:
         Returns:
             VisualText: Self for chaining.
         """
-        self._draw_ranks_files(surface, env)._draw_game_stats(surface, env)
+        # self._draw_ranks_files(surface, env)._draw_game_stats(surface, env)
         return self
