@@ -6,7 +6,7 @@
 import yaml
 
 from .draw_text import VisualText
-from .draw_shapes import VisualShapes
+from .draw_shapes import VisualShapes, Square, Node, ScoreBar
 
 #Global Variable Class
 class GlobalVisual:
@@ -106,9 +106,10 @@ class GlobalVisual:
             tuple[float, float]: (x, y)
         """
         temp_x, temp_y = x - scale_xo, y - scale_yo
-        return temp_x * scale_factor, temp_y * scale_factor
+        new_x, new_y = temp_x * scale_factor, temp_y * scale_factor
+        return new_x + scale_xo, new_y + scale_yo
     
-    def _translation_transform(self, float, x: float, y, new_origin_x: int, new_origin_y: int) -> tuple[float, float]:
+    def _translation_transform(self, x: float, y: float, new_origin_x: int, new_origin_y: int) -> tuple[float, float]:
         """Traslates a point to a new location based off the new world origin.
         Returns:
             tuple[float, float]: (x, y)
@@ -116,7 +117,10 @@ class GlobalVisual:
         return new_origin_x + x, new_origin_y + y
     
     def translate_world(self, new_origin_x: int, new_origin_y: int) -> None:
-        pass
+        #Translate board
+        square: Square
+        for square in self.shapes.board:
+            square.x, square.y = self._translation_transform(square.x, square.y, new_origin_x, new_origin_y)
     
     def scale_world(self, scale_factor: float, scale_xo: float, scale_yo: float) -> None:
         pass
