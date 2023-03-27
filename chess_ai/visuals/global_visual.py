@@ -203,6 +203,10 @@ class GlobalVisual:
             self.shapes.create_board(self.board_origin, self.board_square_size, self.board_white_color, self.board_black_color, env)
             self.shapes.create_score_bar(self.board_origin, self.board_square_size, self.colors["WHITE"], self.colors["GRAY"], env)
             self.text.generate_rank_files(self.board_origin, self.board_square_size, env.chess.board.ranks, env.chess.board.files, white_perspective, self.fontsize_title, self.colors['WHITE'])
+            self.text.generate_game_stats((self.board_origin[0] + self.board_square_size * (env.chess.board.files + 1), self.board_origin[1]),
+                                          self.fontsize,
+                                          self.colors['WHITE']
+                                          )
 
         return self
     

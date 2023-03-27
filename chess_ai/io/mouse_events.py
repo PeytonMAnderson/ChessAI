@@ -43,7 +43,7 @@ class MouseEvents:
             env (Environment): The environment.
         """
         ix, iy = env.io.input_position
-        new_selected = env.visual.shapes._select_square(env.io.input_position, env)
+        new_selected = env.visual.shapes.get_square(env.io.input_position[0], env.io.input_position[1],  env)
         if new_selected is None:
             env.io.selected_position = None
         else:
@@ -83,9 +83,10 @@ class MouseEvents:
         ratio_plus = round(1 + env.io.zoom_speed, 3)
         mx, my = env.io.input_position
         if event.y < 0:
-            
+            env.visual.zoom = env.visual.zoom * ratio_minus
             env.visual.scale_world(ratio_minus, mx, my)
         elif event.y > 0:
             env.visual.scale_world(ratio_plus, mx, my)
+            env.visual.zoom = env.visual.zoom * ratio_plus
             
 

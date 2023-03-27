@@ -20,6 +20,7 @@ class VisualText:
         """Draws Text on the screen.
         """
         self.texts = []
+        self.game_stats = {}
 
     def generate_rank_files(self, 
                             board_origin: tuple, 
@@ -44,6 +45,30 @@ class VisualText:
             file_str = chr(ord('a') + i) if white_perspective else chr(ord('a') + (files - i))
             text_list.append(TextObject(file_str, x, y, fontsize, color))
         self.texts += text_list
+
+    def generate_game_stats(self, stats_origin: tuple, fontsize: int, color: tuple):
+        text_list = []
+        stats_dict = {}
+        x, y = stats_origin
+
+        stats = ["TURN", "LAST_MOVE", "CHECK_STATUS", "CASTLE_AVAIL", "EN_PASSANT", "HALF_MOVES", "FULL_MOVES"]
+
+        for stat in stats:
+            text_obj = TextObject("", x, y, fontsize, color)
+            text_list.append(text_obj)
+            stats_dict[stat] = text_obj
+            y += fontsize * 2
+        self.texts += text_list
+        self.game_stats = stats_dict
+    
+    def update_game_stats(self, env):
+        self.game_stats['TURN'].text = "TURN: WHITE" if env.chess.board.state.whites_turn else "TURN: BLACK"
+        self.game_stats['LAST_MOVE'].text = "LAST MOVE: " + env.chess.last_move_str
+        self.game_stats['CHECK_STATUS'].text = "CHECK STATUS: " + env.chess.check_status_str
+        self.game_stats['CASTLE_AVAIL'].text = "CASTLE AVAILABILITY: " + env.chess.board.state.castle_avail
+        self.game_stats['EN_PASSANT'].text = "EN PASSANT AVAILABILITY: " + env.chess.board.state.en_passant
+        self.game_stats['HALF_MOVES'].text = "HALF MOVES: " + str(env.chess.board.state.half_move) + "/" + str(env.chess.max_half_moves)
+        self.game_stats['FULL_MOVES'].text = "FULL MOVES: " + str(env.chess.board.state.full_move)
 
 
     def _draw_ranks_files(self, surface: Surface, env) -> "VisualText":
@@ -166,6 +191,7 @@ class VisualText:
             VisualText: Self for chaining.
         """
         # self._draw_ranks_files(surface, env)._draw_game_stats(surface, env)
+        self.update_game_stats(env)
         text: TextObject
         for text in self.texts:
             text.draw(surface)

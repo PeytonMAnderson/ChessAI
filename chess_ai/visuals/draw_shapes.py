@@ -41,6 +41,12 @@ class Square:
         rect = Rect(self.x, self.y, self.size, self.size)
         draw.rect(surface, self.color, rect)
 
+    def check_bounds(self, x: int, y: int):
+        if x >= self.x and x <= self.x + self.size:
+            if y >= self.y and y <= self.y + self.size:
+                return True
+        return False
+
 class ScoreBar:
     def __init__(self, xo: int, yo: int, width: int, height: int, white_color: tuple, black_color: tuple, *args, **kwargs) -> None:
         self.x = xo
@@ -81,20 +87,16 @@ class VisualShapes:
         self.tree = []
         self.board = []
         self.score_bar = None
+
+    def get_square(self, x: int, y: int, env) -> tuple | None:
+        for r in range(env.chess.board.ranks):
+            for f in range(env.chess.board.files):
+                square: Square = self.board[r * env.chess.board.ranks + f]
+                if square.check_bounds(x, y):
+                    return (r, f)
+        return None
     
     def create_board(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
-        self.board = self._generate_board(board_origin, board_square_size, board_white_color, board_black_color, env)
-    
-    def create_score_bar(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
-        self.score_bar = ScoreBar(board_origin[0], 
-                            board_origin[1] + board_square_size * (env.chess.board.ranks + 1), 
-                            board_square_size * env.chess.board.files, 
-                            board_square_size/2,
-                            board_white_color,
-                            board_black_color
-        )
-
-    def _generate_board(self, board_origin: tuple, board_square_size: int, board_white_color: tuple, board_black_color: tuple, env) -> list:
         xo, y = board_origin
         white = True
         board_list = []
@@ -107,7 +109,16 @@ class VisualShapes:
                 x += board_square_size
             white = False if white else True
             y += board_square_size
-        return board_list
+        self.board = board_list
+    
+    def create_score_bar(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
+        self.score_bar = ScoreBar(board_origin[0], 
+                            board_origin[1] + board_square_size * (env.chess.board.ranks + 1), 
+                            board_square_size * env.chess.board.files, 
+                            board_square_size/2,
+                            board_white_color,
+                            board_black_color
+        )
     
     def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
         node_list = []
@@ -168,18 +179,6 @@ class VisualShapes:
             node_list, _, _ = self._tree_recurse(tree, env, x, y)
             self.tree = node_list
 
-    def draw_pieces(self, surface: Surface, env):
-        for rank_i in range(env.chess.board.ranks):
-            for file_i in range(env.chess.board.files):
-                    piece: ChessPiece = env.chess.board.state.piece_board[rank_i * env.chess.board.files + file_i]
-                    if piece is not None:
-                        pers_r, pers_f = (rank_i, file_i) if env.visual.perspective == "WHITE" else (env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1)
-                        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
-                        color_str = "w_" if piece.is_white else "b_"
-                        img  = env.piece_images[color_str + piece.type.lower()]
-                        img = transform.scale(img, (square.size, square.size))
-                        surface.blit(img, (square.x, square.y))
-            
     def _draw_background(self, surface: Surface, env) -> "VisualShapes":
         """Draws the background.
 
@@ -193,103 +192,19 @@ class VisualShapes:
         surface.fill(env.visual.background_color)
         return self
 
-    def _draw_board(self, surface: Surface, env) -> "VisualShapes":
-        """Draws the chess board.
-
-        Args:
-            surface (Surface): Screen to draw to.
-            env (Environment): The Environment.
-
-        Returns:
-            VisualShapes: Self for chaining.
-        """
-        white = True
-        x, yo, size = env.visual.get_board_origin()
-        for file in range(env.chess.board.files):
-            y = yo
-            for rank in range(env.chess.board.ranks):
-                if x + size >= 0 and x <= env.visual.w_width and y + size >= 0 and y <= env.visual.w_height:
-                    if white:
-                        rect = Rect(x, y, size, size)
-                        draw.rect(surface, env.visual.board_white_color, rect)
-                    else:
-                        rect = Rect(x, y, size, size)
-                        draw.rect(surface, env.visual.board_black_color, rect)
-                white = False if white else True
-                y = y + size
-            white = False if white else True
-            x = x + size
-        return self
-
-    def _check_bounds(self, x: int , y: int, rank_i: int, file_i: int, env) -> bool:
-        """Checks if (x,y) coordinates falls within the square (rank_i, file_i).
-
-        Args:
-            x (int): x position on screen
-            y (int): y position on screen
-            rank_i (int): rank index
-            file_i (int): file index
-            env (_type_): The environment.
-
-        Returns:
-            bool: True if (x,y) is in bounds, false if otherwise.
-        """
-        xo, yo, size = env.visual.get_board_origin()
-        xi, yr = xo + file_i * size, yo + rank_i * size
-        if x >= xi and x <= xi + size and y >= yr and y <= yr + size:
-            return True
-        return False
-
-    def _select_square(self, mouse_position: tuple, env) -> tuple | None:
-        """Get the square that the mouse is currently selecting.
-
-        Args:
-            mouse_position (tuple): The position of the mouse.
-            env (Environment): The environment.
-
-        Returns:
-            tuple | None: A square, if any, on the chess board the mouse is over.
-        """
-        for rank in range(env.chess.board.ranks):
-            for file in range(env.chess.board.files):
-                if self._check_bounds(mouse_position[0], mouse_position[1], rank, file, env) is True:
-                    return env.visual.adjust_perspective(rank, file, env)
-        return None
-
-    def _draw_pieces(self, surface: Surface, env) -> "VisualShapes":
-        """Draws the pieces on the chess board.
-
-        Args:
-            surface (Surface): Screen to draw to.
-            env (Environment): The Environment.
-
-        Returns:
-            VisualShapes: Self for chaining.
-        """
-        x, y, size = env.visual.get_board_origin()
-
-        rank_index = 0
-        while rank_index < env.chess.board.ranks:
-            file_index = 0
-            while file_index < env.chess.board.files:
-
-                #Get place image from chess board
-                img_x = x + file_index * size
-                img_y = y + rank_index * size
-                if img_x + size >= 0 and img_x <= env.visual.w_width and img_y + size >= 0 and img_y <= env.visual.w_height:
-                    r, f = env.visual.adjust_perspective(rank_index, file_index, env)
-                    piece: ChessPiece = env.chess.board.state.piece_board[r * env.chess.board.files + f]
+    def draw_pieces(self, surface: Surface, env) -> "VisualShapes":
+        for rank_i in range(env.chess.board.ranks):
+            for file_i in range(env.chess.board.files):
+                    piece: ChessPiece = env.chess.board.state.piece_board[rank_i * env.chess.board.files + file_i]
                     if piece is not None:
+                        pers_r, pers_f = (rank_i, file_i) if env.visual.perspective == "WHITE" else (env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1)
+                        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
                         color_str = "w_" if piece.is_white else "b_"
                         img  = env.piece_images[color_str + piece.type.lower()]
-                        #Get Size of Piece
-                        size = env.visual.board_square_size * env.visual.zoom
-                        #Scale and place image on canvas
-                        img = transform.scale(img, (size, size))
-                        surface.blit(img, (img_x, img_y))
-                file_index += 1
-            rank_index += 1
+                        img = transform.scale(img, (square.size, square.size))
+                        surface.blit(img, (square.x, square.y))
         return self
+
 
     def _draw_square(self, surface: Surface, rank_i: int, file_i:int, color: tuple, env) -> "VisualShapes":
         """Draws the Highlights for the move squares.
@@ -301,10 +216,9 @@ class VisualShapes:
         Returns:
             VisualShapes: Self for chaining.
         """
-        rd, fd = env.visual.adjust_perspective(rank_i, file_i, env)
-        x_o, y_o, size = env.visual.get_board_origin()
-        x, y = x_o + fd * size, y_o + rd * size
-        rect = Rect(x, y, size, size)
+        pers_r, pers_f = (rank_i, file_i) if env.visual.perspective == "WHITE" else (env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1)
+        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
+        rect = Rect(square.x, square.y, square.size, square.size)
         draw.rect(surface, color, rect)
         return self
     
@@ -314,8 +228,8 @@ class VisualShapes:
             file_i = 0
             while file_i < env.chess.board.files:
                 value = env.chess.score.calc_piece_pos_bias(piece_str, (rank_i, file_i), env.chess.board, env.chess.board.state)
-                color_value = value * 255
-                self._draw_square(surface, rank_i, file_i, (color_value, color_value, color_value), env)
+                cv = value * 255
+                self._draw_square(surface, rank_i, file_i, (cv, cv, cv), env)
                 file_i += 1
             rank_i += 1
         return self
@@ -391,45 +305,6 @@ class VisualShapes:
         return self
 
 
-    def _draw_score_bar(self, surface: Surface, env) -> "VisualShapes":
-        """Draws Score bar for the score of the game.
-
-        Args:
-            surface (Surface): Screen to draw to.
-            env (Environment): The Environment.
-
-        Returns:
-            VisualShapes: Self for chaining.
-        """
-        #Draw White bar
-        x_o, y_o, size = env.visual.get_board_origin()
-        x, y = x_o, y_o + size * env.chess.board.ranks + size/2
-        bar_size = size * env.chess.board.files
-        white_rect = Rect(x, y, bar_size, size/2)
-        draw.rect(surface, env.visual.colors['WHITE'], white_rect)
-
-        #Draw Black Bar
-        score_diff = env.chess.score.score
-        score_total = env.chess.score.score_max
-        score_black = score_total - score_diff
-        score_ratio: float = 0.5
-
-        #Get score ratio, clamped to max score
-        if abs(score_diff) > score_total or score_total == 0:
-            if score_diff > 0:
-                score_ratio = 0.0
-            else:
-                score_ratio = 1.0
-        else:
-            score_ratio = score_black / (score_total * 2)
-
-        #Draw bar
-        black_size = score_ratio * bar_size
-        black_rect = Rect(x, y, black_size, size/2)
-        draw.rect(surface, env.visual.colors['GRAY'], black_rect)
-        env.visual.text.draw_score_text(surface, x + black_size, y, score_diff, size/2, env)
-        return self
-
     def draw_tree(self, surface: Surface, env):
         node: Node
         xo, yo, size = env.visual.get_board_origin()
@@ -454,10 +329,6 @@ class VisualShapes:
                 text1 = f"{node.score}"        
                 turn_text = rf_font.render(text1, False, env.visual.colors["BLUE"])
                 surface.blit(turn_text, (xt, yt))
-                
-
-
-
 
     def draw_all_shapes(self, surface: Surface, env) -> "VisualShapes":
         """Draws All shapes on the screen.
@@ -476,9 +347,6 @@ class VisualShapes:
         square: Square
         for square in self.board:
             square.draw(surface)
-
-        #Draw Pieces on board
-        self.draw_pieces(surface, env)
         
         #Draw Bar
         if self.score_bar is not None:
@@ -490,16 +358,8 @@ class VisualShapes:
         for node in self.tree:
             node.draw(surface, rf_font)
         
-        
-        # self._draw_board(surface, env)._draw_highlights(surface, env)._draw_pieces(surface, env)
-        # self._draw_score_bar(surface, env)._draw_selected_piece(surface, env)
-        # self.draw_tree(surface, env)
-        # board_origin = env.visual.get_board_origin()
-        # draw.circle(surface, env.visual.colors["RED"], (env.visual.world_origin[0], env.visual.world_origin[1]), self.width/2 * env.visual.zoom)
-        # draw.circle(surface, env.visual.colors["GREEN"], (board_origin[0], board_origin[1]), self.width/2 * env.visual.zoom)
-        # xb = board_origin[0] + env.visual.board_square_size * env.visual.zoom * env.chess.board.files
-        # yb = board_origin[1] + env.visual.board_square_size * env.visual.zoom * env.chess.board.ranks
-        # draw.circle(surface, env.visual.colors["BLUE"], (xb, yb), self.width/2 * env.visual.zoom)
+        #Draw Highlights and pieces
+        self._draw_highlights(surface, env).draw_pieces(surface, env)._draw_selected_piece(surface, env)
         return self
     
 
