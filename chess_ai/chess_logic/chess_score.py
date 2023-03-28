@@ -15,6 +15,7 @@ class ChessScore:
         self.position_bias = {}
         self.max_pieces = 0
         self.max_half_moves = 0
+        self.endgame_piece_count = 8
 
     def get_piece_worth(self, piece: ChessPiece):
         if piece is None:
@@ -63,7 +64,30 @@ class ChessScore:
         elif piece.type == 'Q':
             return self.piece_scores['QUEEN'] + self.calc_piece_pos_bias("Q", position, board, board_state) * 0.1
         elif piece.type == "K":
-            return self.piece_scores['KING'] + self.calc_piece_pos_bias("K", position, board, board_state) * 0.1
+
+            #Add bias for end game, winning king wants to get closer, while losing king wants to get farther
+            our_piece_count = len(board_state.white_positions) if piece.is_white else len(board_state.black_positions)
+            their_piece_count = len(board_state.black_positions) if piece.is_white else len(board_state.white_positions)
+            king_chase_bias = 0
+
+            #If near the end of the game (Less than 8 pieces left on the board)
+            if their_piece_count + our_piece_count < self.endgame_piece_count:
+
+                #Favor king getting closer for winning team
+                if our_piece_count > their_piece_count:
+                    other_king = board_state.king_positions[1] if piece.is_white else board_state.king_positions[0]
+                    dis = abs(other_king[0] - piece.position[0]) + abs(other_king[1] - piece.position[1])
+                    dis_n = dis / (board.ranks + board.files)
+                    king_chase_bias = (1 - dis_n) * 0.1
+
+                #Disfavor other king getting close if on losing team
+                elif our_piece_count < their_piece_count:
+                    other_king = board_state.king_positions[1] if piece.is_white else board_state.king_positions[0]
+                    dis = abs(other_king[0] - piece.position[0]) + abs(other_king[1] - piece.position[1])
+                    dis_n = dis / (board.ranks + board.files)
+                    king_chase_bias = dis_n * 0.1
+
+            return self.piece_scores['KING'] + self.calc_piece_pos_bias("K", position, board, board_state) * 0.1 + king_chase_bias
         else:
             return 0
 
@@ -392,9 +416,12 @@ class ChessScore:
             b_late = self.position_bias["K_LATE"][piece_position[0] * board.ranks + piece_position[1]]
             return b_early * game_ratio + b_late * (1 - game_ratio)
         else:
-            b_early = self.position_bias[piece_str][piece_position[0] * board.ranks + piece_position[1]]
-            b_late = 1.0
-            return b_early * game_ratio + b_late * (1 - game_ratio)
+            if len(board_state.white_positions) + len(board_state.black_positions) >= self.endgame_piece_count:
+                b_early = self.position_bias[piece_str][piece_position[0] * board.ranks + piece_position[1]]
+                b_late = 1.0
+                return b_early * game_ratio + b_late * (1 - game_ratio)
+            else:
+                return 1.0
 
     
     def calc_position_bias(self, board: ChessBoard) -> "ChessScore":

@@ -215,7 +215,6 @@ class GlobalChess:
             self.score.max_half_moves = self.max_half_moves
             self.score.calc_position_bias(self.board)
             self.score.set_max_score(self.board, self.board.state)
-            self.board.check_move_for_check(ChessMove(self.board.state.piece_board[63], (5, 7)), self.board.state)
 
             #Start history
             self.history.pop_add({"last_move_str": "None", "last_move_tuple": None, "fen_string": settings['BOARD']})
