@@ -25,6 +25,7 @@ class GlobalChess:
                  max_half_moves: int = 50,
                  piece_values: dict = {},
                  piece_scores: dict = {},
+                 starting_fen: str = "",
     *args, **kwargs) -> None:
         
         #Attach Chess Objects
@@ -39,6 +40,7 @@ class GlobalChess:
         self.tree = []
         self.max_depth = 0
         self.random_chance = 0.2
+        self.starting_fen = starting_fen
     
     def _calc_check_status_str(self) -> "GlobalChess":
         """Calculates and sets the check_status_str from check_status.
@@ -211,6 +213,7 @@ class GlobalChess:
             self.board.utils.piece_values = settings['PIECE_VALUES']
             self.score.piece_scores = settings['PIECE_SCORES']
             self.board.fen_to_board(settings['BOARD'])
+            self.starting_fen = settings['BOARD']
             self.max_half_moves = settings['MAX_HALF_MOVES']
             self.score.max_half_moves = self.max_half_moves
             self.score.calc_position_bias(self.board)

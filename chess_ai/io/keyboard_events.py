@@ -32,6 +32,15 @@ class KeyboardEvents:
         if event.key == pygame.K_SPACE:
             env.ai.paused = False if env.ai.paused else True
 
+        #Reset Board
+        if event.key == pygame.K_r:
+            env.chess.board.fen_to_board(env.chess.starting_fen)
+            env.chess.score.update_score(env.chess.board, env.chess.board.state)
+            env.visual.shapes.update_score_bar(env)
+            env.chess._calc_check_status_str()
+            env.chess.last_move_str = "None"
+            env.chess.last_move_tuple = None
+
     def keyboard_events(self, event, env):
         """Listen for keyboard actions. Updates Environment.
 
