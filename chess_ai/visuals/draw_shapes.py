@@ -5,7 +5,7 @@ from ..chess_logic.chess_move import ChessMove
 #from ..environment import Environment
 
 class Node:
-    def __init__(self, x: int, y: int, radius: int, color: tuple, child_positions: tuple, score: int, move: ChessMove, *args, **kwargs) -> None:
+    def __init__(self, x: int, y: int, radius: int, color: tuple, score: int, move: ChessMove, *args, **kwargs) -> None:
         self.x = x
         self.y = y
         self.radius = radius
