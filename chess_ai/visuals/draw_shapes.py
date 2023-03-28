@@ -120,6 +120,20 @@ class VisualShapes:
                             board_black_color
         )
     
+    def update_score_bar(self, env) -> None:
+        score = env.chess.score.score
+        self.score_bar.calc_ratio(env)
+        env.visual.text.score.y = self.score_bar.y + self.score_bar.height/4
+        env.visual.text.score.text = str(score) if score <= 0 else "+" + str(score)
+        if score >= 0:
+            env.visual.text.score.x = self.score_bar.x + self.score_bar.width * self.score_bar.ratio + env.visual.text.score.size
+            env.visual.text.score.align = "topleft"
+            env.visual.text.score.color = env.visual.colors["GRAY"]
+        else:
+            env.visual.text.score.x = self.score_bar.x + self.score_bar.width * self.score_bar.ratio - env.visual.text.score.size
+            env.visual.text.score.align = "topright"
+            env.visual.text.score.color = env.visual.colors["WHITE"]
+
     def _tree_recurse(self, sub_tree_node: list, env, origin_x: int = 0, origin_y: int = 0):
         node_list = []
         this_node_value = sub_tree_node[0]

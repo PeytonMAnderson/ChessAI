@@ -129,6 +129,7 @@ class GlobalChess:
 
         #Get score
         self.score.update_score(self.board, self.board.state)
+        env.visual.shapes.update_score_bar(env)
 
     
         #Calc if game ended
@@ -163,7 +164,7 @@ class GlobalChess:
         # env.visual.shapes.generate_tree(env)
 
 
-    def load_from_history(self, frame: dict) -> "GlobalChess":
+    def load_from_history(self, frame: dict, env) -> "GlobalChess":
         """Load a state of the game from history. Updates score, history, game_ended, and last move.
 
         Args:
@@ -180,6 +181,7 @@ class GlobalChess:
         self.last_move_str = frame['last_move_str']
         self.last_move_tuple = frame['last_move_tuple']
         self.score.update_score(self.board, self.board.state)
+        env.visual.shapes.update_score_bar(env)
         self._calc_check_status_str()
 
         #Calc if game ended

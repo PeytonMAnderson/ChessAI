@@ -3,17 +3,20 @@ from pygame import Surface, Rect, draw, transform, font
 #from ..environment import Environment
 
 class TextObject:
-    def __init__(self, text: str, x: int, y: int, fontsize: int, color: int, *args, **kwargs) -> None:
+    def __init__(self, text: str, x: int, y: int, fontsize: int, color: int, align: str = "topleft", *args, **kwargs) -> None:
         self.text = text
         self.x = x
         self.y = y
         self.size = fontsize
         self.color = color
-
+        self.align = align
+        
     def draw(self, surface: Surface) -> None:
         text_font = font.Font('freesansbold.ttf', int(self.size))
         text = text_font.render(self.text, False, self.color)
-        surface.blit(text, (self.x, self.y))
+        rect = text.get_rect()
+        setattr(rect, self.align, (self.x, self.y))
+        surface.blit(text, rect)
 
 class VisualText:
     def __init__(self, *args, **kwargs) -> None:
@@ -21,6 +24,7 @@ class VisualText:
         """
         self.texts = []
         self.game_stats = {}
+        self.score = None
 
     def generate_rank_files(self, 
                             board_origin: tuple, 
@@ -58,6 +62,8 @@ class VisualText:
             text_list.append(text_obj)
             stats_dict[stat] = text_obj
             y += fontsize * 2
+        self.score = TextObject("", 0, 0, fontsize, color)
+        text_list.append(self.score)
         self.texts += text_list
         self.game_stats = stats_dict
     
