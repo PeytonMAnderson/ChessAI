@@ -2,6 +2,7 @@ import yaml
 
 from .base_ai import BaseAI
 from .custom_ai.custom_ai import CustomAI
+from .stockfish.stock_ai import StockFishAI
 from ..chess_logic.chess_board import ChessBoard
 
 class GlobalAI:
@@ -23,6 +24,8 @@ class GlobalAI:
             return None
         elif player_str == "CUSTOM":
             return CustomAI(is_white, self.custom_depth)
+        elif player_str == "STOCKFISH":
+            return StockFishAI(is_white)
 
     def set_players(self):
         self.white_player = self.get_player_from_str(self.white_player_str, True)
@@ -31,9 +34,9 @@ class GlobalAI:
     def execute_player(self, player_str: str, player_value: BaseAI | None, board: ChessBoard, env): 
         if player_str == "PLAYER":
             return
-        elif player_str == "CUSTOM":
+        elif player_str == "CUSTOM" or player_str == "STOCKFISH":
             player_value.execute_turn(board, env)
-        
+
     def execute_turn(self, board: ChessBoard, env): 
         if env.chess.game_ended or self.paused:
             return

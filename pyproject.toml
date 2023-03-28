@@ -8,5 +8,6 @@ authors = ["Peyton Anderson <peyanders@gmail.com>"]
 python = "^3.10"
 pygame = "^2.3.0"
 pyyaml = "^6.0"
+chess = "^1.9.4"
 
 [tool.poetry.dev-dependencies]

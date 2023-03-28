@@ -108,6 +108,40 @@ class GlobalChess:
         if old_piece is not None:
             captured_str = "x"
         return piece_str + captured_str + file + rank + check_str
+    
+    def move_extra(self, env, old_move: ChessMove = None, old_piece: ChessPiece = None, move_str: str = None) -> "GlobalChess":
+        #Get Strings
+        self._calc_check_status_str()
+        if move_str is None:
+            self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.state.check_status)
+        else:
+            self.last_move_str = move_str
+
+        #Get score
+        self.score.update_score(self.board, self.board.state)
+        env.visual.shapes.update_score_bar(env)
+
+        #Calc if game ended
+        if self.board.state.check_status is not None and abs(self.board.state.check_status) == 2 or self.board.state.check_status == 0:
+            self.game_ended = True
+        elif self.board.state.half_move >= self.max_half_moves:
+            self.game_ended = True
+        else:
+            self.game_ended = False
+
+        #Generate History
+        fen = self.board.board_to_fen()
+        print(fen)
+        self.history.pop_add({"last_move_str": self.last_move_str, 
+                              "last_move_tuple": self.last_move_tuple, 
+                              "fen_string":fen})
+        
+        if env is not None:
+            if self.last_move_str.count("x") > 0:
+                env.sound.play("capture", env)
+            else:
+                env.sound.play("move-self", env)
+        
 
     def move_piece(self, move: ChessMove, env = None) -> "GlobalChess":
         """Moves a piece on the board assuming the move if valid. Updates score, history, game_ended, and last move.
@@ -126,32 +160,7 @@ class GlobalChess:
         old_move = deepcopy(move)
         self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
         self.board.move_piece(move, self.board.state)
-        self._calc_check_status_str()
-        self.last_move_str = self._calc_move_str(old_move, old_piece, self.board.state.check_status)
-
-        #Get score
-        self.score.update_score(self.board, self.board.state)
-        env.visual.shapes.update_score_bar(env)
-
-    
-        #Calc if game ended
-        if self.board.state.check_status is not None and abs(self.board.state.check_status) == 2 or self.board.state.check_status == 0:
-            self.game_ended = True
-        elif self.board.state.half_move >= self.max_half_moves:
-            self.game_ended = True
-        else:
-            self.game_ended = False
-        fen = self.board.board_to_fen()
-        print(fen)
-        self.history.pop_add({"last_move_str": self.last_move_str, 
-                              "last_move_tuple": self.last_move_tuple, 
-                              "fen_string":fen})
-        
-        if env is not None:
-            if self.last_move_str.count("x") > 0:
-                env.sound.play("capture", env)
-            else:
-                env.sound.play("move-self", env)
+        self.move_extra(env, old_move, old_piece)
         
         # moves = self.board.state.white_moves if self.board.state.whites_turn else self.board.state.black_moves
         # best_score, best_move_list, branches = self.minimax(env, self.board, self.board.state, self.max_depth, self.board.state.whites_turn, True, create_tree=True)

@@ -18,7 +18,7 @@ class CustomAI(BaseAI):
     def __init__(self, is_white: bool, max_depth: int = 2, *args, **kwargs) -> None:
         super().__init__(is_white, *args, **kwargs)
         self.max_depth = max_depth
-        self.mp_start_depth = 4
+        self.mp_start_depth = 10
         self.random_chance = 0.2
 
     def _sort_move(self, move_tuple: tuple) -> int:
@@ -293,5 +293,6 @@ class CustomAI(BaseAI):
         end = time.time()
         e = round((end-start) * 1000, 3)
         if best_move is not None:
-            print(f"DONE! Branches Checked: {branches} and found Best Move: {vars(best_move)} with best score: {best_score} in {e} ms")
+            old_piece = env.chess.board.state.piece_board[best_move.new_position[0] * env.chess.board.files + best_move.new_position[1]]
+            print(f"DONE! Branches Checked: {branches} and found Best Move: {env.chess._calc_move_str(best_move, old_piece, None)} with best score: {best_score} in {e} ms")
             env.chess.move_piece(best_move, env)

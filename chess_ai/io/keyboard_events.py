@@ -40,6 +40,7 @@ class KeyboardEvents:
             env.chess._calc_check_status_str()
             env.chess.last_move_str = "None"
             env.chess.last_move_tuple = None
+            env.chess.game_ended = False
 
     def keyboard_events(self, event, env):
         """Listen for keyboard actions. Updates Environment.
