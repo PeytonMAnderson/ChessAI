@@ -149,17 +149,6 @@ class GlobalVisual:
             text.x, text.y = self._scale_transform(scale_factor, text.x, text.y, scale_xo, scale_yo)
             text.size = text.size * scale_factor
 
-    def get_board_origin(self) -> tuple[int, int, int]:
-        """Gets the board origin from the world origin offset and board origin offset, and the size of the squares.
-        Returns:
-            tuple[int, int, int]: x, y, size
-        """
-        x0, y0 = self.world_origin
-        x_b, y_b = self.board_origin
-        size = self.board_square_size * self.zoom
-        x, y = x0 + x_b * self.zoom, y0 + y_b * self.zoom
-        return x, y, size
-
     def set_from_yaml(self, yaml_path: str, env) -> "GlobalVisual":
         """Updates the visuals from a yaml config file.
 
@@ -210,7 +199,7 @@ class GlobalVisual:
 
         return self
     
-    def adjust_perspective(self, rank_i: int, file_i: int, env) -> tuple[int, int]:
+    def adjust_perspective(self, env, rank_i: int, file_i: int = None) -> tuple[int, int]:
         """Adjusts the visual perspective of the (rank_i, file_i) pair based of from whites or blacks side.
 
         Args:
@@ -221,7 +210,13 @@ class GlobalVisual:
         Returns:
             tuple: New (rank_i, file_i) adjusted for the perspective.
         """
-        if self.perspective == "WHITE":
-            return rank_i, file_i
+        if file_i is None:
+            if self.perspective == "WHITE":
+                return rank_i[0], file_i[1]
+            else:
+                return env.chess.board.ranks - rank_i[0] - 1, env.chess.board.files - rank_i[1] - 1
         else:
-            return env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1
+            if self.perspective == "WHITE":
+                return rank_i, file_i
+            else:
+                return env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1

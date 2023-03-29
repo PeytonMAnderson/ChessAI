@@ -89,11 +89,13 @@ class VisualShapes:
         self.score_bar = None
 
     def get_square(self, x: int, y: int, env) -> tuple | None:
-        for r in range(env.chess.board.ranks):
-            for f in range(env.chess.board.files):
+        for ro in range(env.chess.board.ranks):
+            for fo in range(env.chess.board.files):
+                r, f = env.visual.adjust_perspective(env, ro, fo)
                 square: Square = self.board[r * env.chess.board.ranks + f]
                 if square.check_bounds(x, y):
-                    return (r, f)
+                    print(ro, fo)
+                    return (ro, fo)
         return None
     
     def create_board(self, board_origin, board_square_size, board_white_color: tuple, board_black_color: tuple, env) -> None:
@@ -266,7 +268,7 @@ class VisualShapes:
 
         #Draw selected position
         if env.io.selected_position is not None:
-            rd, fd = env.io.selected_position[0], env.io.selected_position[1]
+            rd, fd = env.io.selected_position
             self._draw_square(surface, rd, fd, env.visual.board_selected_color, env)
         
             #Draw Available Positions
@@ -274,12 +276,14 @@ class VisualShapes:
                 move: ChessMove
                 for move in env.chess.board.state.white_moves:
                     if move.piece.position == env.io.selected_position:
-                        self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
+                        mr, mf = move.new_position
+                        self._draw_square(surface, mr, mf, env.visual.board_valid_moves_color, env)
             else:
                 move: ChessMove
                 for move in env.chess.board.state.black_moves:
                     if move.piece.position == env.io.selected_position:
-                        self._draw_square(surface, move.new_position[0], move.new_position[1], env.visual.board_valid_moves_color, env)
+                        mr, mf = move.new_position
+                        self._draw_square(surface, mr, mf, env.visual.board_valid_moves_color, env)
 
         # for position in env.chess.board.state.white_positions:
         #     self._draw_square(surface, position[0], position[1], env.visual.colors['ORANGE'], env)

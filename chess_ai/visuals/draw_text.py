@@ -40,13 +40,13 @@ class VisualText:
         #Ranks
         for i in range(ranks):
             x, y = xo, yo + board_square_size * i
-            rank_str = str(ranks - i) if white_perspective else str(ranks + 1)
+            rank_str = str(ranks - i) if white_perspective else str(i + 1)
             text_list.append(TextObject(rank_str, x, y, fontsize, color))
         #Files
         xo, yo = board_origin[0] + board_square_size/4, board_origin[1] - board_square_size/2
         for i in range(files):
             x, y = xo + board_square_size * i, yo 
-            file_str = chr(ord('a') + i) if white_perspective else chr(ord('a') + (files - i))
+            file_str = chr(ord('a') + i) if white_perspective else chr(ord('a') + (files - i - 1))
             text_list.append(TextObject(file_str, x, y, fontsize, color))
         self.texts += text_list
 
