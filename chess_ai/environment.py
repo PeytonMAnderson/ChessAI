@@ -10,15 +10,13 @@ from .sounds.global_sound import GlobalSound
 
 
 class Environment:
-    def __init__(self, config_dir: str = None, pieces_dir: str = None, sounds_dir: str = None, *args, **kwargs) -> None:
+    def __init__(self, config_dir: str = None, pieces_dir: str = None, icons_dir: str = None, sounds_dir: str = None, *args, **kwargs) -> None:
         """An environment that handles visuals, I/O, chess, and AI
 
         Args:
             config_dir (str, optional): Directory to a config file if any. Defaults to None.
             pieces_dir (str, optional): Directory to pieces folder for piece images. Defaults to None.
         """
-        self.piece_images = None
-        self.game_sounds = None
         #Set Variables
         if config_dir is not None:
             self.io = GlobalIO().set_from_yaml(config_dir)
@@ -35,11 +33,15 @@ class Environment:
 
         #Load Piece Images
         if pieces_dir is not None:
-            self._load_images(pieces_dir)
+            self.piece_images = self._load_images(pieces_dir)
+        
+        #Load Icons
+        if icons_dir is not None:
+            self.icon_images = self._load_images(icons_dir)
 
         #Load Sounds
         if sounds_dir is not None:
-            self._load_sounds(sounds_dir)
+            self.game_sounds = self._load_sounds(sounds_dir)
             self.sound.set_volumes(self)
 
     def _load_images(self, dir: str) -> "Environment":
@@ -59,8 +61,7 @@ class Environment:
                 py_images[piece] = pygame.image.load(d)
         else:
             print("WARNING: Image path not found.")
-        self.piece_images = py_images
-        return self
+        return py_images
     
     def _load_sounds(self, dir: str) -> "Environment":
         """Loads the sounds into the Environment.
@@ -79,8 +80,7 @@ class Environment:
                 py_sounds[piece] = pygame.mixer.Sound(d)
         else:
             print("WARNING: Image path not found.")
-        self.game_sounds = py_sounds
-        return self
+        return py_sounds
 
     def execute_next_turn(self) -> "Environment":
         """Executes the next turn if possible.

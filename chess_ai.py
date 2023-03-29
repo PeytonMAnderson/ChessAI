@@ -13,6 +13,7 @@ from chess_ai import *
 #Constants
 FPS = 60
 PIECES_DIR = "./chess_ai/visuals/chess_pieces"
+ICONS_DIR = "./chess_ai/visuals/icons"
 SOUNDS_DIR = "./chess_ai/sounds/chess_sounds"
 CONFIG_FILE = "./chess_config.yaml"
 
@@ -23,7 +24,7 @@ def main():
     pygame.mixer.init()  ## For sound
 
     #Declare GlobalState and Global Colors and Pieces
-    env = Environment(CONFIG_FILE, PIECES_DIR, SOUNDS_DIR)
+    env = Environment(CONFIG_FILE, PIECES_DIR, ICONS_DIR, SOUNDS_DIR)
 
     screen = pygame.display.set_mode((env.visual.w_width, env.visual.w_height), pygame.RESIZABLE)
     pygame.display.set_caption("Chess")

@@ -87,6 +87,7 @@ class VisualShapes:
         self.tree = []
         self.board = []
         self.score_bar = None
+        self.icons = None
 
     def get_square(self, x: int, y: int, env) -> tuple | None:
         for ro in range(env.chess.board.ranks):
@@ -94,7 +95,6 @@ class VisualShapes:
                 r, f = env.visual.adjust_perspective(env, ro, fo)
                 square: Square = self.board[r * env.chess.board.ranks + f]
                 if square.check_bounds(x, y):
-                    print(ro, fo)
                     return (ro, fo)
         return None
     
@@ -213,14 +213,29 @@ class VisualShapes:
             for file_i in range(env.chess.board.files):
                     piece: ChessPiece = env.chess.board.state.piece_board[rank_i * env.chess.board.files + file_i]
                     if piece is not None:
-                        pers_r, pers_f = (rank_i, file_i) if env.visual.perspective == "WHITE" else (env.chess.board.ranks - rank_i - 1, env.chess.board.files - file_i - 1)
+                        pers_r, pers_f = env.visual.adjust_perspective(env, rank_i, file_i)
                         square: Square = self.board[pers_r * env.chess.board.files + pers_f]
                         color_str = "w_" if piece.is_white else "b_"
                         img  = env.piece_images[color_str + piece.type.lower()]
                         img = transform.scale(img, (square.size, square.size))
                         surface.blit(img, (square.x, square.y))
         return self
+    
+    def draw_pfp(self, surface: Surface, env) -> "VisualShapes":
+        pers_r, pers_f = env.visual.adjust_perspective(env, env.chess.board.ranks-1, 0)[0], 0
+        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
+        img_str = env.ai.white_player_str.lower()
+        img = env.icon_images[img_str]
+        img = transform.scale(img, (square.size, square.size))
+        surface.blit(img, (square.x - square.size*2, square.y))
 
+        pers_r, pers_f = env.visual.adjust_perspective(env, 0, 0)[0], 0
+        square: Square = self.board[pers_r * env.chess.board.files + pers_f]
+        img_str = env.ai.black_player_str.lower()
+        img = env.icon_images[img_str]
+        img = transform.scale(img, (square.size, square.size))
+        surface.blit(img, (square.x - square.size*2, square.y))
+        return self
 
     def _draw_square(self, surface: Surface, rank_i: int, file_i:int, color: tuple, env) -> "VisualShapes":
         """Draws the Highlights for the move squares.
@@ -377,7 +392,7 @@ class VisualShapes:
             node.draw(surface, rf_font)
         
         #Draw Highlights and pieces
-        self._draw_highlights(surface, env).draw_pieces(surface, env)._draw_selected_piece(surface, env)
+        self._draw_highlights(surface, env).draw_pieces(surface, env).draw_pfp(surface, env)._draw_selected_piece(surface, env)
         return self
     
 

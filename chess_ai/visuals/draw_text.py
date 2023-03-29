@@ -50,6 +50,33 @@ class VisualText:
             text_list.append(TextObject(file_str, x, y, fontsize, color))
         self.texts += text_list
 
+    def generate_names(self, 
+                            board_origin: tuple, 
+                            board_square_size: int, 
+                            ranks: int, 
+                            white_perspective: bool,
+                            fontsize: int,
+                            color: tuple,
+                            env
+                            ) -> None:
+        text_list = []
+
+        #White
+        r, f = (ranks-1, 0) if white_perspective else (0, 0)
+        xo, yo = board_origin[0] - board_square_size*2.5, board_origin[1] + board_square_size/4
+        x, y = xo, yo + board_square_size * r
+        to = TextObject(env.ai.white_player_str, x, y, fontsize, color)
+        to.align = "topright"
+        text_list.append(to)
+
+        #Black
+        r, f = (0, 0) if white_perspective else (ranks-1, 0)
+        x, y = xo, yo + board_square_size * r
+        to = TextObject(env.ai.black_player_str, x, y, fontsize, color)
+        to.align = "topright"
+        text_list.append(to)
+        self.texts += text_list
+
     def generate_game_stats(self, stats_origin: tuple, fontsize: int, color: tuple):
         text_list = []
         stats_dict = {}

@@ -196,6 +196,7 @@ class GlobalVisual:
                                           self.fontsize,
                                           self.colors['WHITE']
                                           )
+            self.text.generate_names(self.board_origin, self.board_square_size, env.chess.board.ranks, white_perspective, self.fontsize_title, self.colors['WHITE'], env)
 
         return self
     
