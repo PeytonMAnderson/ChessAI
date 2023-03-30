@@ -3,7 +3,7 @@ from .chess_board import ChessBoardState, ChessBoard
 from .chess_piece import ChessPiece
 
 class ChessScore:
-    def __init__(self, piece_scores: dict, *args, **kwargs) -> None:
+    def __init__(self, piece_scores: dict, max_half_moves: int = 50, endgame_piece_count: int = 8, *args, **kwargs) -> None:
         """Calculates the score value of a chess board_state.
 
         Args:
@@ -14,8 +14,8 @@ class ChessScore:
         self.score = 0
         self.position_bias = {}
         self.max_pieces = 0
-        self.max_half_moves = 0
-        self.endgame_piece_count = 8
+        self.max_half_moves = max_half_moves
+        self.endgame_piece_count = endgame_piece_count
 
     def get_piece_worth(self, piece: ChessPiece):
         if piece is None:
@@ -35,12 +35,12 @@ class ChessScore:
         else:
             return 0
         
-    def get_position_difference(self, piece: ChessPiece, old_position: tuple, new_position: tuple, board: ChessBoard, board_state: ChessBoardState) -> int:
+    def get_position_difference(self, piece: ChessPiece, old_position: tuple, new_position: tuple, board: ChessBoard, board_state: ChessBoardState) -> float:
         position_old = old_position if piece.is_white else (board.ranks - old_position[0] - 1, old_position[1])
         position_new = new_position if piece.is_white else (board.ranks - new_position[0] - 1, new_position[1])
         return self.calc_piece_pos_bias(piece.type, position_new, board, board_state) - self.calc_piece_pos_bias(piece.type, position_old, board, board_state)
 
-    def get_piece_score_king(self, piece: ChessPiece, board: ChessBoard, board_state: ChessBoardState) -> int:
+    def get_piece_score_king(self, piece: ChessPiece, board: ChessBoard, board_state: ChessBoardState) -> float:
         """Get the score of a piece type.
 
         Args:
@@ -114,7 +114,7 @@ class ChessScore:
         return self
 
 
-    def _get_base_score(self, board: ChessBoard, board_state: ChessBoardState) -> int:
+    def _get_base_score(self, board: ChessBoard, board_state: ChessBoardState) -> float:
         """Get the base score including both teams. Does not account for checking.
 
         Args:
@@ -133,7 +133,7 @@ class ChessScore:
             black_score += self.get_piece_score_king(piece, board, board_state)
         return round(white_score - black_score, 3)
 
-    def calc_score(self, board: ChessBoard, board_state: ChessBoardState) -> int:
+    def calc_score(self, board: ChessBoard, board_state: ChessBoardState) -> float:
         """Calculate the score value of the current chess board_state and places it in score.
 
         Args:

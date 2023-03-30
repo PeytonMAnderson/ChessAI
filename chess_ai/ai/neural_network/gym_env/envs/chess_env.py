@@ -4,6 +4,7 @@ import pygame
 import numpy as np
 import random
 
+from chess_ai.ai.base_ai import BaseAI
 from chess_ai.chess_logic.chess_utils import ChessUtils
 from chess_ai.chess_logic.chess_board import ChessBoardState, ChessBoard
 from chess_ai.chess_logic.chess_piece import ChessPiece
@@ -14,12 +15,13 @@ from chess_ai.chess_logic.chess_score import ChessScore
 class ChessEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, chess_board: ChessBoard, chess_score: ChessScore, max_half_moves: int, render_mode=None, size=5):
+    def __init__(self, chess_board: ChessBoard, chess_score: ChessScore, max_half_moves: int, other_player: BaseAI, render_mode=None, size=5):
        
         self.chess_board = chess_board
         self.chess_score = chess_score
         self.max_half_moves = max_half_moves
         self.starting_position = chess_board.board_to_fen()
+        self.other_player = other_player
         self.reward_bounds = (-chess_score.piece_scores['CHECKMATE'], chess_score.piece_scores['CHECKMATE'])
         self.board_values = [
 
@@ -108,7 +110,7 @@ class ChessEnv(gym.Env):
         self.action = np.zeros(self.act_boards * self.chess_board.ranks * self.chess_board.files, dtype=int)
         board_offset = self.chess_board.ranks * self.chess_board.files
         self.action[ro * self.chess_board.files + fo] = 1
-        self.action[board_offset + rf * self.chess_board.files + ff]
+        self.action[board_offset + rf * self.chess_board.files + ff] = 1
         return self
 
     def _get_act(self, action: np.ndarray) -> ChessMove | None:
@@ -135,27 +137,39 @@ class ChessEnv(gym.Env):
                 return move
         return None
     
-    
-    def step(self, action: np.ndarray) -> tuple[dict, float, bool, str]:
+    def _calc_half_move(self, move: ChessMove) -> tuple[float, bool]:
+        self.chess_board.move_piece(move, self.chess_board.state)
+        score = self.chess_score.calc_score(self.chess_board, self.chess_board.state)
+        terminated = False
+        if (self.chess_board.state.check_status is not None 
+            and abs(self.chess_board.state.check_status) == 2 
+            or self.chess_board.state.check_status == 0
+            or self.chess_board.state.half_move >= self.max_half_moves):
+            terminated = True
+        return score, terminated
 
+    def step(self, action: np.ndarray) -> tuple[dict, float, bool, str]:
         #If move is illegal, return player resigns
         move: ChessMove = self._get_act(action)
         if move is None:
             if self.chess_board.state.whites_turn:
                 return self._get_obs(), self.reward_bounds[0], True, self.chess_board.board_to_fen()
         
-        #Else, Perform move and return new score
-        whites_turn = True if self.chess_board.state.whites_turn else False
-        self.chess_board.move_piece(move, self.chess_board.state)
+        #Else, Perform move our move
+        wht = True if self.chess_board.state.whites_turn else False
+        score, terminated = self._calc_half_move(move)
+        if terminated:
+            self._set_obs()
+            return self._get_obs(), score if wht else -score, terminated, self.chess_board.board_to_fen()
+        
+        #Else Perform their move
+        their_move = self.other_player.get_move(self.chess_board)
+        if their_move is None:
+            self._set_obs()
+            return self._get_obs(), self.reward_bounds[1], True, self.chess_board.board_to_fen()
+        score, terminated = self._calc_half_move(their_move)
         self._set_obs()
-        score = self.chess_score.calc_score(self.chess_board, self.chess_board.state)
-        reward = score if whites_turn else -score
-        terminated = False
-        if self.chess_board.state.check_status is not None and abs(self.chess_board.state.check_status) == 2 or self.chess_board.state.check_status == 0:
-            terminated = True
-        elif self.chess_board.state.half_move >= self.max_half_moves:
-            terminated = True
-        return self._get_obs(), reward, terminated, self.chess_board.board_to_fen()
+        return self._get_obs(), score if wht else -score, terminated, self.chess_board.board_to_fen()
     
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random

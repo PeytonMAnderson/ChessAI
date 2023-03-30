@@ -280,8 +280,11 @@ class CustomAI(BaseAI):
             return self.minimax(score_class, board, board_state, depth, maximizePlayer, prune, alpha, beta)
         
         
-    def execute_turn(self, board: ChessBoard, env):
+    def execute_turn(self, board: ChessBoard, env = None):
         print(f"Calculating next move...")
+        if env is None:
+            print("WARNING: Custom AI needs env.")
+            return
         best_move: ChessMove
         start = time.time()
         best_score, best_move, branches = None, None, 0
