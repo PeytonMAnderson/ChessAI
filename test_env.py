@@ -16,13 +16,15 @@ scores.set_max_score(board, board.state)
 scores.calc_position_bias(board)
 
 board.fen_to_board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0")
-ce = ChessEnv(board, scores, 50, RandomAI(False))
+ce = ChessEnv(board, scores, 50, RandomAI(True))
+
+ce.other_player.execute_turn(ce.chess_board)
 
 for i in range(1000):
-    if len(ce.chess_board.state.white_moves) == 0:
+    if len(ce.chess_board.state.black_moves) == 0:
         break
-    move_i = random.randint(0, len(ce.chess_board.state.white_moves) - 1)
-    move = ce.chess_board.state.white_moves[move_i]
+    move_i = random.randint(0, len(ce.chess_board.state.black_moves) - 1)
+    move = ce.chess_board.state.black_moves[move_i]
     ce._set_act(move)
     observation, reward, terminated, info = ce.step(ce.action)
     print(f"{i}: {reward, terminated, info}")

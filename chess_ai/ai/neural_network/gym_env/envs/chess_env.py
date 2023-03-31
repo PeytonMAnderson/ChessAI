@@ -148,7 +148,9 @@ class ChessEnv(gym.Env):
             terminated = True
         return score, terminated
 
-    def step(self, action: np.ndarray) -> tuple[dict, float, bool, str]:
+    def step(self, action: np.ndarray, action2: np.ndarray = None) -> tuple[dict, float, bool, str]:
+        print(action)
+        print(action2)
         #If move is illegal, return player resigns
         move: ChessMove = self._get_act(action)
         if move is None:
@@ -173,7 +175,6 @@ class ChessEnv(gym.Env):
     
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
 
         #Update the Board, observation, and action
         self.observation = np.zeros(self.obs_boards * self.chess_board.ranks * self.chess_board.files, dtype=int)
@@ -184,7 +185,7 @@ class ChessEnv(gym.Env):
         if self.render_mode == "human":
             self._render_frame()
 
-        return self._get_obs(), self.starting_position
+        return self.observation
 
     def render(self):
         if self.render_mode == "rgb_array" or self.render_mode == "human":
