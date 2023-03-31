@@ -3,7 +3,7 @@ from .chess_board import ChessBoardState, ChessBoard
 from .chess_piece import ChessPiece
 
 class ChessScore:
-    def __init__(self, piece_scores: dict, max_half_moves: int = 50, endgame_piece_count: int = 8, *args, **kwargs) -> None:
+    def __init__(self, piece_scores: dict, max_half_moves: int = 50, endgame_piece_count: int = 8, board: ChessBoard = None, *args, **kwargs) -> None:
         """Calculates the score value of a chess board_state.
 
         Args:
@@ -16,6 +16,9 @@ class ChessScore:
         self.max_pieces = 0
         self.max_half_moves = max_half_moves
         self.endgame_piece_count = endgame_piece_count
+        if board is not None:
+            print("Creating new Piece Bias...")
+            self.calc_position_bias(board)
 
     def get_piece_worth(self, piece: ChessPiece):
         if piece is None:
@@ -417,6 +420,8 @@ class ChessScore:
             return b_early * game_ratio + b_late * (1 - game_ratio)
         else:
             if len(board_state.white_positions) + len(board_state.black_positions) >= self.endgame_piece_count:
+                if self.position_bias.get(piece_str) is None:
+                    print(f"\n\nUNABLE TO FIND {piece_str} in {self.position_bias}\n\n")
                 b_early = self.position_bias[piece_str][piece_position[0] * board.ranks + piece_position[1]]
                 b_late = 1.0
                 return b_early * game_ratio + b_late * (1 - game_ratio)

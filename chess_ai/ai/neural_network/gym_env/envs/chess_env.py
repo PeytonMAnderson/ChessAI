@@ -38,7 +38,7 @@ class ChessEnv(gym.Env):
             ("black_rooks", False, "R"),
             ("black_queens", False, "Q"),
             ("black_kings", False, "K"),
-
+            ("current_positions", None, None),
             ("legal_moves", None, None),
         ]
         self.move_values = [
@@ -52,12 +52,9 @@ class ChessEnv(gym.Env):
         self.observation_space = spaces.MultiBinary(self.obs_boards * self.chess_board.ranks * self.chess_board.files)
         self.observation = np.zeros(self.obs_boards * self.chess_board.ranks * self.chess_board.files, dtype=int)
         self._set_obs(chess_board.state)
-        print(self.observation.shape[0])
 
         #Set Actions Arrays
-        self.action_space = spaces.MultiBinary(self.act_boards * self.chess_board.ranks * self.chess_board.files)
-        self.action = np.zeros(self.act_boards * self.chess_board.ranks * self.chess_board.files, dtype=int)
-        print(self.action.shape[0])
+        self.action_space = spaces.MultiBinary(self.chess_board.ranks * self.chess_board.files * self.chess_board.ranks * self.chess_board.files)
 
         #Rendering
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -68,6 +65,7 @@ class ChessEnv(gym.Env):
     def _set_obs(self, board_state: ChessBoardState = None) -> "ChessEnv":
         #Get Piece Positions
         this_board_state = board_state if board_state is not None else self.chess_board.state
+        self.observation = np.zeros(self.obs_boards * self.chess_board.ranks * self.chess_board.files, dtype=int)
         for i in range(self.obs_boards-1):
             board_offset = i * self.chess_board.ranks * self.chess_board.files
             for r in range(self.chess_board.ranks):
@@ -77,13 +75,16 @@ class ChessEnv(gym.Env):
                         self.observation[board_offset + r * self.chess_board.files + f] = 0
                     else:
                         self.observation[board_offset + r * self.chess_board.files + f] = 1
-        #Set to all 0
-        board_offset = (self.obs_boards-1) * self.chess_board.ranks * self.chess_board.files
-        for r in range(self.chess_board.ranks):
-            for f in range(self.chess_board.files):
-                self.observation[board_offset + r * self.chess_board.files + f] = 0
+
+        #Get Positions
+        board_offset = (self.obs_boards-2) * self.chess_board.ranks * self.chess_board.files
+        position_list = this_board_state.white_positions if this_board_state.whites_turn else this_board_state.black_positions
+        for r, f in position_list:
+            self.observation[board_offset + r * self.chess_board.files + f] = 1
+
         #Get Moves
         moves_list = this_board_state.white_moves if this_board_state.whites_turn else this_board_state.black_moves
+        board_offset = (self.obs_boards-1) * self.chess_board.ranks * self.chess_board.files
         move: ChessMove
         for move in moves_list:
             r, f = move.new_position
@@ -113,20 +114,12 @@ class ChessEnv(gym.Env):
         self.action[board_offset + rf * self.chess_board.files + ff] = 1
         return self
 
-    def _get_act(self, action: np.ndarray) -> ChessMove | None:
-        #Get starting position and ending positions from action
-        ro, fo = None, None
-        rf, ff = None, None
-        for i in range(self.act_boards):
-            board_offset = i * self.chess_board.ranks * self.chess_board.files
-            for r in range(self.chess_board.ranks):
-                rank_offset = r * self.chess_board.files
-                for f in range(self.chess_board.files):
-                    if action[board_offset + rank_offset + f] == 1:
-                        if i == 0:
-                            ro, fo = r, f
-                        else:
-                            rf, ff = r, f
+    def _get_act(self, action_index: int) -> ChessMove | None:
+        start_pos = int(action_index / (self.chess_board.ranks * self.chess_board.files))
+        end_pos = action_index % (self.chess_board.ranks * self.chess_board.files)
+        ro, fo = int(start_pos / self.chess_board.ranks), start_pos % self.chess_board.ranks
+        rf, ff = int(end_pos / self.chess_board.ranks), end_pos % self.chess_board.ranks
+
         #From the starting position to ending position, find if there exists a valid move
         moves_list = self.chess_board.state.white_moves if self.chess_board.state.whites_turn else self.chess_board.state.black_moves
         move: ChessMove
@@ -148,30 +141,27 @@ class ChessEnv(gym.Env):
             terminated = True
         return score, terminated
 
-    def step(self, action: np.ndarray, action2: np.ndarray = None) -> tuple[dict, float, bool, str]:
-        print(action)
-        print(action2)
+    def step(self, action_index: int) -> tuple[dict, float, bool, str]:
         #If move is illegal, return player resigns
-        move: ChessMove = self._get_act(action)
+        move: ChessMove = self._get_act(action_index)
         if move is None:
             if self.chess_board.state.whites_turn:
-                return self._get_obs(), self.reward_bounds[0], True, self.chess_board.board_to_fen()
+                return self.observation, self.reward_bounds[0], True, {"board": self.chess_board.board_to_fen()}
         
         #Else, Perform move our move
         wht = True if self.chess_board.state.whites_turn else False
         score, terminated = self._calc_half_move(move)
         if terminated:
             self._set_obs()
-            return self._get_obs(), score if wht else -score, terminated, self.chess_board.board_to_fen()
-        
+            return self.observation, score if wht else -score, terminated, {"board": self.chess_board.board_to_fen()}
         #Else Perform their move
         their_move = self.other_player.get_move(self.chess_board)
         if their_move is None:
             self._set_obs()
-            return self._get_obs(), self.reward_bounds[1], True, self.chess_board.board_to_fen()
+            return self.observation, self.reward_bounds[1], True, {"board": self.chess_board.board_to_fen()}
         score, terminated = self._calc_half_move(their_move)
         self._set_obs()
-        return self._get_obs(), score if wht else -score, terminated, self.chess_board.board_to_fen()
+        return self.observation, score if wht else -score, terminated, {"board": self.chess_board.board_to_fen()}
     
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
