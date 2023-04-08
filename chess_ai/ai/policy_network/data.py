@@ -7,7 +7,7 @@ from ..base_ai import BaseAI
 OUTPUT_FILE_PATH = "./chess_ai/ai/policy_network/train_data/train.json"
 
 def calc_piece_array(board: ChessBoard, board_state: ChessBoardState, is_white: bool, piece_type: str) -> list:
-    piece_board = [0] * board.ranks * board.files
+    piece_board = [[0 for f in range(board.files)] for r in range(board.ranks)]
     for rank in range(board.ranks):
         for file in range(board.files):
             piece: ChessPiece = board_state.piece_board[rank * board.files + file]
@@ -16,29 +16,29 @@ def calc_piece_array(board: ChessBoard, board_state: ChessBoardState, is_white: 
             if piece.is_white != is_white:
                 continue
             if piece.type == piece_type:
-                piece_board[rank * board.files + file] = 1
+                piece_board[rank][file] = 1
     return piece_board
 
 def calc_current_positions(board: ChessBoard, board_state: ChessBoardState) -> list:
-    pos_list = [0] * board.ranks * board.files
+    pos_list = [[0 for f in range(board.files)] for r in range(board.ranks)]
     for rank in range(board.ranks):
         for file in range(board.files):
             piece: ChessPiece = board_state.piece_board[rank * board.files + file]
             if piece is None:
                 continue
             if board_state.whites_turn and piece.is_white:
-                pos_list[rank * board.files + file] = 1
+                pos_list[rank][file] = 1
             elif not board_state.whites_turn and not piece.is_white:
-                pos_list[rank * board.files + file] = 1
+                pos_list[rank][file] = 1
     return pos_list
 
 def calc_legal_moves(board: ChessBoard, board_state: ChessBoardState) -> list:
-    legal_moves = [0] * board.ranks * board.files
+    legal_moves = [[0 for f in range(board.files)] for r in range(board.ranks)]
     moves_array = board_state.white_moves if board_state.whites_turn else board_state.black_moves
     move: ChessMove
     for move in moves_array:
         r, f = move.new_position
-        legal_moves[r * board.files + f] = 1
+        legal_moves[r][f] = 1
     return legal_moves
 
 def calc_board_arrays(board: ChessBoard, board_state: ChessBoardState) -> list:
@@ -71,8 +71,20 @@ def calc_board_arrays(board: ChessBoard, board_state: ChessBoardState) -> list:
             board_arrays.append(calc_piece_array(board, board_state, is_white, piece_type))
     return board_arrays
 
+def normalize(score_value: float, score: ChessScore) -> float:
+    return (score_value / (score.score_max_checkmate * 2)) + 0.5
+
+def de_normalize(score_value: float, score: ChessScore) -> float:
+    return (score_value - 0.5) * (score.score_max_checkmate * 2)
+
 def calc_board_score(board: ChessBoard, board_state: ChessBoardState, score: ChessScore) -> float:
-    return score.calc_score(board, board_state)
+    #(-1000, 1000)
+    score_value  = score.calc_score(board, board_state)
+    #(-0.5, 0.5)
+    score_norm = score_value / (score.score_max_checkmate * 2)
+    #(0, 1)
+    score_norm_pos = score_norm + 0.5
+    return score_norm_pos
 
 def generate_boards(board: ChessBoard, score: ChessScore, ai: BaseAI, n_boards: int, max_half_moves: int) -> list:
     boards = []
@@ -115,6 +127,18 @@ def get_data(file_path: str = OUTPUT_FILE_PATH) -> list:
     with open(file_path, 'rb') as f:
         boards = loads(f.read())
     return boards
+
+def get_formated_data(file_path: str = OUTPUT_FILE_PATH) -> tuple[np.ndarray, np.ndarray]:
+    with open(file_path, 'rb') as f:
+        boards = loads(f.read())
+        x_train = []
+        y_train = []
+        for b in boards:
+            score = b.get("score")
+            bds = b.get("boards")
+            x_train.append(bds)
+            y_train.append(score)
+    return np.array(x_train), np.array(y_train)
 
 def cli_board(board: ChessBoard, board_lists: list) -> None:
     board_types = [

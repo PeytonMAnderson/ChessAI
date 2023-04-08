@@ -11,6 +11,7 @@ class ChessScore:
         """
         self.piece_scores = piece_scores
         self.score_max = 0
+        self.score_max_checkmate = 0
         self.score = 0
         self.position_bias = {}
         self.max_pieces = 0
@@ -113,6 +114,7 @@ class ChessScore:
             piece: ChessPiece = board_state.piece_board[r * board.files + f]
             black_score += self.get_piece_score_king(piece, board, board_state)
         self.score_max = max(round(white_score, 3), round(white_score, 3))
+        self.score_max_checkmate = self.piece_scores['CHECKMATE']
         self.max_pieces = len(board_state.white_positions) + len(board_state.black_positions)
         return self
 
