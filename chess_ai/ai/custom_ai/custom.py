@@ -279,6 +279,17 @@ class CustomAI(BaseAI):
             #Return best from entire list
             return self.minimax(score_class, board, board_state, depth, maximizePlayer, prune, alpha, beta)
         
+    def get_move(self, board: ChessBoard, env = None) -> ChessMove:
+        print(f"Calculating next move...")
+        best_move: ChessMove
+        best_score, best_move, branches = None, None, 0
+        score_class = env.chess.score
+        if self.mp_start_depth <= self.max_depth:
+            best_score, best_move, branches = self.minimax_mp(score_class, board, board.state, self.max_depth, True if env.chess.board.state.whites_turn else False, True)
+        else:
+            best_score, best_move, branches = self.minimax(score_class, board, board.state, self.max_depth, True if env.chess.board.state.whites_turn else False, True)
+        print(f"DONE! Branches Checked: {branches}. with best score: {best_score}")
+        return best_move
         
     def execute_turn(self, board: ChessBoard, env = None):
         print(f"Calculating next move...")

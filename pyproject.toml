@@ -9,5 +9,6 @@ python = "^3.10"
 pygame = "^2.3.0"
 pyyaml = "^6.0"
 chess = "^1.9.4"
+orjson = "^3.8.9"
 
 [tool.poetry.dev-dependencies]
