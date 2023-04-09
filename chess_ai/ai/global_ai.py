@@ -26,7 +26,7 @@ class GlobalAI:
         if player_str == "PLAYER":
             return None
         elif player_str == "CUSTOM":
-            return CustomAI(score)
+            return CustomAI(score, self.custom_depth)
         elif player_str == "STOCKFISH":
             return StockFishAI(score, 0.1)
         elif player_str == "RANDOM":
@@ -42,7 +42,7 @@ class GlobalAI:
         if player_str == "PLAYER":
             return
         else:
-            player_value.execute_turn(board)
+            player_value.execute_turn(board, env)
 
     def execute_turn(self, board: ChessBoard, env): 
         if env.chess.game_ended or self.paused:

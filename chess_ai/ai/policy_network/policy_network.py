@@ -12,6 +12,7 @@ BIG_NUMBER = 1000000
 class PolicyAI(BaseAI):
     def __init__(self, score: ChessScore, model_dir_str: str, depth: int = 0, *args, **kwargs):
         super().__init__(score, *args, **kwargs)
+        tf.keras.utils.disable_interactive_logging()
         self.model = tf.keras.models.load_model(model_dir_str)
         self.depth = depth
 
@@ -26,6 +27,8 @@ class PolicyAI(BaseAI):
     def _predict_best_move(self, board: ChessBoard, board_state: ChessBoardState) -> tuple[float, ChessMove]:
         move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
         x_predict = self._get_boards_arrays(board, board_state, move_list)
+        if len(move_list) <= 0:
+            return None, None
         predict_scores = self.model.predict(x_predict)
         best_score = -BIG_NUMBER if board_state.whites_turn else BIG_NUMBER
         best_move = None
@@ -85,8 +88,8 @@ class PolicyAI(BaseAI):
 
     def get_move(self, board: ChessBoard, board_state: ChessBoardState) -> ChessMove | None:
         best_score, best_move = self._minimax(board, board_state, depth=self.depth)
-        print(f"Got Best Move: {best_move.piece.position} => {best_move.new_position} with score of {best_score}")
         if best_move is not None:
+            #print(f"Got Best Move: {best_move.piece.position} => {best_move.new_position} with score of {best_score}")
             return best_move
         return None
         
