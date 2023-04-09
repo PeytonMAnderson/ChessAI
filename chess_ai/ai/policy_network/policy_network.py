@@ -32,7 +32,7 @@ class PolicyAI(BaseAI):
         move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
         x_predict = self._get_boards_arrays(board, board_state, move_list)
         if len(move_list) <= 0:
-            return -BIG_NUMBER if board_state.whites_turn else BIG_NUMBER, None
+            return self.score.calc_score(board, board_state), None
         predict_scores = self.model.predict(x_predict)
         best_score = -BIG_NUMBER if board_state.whites_turn else BIG_NUMBER
         best_move = None

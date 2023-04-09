@@ -30,6 +30,8 @@ class MinimaxAlphaBeta(Minimax):
                 if new_score < best_score:
                     best_score = new_score
                     best_move = move
+        if len(sorted_list) == 0:
+            return self.score.calc_score(board, board_state), best_move
         return best_score, best_move    
 
     def _sort_move(self, move_tuple: tuple) -> int:
