@@ -14,4 +14,4 @@ class StockFishAI(BaseAI):
     def get_move(self, board: ChessBoard, board_state: ChessBoardState) -> ChessMove:
         chess_board = chess.Board(board.board_to_fen(board_state))
         result = self.engine.play(chess_board, chess.engine.Limit(self.time_limit))
-        return board.uci_to_move(result.move.uci())
+        return board.uci_to_move(result.move.uci(), board_state)

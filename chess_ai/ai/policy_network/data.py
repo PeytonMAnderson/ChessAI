@@ -5,6 +5,7 @@ from ...chess_logic import *
 from ..base_ai import BaseAI
 
 OUTPUT_FILE_PATH = "./chess_ai/ai/policy_network/train_data/train.json"
+BIG_NUMBER = 1000000
 
 def calc_piece_array(board: ChessBoard, board_state: ChessBoardState, is_white: bool, piece_type: str) -> list:
     piece_board = [[0 for f in range(board.files)] for r in range(board.ranks)]

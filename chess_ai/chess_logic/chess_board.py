@@ -176,9 +176,9 @@ class ChessBoard:
     
     def uci_to_move(self, uci: str, board_state: ChessBoardState) -> ChessMove | None:
         move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
-        rank1, file1, rank2, file2 = uci[0], uci[1], uci[2], uci[3]
-        r1, f1 = self.utils.get_number_from_rank(rank1, self.ranks), self.utils.get_number_from_file(file1, self.files)
-        r2, f2 = self.utils.get_number_from_rank(rank2, self.ranks), self.utils.get_number_from_file(file2, self.files)
+        file1, rank1, file2, rank2 = uci[0], uci[1], uci[2], uci[3]
+        r1, f1 = self.utils.get_number_from_rank(rank1, self.ranks), self.utils.get_number_from_file(file1)
+        r2, f2 = self.utils.get_number_from_rank(rank2, self.ranks), self.utils.get_number_from_file(file2)
         move: ChessMove
         for move in move_list:
             ro, fo = move.piece.position
