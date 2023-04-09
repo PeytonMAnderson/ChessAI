@@ -141,8 +141,8 @@ class GlobalChess:
                 env.sound.play("capture", env)
             else:
                 env.sound.play("move-self", env)
+        self.last_move_tuple = (old_move.piece.position[0], old_move.piece.position[1], old_move.new_position[0], old_move.new_position[1])
         
-
     def move_piece(self, move: ChessMove, env = None) -> "GlobalChess":
         """Moves a piece on the board assuming the move if valid. Updates score, history, game_ended, and last move.
 
@@ -158,7 +158,7 @@ class GlobalChess:
         #Move Piece
         old_piece = deepcopy(self.board.state.piece_board[move.new_position[0] * self.board.files + move.new_position[1]])
         old_move = deepcopy(move)
-        self.last_move_tuple = (move.piece.position[0], move.piece.position[1], move.new_position[0], move.new_position[1])
+        
         self.board.move_piece(move, self.board.state)
         self.move_extra(env, old_move, old_piece)
         
