@@ -3,23 +3,15 @@ import chess.engine
 import time
 
 from ..base_ai import BaseAI
-from ...chess_logic.chess_board import ChessBoard
+from ...chess_logic import *
 
 class StockFishAI(BaseAI):
-    def __init__(self, is_white: bool, *args, **kwargs):
-        super().__init__(is_white, *args, **kwargs)
+    def __init__(self, score:  ChessScore, time_limit: int = 0.1, *args, **kwargs):
+        super().__init__(score, *args, **kwargs)
         self.engine = chess.engine.SimpleEngine.popen_uci(r'.\chess_ai\ai\stockfish\stockfish\stockfish-windows-2022-x86-64-avx2.exe')
-        
-    def execute_turn(self, board: ChessBoard, env = None):
-        start = time.time()
-        chess_board = chess.Board(board.board_to_fen())
-        result = self.engine.play(chess_board, chess.engine.Limit(time=0.1))
-        san = chess_board.san(result.move)
-        chess_board.push(result.move)
-        new_fen = chess_board.fen()
-        board.fen_to_board(new_fen)
-        if env is not None:
-            env.chess.move_extra(env, move_str=san)
-        end = time.time()
-        e = round((end-start)*1000, 3)
-        print(f"DONE! Found Best Move: {san} in {e} ms")
+        self.time_limit = time_limit
+
+    def get_move(self, board: ChessBoard, board_state: ChessBoardState) -> ChessMove:
+        chess_board = chess.Board(board.board_to_fen(board_state))
+        result = self.engine.play(chess_board, chess.engine.Limit(self.time_limit))
+        return board.uci_to_move(result.move.uci())

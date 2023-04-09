@@ -120,11 +120,12 @@ class ChessBoard:
         #Return self
         return self
     
-    def board_to_fen(self) -> str:
+    def board_to_fen(self, board_state: ChessBoardState = None) -> str:
         """Generates a FEN string from the current board.
 
             Returns: FEN string.
         """
+        bs = board_state if board_state is not None else self.state
         rank_index = 0
         file_index = 0
 
@@ -140,7 +141,7 @@ class ChessBoard:
 
                 #Get piece from board
                 loc = rank_index * self.files + file_index
-                piece: ChessPiece = self.state.piece_board[loc]
+                piece: ChessPiece = bs.piece_board[loc]
 
                 #If location is a piece
                 if isinstance(piece, ChessPiece):
@@ -170,8 +171,31 @@ class ChessBoard:
             rank_index += 1
         
         #Add Active color:
-        color_str = "w" if self.state.whites_turn else "b"
-        return rank_str + " " + color_str + " " + self.state.castle_avail + " " + self.state.en_passant + " " + str(self.state.half_move) + " " + str(self.state.full_move)
+        color_str = "w" if bs.whites_turn else "b"
+        return rank_str + " " + color_str + " " + bs.castle_avail + " " + bs.en_passant + " " + str(bs.half_move) + " " + str(bs.full_move)
+    
+    def uci_to_move(self, uci: str, board_state: ChessBoardState) -> ChessMove | None:
+        move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
+        rank1, file1, rank2, file2 = uci[0], uci[1], uci[2], uci[3]
+        r1, f1 = self.utils.get_number_from_rank(rank1, self.ranks), self.utils.get_number_from_file(file1, self.files)
+        r2, f2 = self.utils.get_number_from_rank(rank2, self.ranks), self.utils.get_number_from_file(file2, self.files)
+        move: ChessMove
+        for move in move_list:
+            ro, fo = move.piece.position
+            rf, ff = move.new_position
+            if (r1, f1) == (ro, fo) and (r2, f2) == (rf, ff):
+                return move
+        return None
+
+    def move_to_uci(self, move: ChessMove) -> str:
+        r1, f1 = move.piece.position
+        r2, f2 = move.new_position
+        rank1, file1 = self.utils.get_rank_from_number(r1, self.ranks), self.utils.get_file_from_number(f1, self.files)
+        rank2, file2 = self.utils.get_rank_from_number(r2, self.ranks), self.utils.get_file_from_number(f2, self.files)
+        promotion = ""
+        if move.promotion:
+            promotion = move.promotion_type.lower()
+        return file1 + rank1 + file2 + rank2 + promotion
 
     def _simulate_move(self, new_move: ChessMove, chess_board_state: ChessBoardState) -> tuple[list, list, list, list, bool]:
 

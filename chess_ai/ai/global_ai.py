@@ -1,11 +1,12 @@
 import yaml
 
 from .base_ai import BaseAI
-from ..chess_logic.chess_board import ChessBoard
+from ..chess_logic import *
 
 from .custom_ai.custom import CustomAI
 from .stockfish.stock_ai import StockFishAI
 from .random.random_ai import RandomAI
+from .policy_network.policy_network import PolicyAI
 
 class GlobalAI:
     def __init__(self,
@@ -21,25 +22,27 @@ class GlobalAI:
         self.black_player = None
         self.paused = paused
 
-    def get_player_from_str(self, player_str: str, is_white: bool) -> None:
+    def get_player_from_str(self, player_str: str, score: ChessScore) -> None:
         if player_str == "PLAYER":
             return None
         elif player_str == "CUSTOM":
-            return CustomAI(is_white, self.custom_depth)
+            return CustomAI(score)
         elif player_str == "STOCKFISH":
-            return StockFishAI(is_white)
+            return StockFishAI(score, 0.1)
         elif player_str == "RANDOM":
-            return RandomAI(is_white)
+            return RandomAI(score)
+        elif player_str == "POLICY":
+            return PolicyAI(score, './chess_ai/ai/policy_network/models/policy_network.model', 0)
 
-    def set_players(self):
-        self.white_player = self.get_player_from_str(self.white_player_str, True)
-        self.black_player = self.get_player_from_str(self.black_player_str, False)
+    def set_players(self, score: ChessScore):
+        self.white_player = self.get_player_from_str(self.white_player_str, score)
+        self.black_player = self.get_player_from_str(self.black_player_str, score)
 
     def execute_player(self, player_str: str, player_value: BaseAI | None, board: ChessBoard, env): 
         if player_str == "PLAYER":
             return
         else:
-            player_value.execute_turn(board, env)
+            player_value.execute_turn(board)
 
     def execute_turn(self, board: ChessBoard, env): 
         if env.chess.game_ended or self.paused:
@@ -49,6 +52,24 @@ class GlobalAI:
         else:
             self.execute_player(self.black_player_str, self.black_player, board, env)
 
+    def _create_chess_score(self, yaml_dict: dict) -> ChessScore:
+        #Save Board Chess Values
+        settings = yaml_dict['CHESS']
+        files = settings['BOARD_FILES']
+        ranks = settings['BOARD_RANKS']
+        piece_values = settings['PIECE_VALUES']
+        starting_fen = settings['BOARD']
+        board = ChessBoard(ChessUtils(piece_values), ranks, files)
+        board.fen_to_board(starting_fen)
+
+        #Getting ChessScore
+        piece_scores = settings['PIECE_SCORES']
+        max_half_moves = settings['MAX_HALF_MOVES']
+        score = ChessScore(piece_scores, max_half_moves)
+        score.calc_position_bias(board)
+        score.set_max_score(board, board.state)
+        return score
+
     def set_from_yaml(self, yaml_path: str) -> "GlobalAI":
         with open(yaml_path, "r") as f:
             yaml_settings = yaml.safe_load(f)
@@ -57,7 +78,7 @@ class GlobalAI:
             self.white_player_str = settings["WHITE_PLAYER"]
             self.black_player_str = settings["BLACK_PLAYER"]
             self.paused = settings["PAUSED"]
-            self.set_players()
+            self.set_players(self._create_chess_score(yaml_settings))
         return self
     
     def piece_is_playable(self, is_white: bool) -> bool:

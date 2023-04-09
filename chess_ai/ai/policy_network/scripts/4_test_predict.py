@@ -11,7 +11,7 @@ CONFIG_FILE = "./chess_config.yaml"
 TRAIN_DATA_FILE_PATH = "./chess_ai/ai/policy_network/train_data/train.json"
 MODEL_FILE_PATH = './chess_ai/ai/policy_network/models/policy_network.model'
 TEST_STRING = "rnbq1rk1/pppp1ppp/5n2/4p3/2B1P3/2PP1N2/P4PPP/RNBQK2R w KQ - 1 6"
-TEST_STRING2 = "r1bqkbnr/pppppppp/n7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 2 2"
+TEST_STRING2 = "2kr3r/p1ppqpb1/bn2Qnp1/3PN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQ - 3 2"
 
 def get_from_yaml(yaml_path: str):
     with open(yaml_path, "r") as f:
@@ -41,11 +41,14 @@ def main():
 
     #Get Scores
     board.fen_to_board(TEST_STRING2)
-    board_arrays = np.array([np.array(calc_board_arrays(board, board.state))])
-    real_score = score.calc_score(board, board.state)
-    pred_score = model.predict(board_arrays)
-    print(f"Predicted: {de_normalize(pred_score[0][0], score)}, Actual Score: {real_score}")
-
+    move: ChessMove
+    moves_list = board.state.white_moves if board.state.whites_turn else board.state.black_moves
+    for move in moves_list:
+        new_board_state = board.move_piece(move, board.state, True)
+        new_board_arrays = np.array([np.array(calc_board_arrays(board, new_board_state))])
+        new_real_score = score.calc_score(board, new_board_state)
+        new_pred_score = model.predict(new_board_arrays)
+        print(f"Move: ({move.piece.position} => {move.new_position}) Predicted: {de_normalize(new_pred_score[0][0], score)}, Actual Score: {new_real_score}")
 
 if __name__ == "__main__":
     main()
