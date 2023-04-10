@@ -90,7 +90,7 @@ class MinimaxAlphaBeta(Minimax):
                       depth: int = 0,
                       sorted: bool = True,
                       track_move: bool = True
-    ) -> tuple[float, ChessMove] | float:
+    ) -> tuple[float, ChessMove, int] | tuple[float, int]:
         #Depth == 0: Just Check what score each of my moves makes.
         if depth == 0:
             score, move, branches = self.calc_best_score(board, board_state, True, alpha, beta)

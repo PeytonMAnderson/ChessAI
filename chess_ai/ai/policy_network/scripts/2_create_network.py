@@ -9,7 +9,7 @@ MODEL_FILE_PATH = './chess_ai/ai/policy_network/models'
 CONV_SIZE = 32
 CONV_DEPTH = 4
 DENSE_NEURONS = 64
-MODEL_NAME = "policy_network2.model"
+MODEL_NAME = "policy_network3.model"
 
 def _create_network(example_boards: list, conv_size: int, conv_depth: int, dense_neurons: int = 64):
     board_count = len(example_boards)
@@ -21,7 +21,7 @@ def _create_network(example_boards: list, conv_size: int, conv_depth: int, dense
         conv_layer = tf.keras.layers.Conv2D(filters=conv_size, kernel_size=3, padding='same', activation='relu')(conv_layer)
     flat_layer = tf.keras.layers.Flatten()(conv_layer)
     dense_layer = tf.keras.layers.Dense(dense_neurons, 'relu')(flat_layer)
-    dense_layer = tf.keras.layers.Dense(dense_neurons, 'relu')(dense_layer)
+    dense_layer = tf.keras.layers.Dense(int(dense_neurons**0.5), 'relu')(dense_layer)
     output_layer = tf.keras.layers.Dense(1, 'sigmoid')(dense_layer)
     return tf.keras.models.Model(inputs=model_input, outputs=output_layer)
 
@@ -36,7 +36,7 @@ def main():
     model.summary()
 
     #Train Model for 1 Epoch
-    model.fit(x_train, y_train, batch_size=2048, epochs=1, verbose=1, validation_split=0.1)
+    model.fit(x_train, y_train, batch_size=500, epochs=1, verbose=1, validation_split=0.1)
 
     #Save Model
     print("Saving Model...")

@@ -3,9 +3,15 @@ import numpy as np
 
 from ...chess_logic import *
 from ..base_ai import BaseAI
+from ...minimax import MinimaxAlphaBeta
 
 OUTPUT_FILE_PATH = "./chess_ai/ai/policy_network/train_data/train.json"
 BIG_NUMBER = 1000000
+
+def get_data(file_path: str = OUTPUT_FILE_PATH) -> list:
+    with open(file_path, 'rb') as f:
+        boards = loads(f.read())
+    return boards
 
 def calc_piece_array(board: ChessBoard, board_state: ChessBoardState, is_white: bool, piece_type: str) -> list:
     piece_board = [[0 for f in range(board.files)] for r in range(board.ranks)]
@@ -78,18 +84,31 @@ def normalize(score_value: float, score: ChessScore) -> float:
 def de_normalize(score_value: float, score: ChessScore) -> float:
     return (score_value - 0.5) * (score.score_max_checkmate * 2)
 
-def calc_board_score(board: ChessBoard, board_state: ChessBoardState, score: ChessScore) -> float:
+def calc_board_score(board: ChessBoard, board_state: ChessBoardState, score: ChessScore, depth: int) -> float:
     #(-1000, 1000)
-    score_value  = score.calc_score(board, board_state)
+    score_value = 0
+    if depth == -1:
+        score_value = score.calc_score(board, board_state)
+    else:
+        minimax = MinimaxAlphaBeta(score)
+        score_value, branches = minimax.minimax(board, board_state, depth=depth, track_move=False)
     #(-0.5, 0.5)
     score_norm = score_value / (score.score_max_checkmate * 2)
     #(0, 1)
     score_norm_pos = score_norm + 0.5
     return score_norm_pos
 
-def generate_boards(board: ChessBoard, score: ChessScore, ai: BaseAI, n_boards: int, max_half_moves: int) -> list:
+def generate_boards(board: ChessBoard, 
+                    score: ChessScore, 
+                    ai: BaseAI, 
+                    n_boards: int, 
+                    max_half_moves: int, 
+                    depth: int, 
+                    file_path: str,
+                    starting_board: int = 0
+) -> list:
     boards = []
-    board_count = 0
+    board_count = starting_board
     game_count = 0
     #Keep looping until n boards is filled
     while board_count < n_boards:
@@ -105,9 +124,17 @@ def generate_boards(board: ChessBoard, score: ChessScore, ai: BaseAI, n_boards: 
                 if abs(new_board_state.check_status) == 2 or new_board_state.check_status == 0:
                     game_ended = True
             board_array = calc_board_arrays(board, new_board_state)
-            board_score = calc_board_score(board, new_board_state, score)
-            boards.append({"boards": board_array, "score": board_score})
+            board_score = calc_board_score(board, new_board_state, score, depth)
+            board_dict = {"boards": board_array, "score": board_score}
             board_count += 1
+            if depth > 1:
+                print(f"\tBoard Created: {board_count}, Depth {depth}, Score: {board_score}")
+                boards_json: list = get_data(file_path)
+                boards_json.append(board_dict)
+                with open(file_path, 'wb') as f:
+                    f.write(dumps(boards_json, option=0))
+            else:
+                boards.append(board_dict)
         game_count += 1
         print(f"Finished Game {game_count}: Current board count: {board_count}.")
     print(f"Finished with {board_count} boards, from {game_count} games.")
@@ -118,16 +145,24 @@ def create_data(board: ChessBoard,
                 ai: BaseAI, 
                 n_boards: int = 1_000, 
                 max_half_moves: int = 50, 
-                file_path: str = OUTPUT_FILE_PATH
+                file_path: str = OUTPUT_FILE_PATH,
+                depth: int = -1,
+                reset: bool = False
     ) -> None:
-    boards = generate_boards(board, score, ai, n_boards,  max_half_moves)
-    with open(file_path, 'wb') as f:
-        f.write(dumps(boards, option=0))
-
-def get_data(file_path: str = OUTPUT_FILE_PATH) -> list:
-    with open(file_path, 'rb') as f:
-        boards = loads(f.read())
-    return boards
+    
+    starting_board = 0
+    if depth >= 0 and reset:
+        print("Data Reset.")
+        with open(file_path, 'wb') as f:
+            f.write(dumps([], option=0))
+    current_boards = get_data(file_path)
+    if isinstance(current_boards, list):
+        starting_board = len(current_boards)
+    print(f"Generating Boards starting with board {starting_board}")
+    boards = generate_boards(board, score, ai, n_boards,  max_half_moves, depth, file_path, starting_board)
+    if depth == -1:
+        with open(file_path, 'wb') as f:
+            f.write(dumps(boards, option=0))
 
 def get_formated_data(file_path: str = OUTPUT_FILE_PATH) -> tuple[np.ndarray, np.ndarray]:
     with open(file_path, 'rb') as f:

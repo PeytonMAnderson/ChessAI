@@ -7,7 +7,9 @@ from chess_ai.ai.random.random_ai import RandomAI
 
 CONFIG_FILE = "./chess_config.yaml"
 TRAIN_DATA_FILE_PATH = "./chess_ai/ai/policy_network/train_data/train.json"
-N_BOARDS = 100_000
+N_BOARDS = 1_000
+DEPTH = 2
+RESET = True
 
 def get_from_yaml(yaml_path: str):
     with open(yaml_path, "r") as f:
@@ -31,10 +33,10 @@ def main():
     board.fen_to_board(board_fen)
     score.calc_position_bias(board)
     score.set_max_score(board, board.state)
-    random_ai = RandomAI()
+    random_ai = RandomAI(score)
 
     #Create Data
-    create_data(board, score, random_ai, N_BOARDS, half_moves, TRAIN_DATA_FILE_PATH)
+    create_data(board, score, random_ai, N_BOARDS, half_moves, TRAIN_DATA_FILE_PATH, DEPTH, RESET)
 
 if __name__ == "__main__":
     main()
