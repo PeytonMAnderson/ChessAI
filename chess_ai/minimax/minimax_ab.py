@@ -1,5 +1,4 @@
 from typing import Callable
-
 from ..chess_logic import *
 from .minimax import Minimax
 
@@ -12,27 +11,40 @@ class MinimaxAlphaBeta(Minimax):
             calc_best_score = self._best_score_function
         super().__init__(score, calc_best_score, *args, **kwargs)
 
-    def _best_score_function(self, board: ChessBoard, board_state: ChessBoardState, sorted: bool = True) -> tuple[float, ChessMove]:
+    def _prune_score_function(self, best_score: float, maxmimize: bool, alpha: float = None, beta: float = None) -> tuple[float, float, bool]:
+        if alpha is None or beta is None:
+            return (None, None, False)
+        new_alpha = max(alpha, best_score) if maxmimize else alpha
+        new_beta = min(beta, best_score) if not maxmimize else beta
+        if beta <= alpha:
+            return (new_alpha, new_beta, True)
+        return (new_alpha, new_beta, False)
+
+    def _get_best_score(self, best_score: float, best_move: ChessMove, new_score: float, new_move: ChessMove, maximize: bool) -> tuple[float, ChessMove]:
+        update = True if (maximize and new_score > best_score) or (not maximize and new_score < best_score) else False
+        return (new_score, new_move) if update else (best_score, best_move)
+
+    def _best_score_function(self, board: ChessBoard, board_state: ChessBoardState, sorted: bool = True, alpha: float = None, beta: float = None) -> tuple[float, ChessMove]:
         move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
         sorted_list = move_list if not sorted else self._order_move_list(board, board_state, move_list)
         best_score = -BIG_NUMBER if board_state.whites_turn else BIG_NUMBER
         best_move = None
+        branches = 0
+        new_alpha = alpha
+        new_beta = beta
         move: ChessMove
         for move in sorted_list:
+            branches += 1
             move = move[1] if isinstance(move, tuple) else move
             new_board_state = board.move_piece(move, board_state, True)
             new_score = self.score.calc_score(board, new_board_state)
-            if board_state.whites_turn:
-                if new_score > best_score:
-                    best_score = new_score
-                    best_move = move
-            else:
-                if new_score < best_score:
-                    best_score = new_score
-                    best_move = move
+            best_score, best_move = self._get_best_score(best_score, best_move, new_score, move, board_state.whites_turn)
+            new_alpha, new_beta, prune = self._prune_score_function(best_score, board_state.whites_turn, new_alpha, new_beta)
+            if prune:
+                break
         if len(sorted_list) == 0:
-            return self.score.calc_score(board, board_state), best_move
-        return best_score, best_move    
+            return self.score.calc_score(board, board_state), best_move, branches   
+        return best_score, best_move, branches   
 
     def _sort_move(self, move_tuple: tuple) -> int:
         return -move_tuple[0]
@@ -81,49 +93,32 @@ class MinimaxAlphaBeta(Minimax):
     ) -> tuple[float, ChessMove] | float:
         #Depth == 0: Just Check what score each of my moves makes.
         if depth == 0:
-            score, move = self.calc_best_score(board, board_state)
+            score, move, branches = self.calc_best_score(board, board_state, True, alpha, beta)
             if track_move:
-                return score, move
-            return score
+                return score, move, branches
+            return score, branches
         
         #Depth > 0: Recurse to depth == 0
         best_score = -BIG_NUMBER if board_state.whites_turn else BIG_NUMBER
         best_move = None
+        branches = 0
+        new_alpha = alpha
+        new_beta = beta
 
-        if board_state.whites_turn:
-            #Maximize
-            move: ChessPiece
-            sorted_list = board_state.white_moves if not sorted else self._order_move_list(board, board_state, board_state.white_moves)
-            for move in sorted_list:
-                move = move[1] if isinstance(move, tuple) else move
-                new_board_state = board.move_piece(move, board_state, True)
-                deep_score = self.minimax(board, new_board_state, alpha, beta, depth - 1, sorted, False)
-                #Max
-                if deep_score > best_score:
-                    best_score = deep_score
-                    best_move = move
-                #Alpha
-                alpha = max(alpha, best_score)
-                #Beta
-                if beta <= alpha:
-                    break
-        else:
-            #Maximize
-            move: ChessPiece
-            sorted_list = board_state.white_moves if not sorted else self._order_move_list(board, board_state, board_state.black_moves)
-            for move in sorted_list:
-                move = move[1] if isinstance(move, tuple) else move
-                new_board_state = board.move_piece(move, board_state, True)
-                deep_score = self.minimax(board, new_board_state, alpha, beta, depth - 1, sorted, False)
-                #Min
-                if deep_score < best_score:
-                    best_score = deep_score
-                    best_move = move
-                #Beta
-                beta = min(beta, best_score)
-                #Alpha
-                if beta <= alpha:
-                    break
+        #Sort Moves
+        move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
+        sorted_list = move_list if not sorted else self._order_move_list(board, board_state, move_list)
+        move: ChessPiece
+        for move in sorted_list:
+            move = move[1] if isinstance(move, tuple) else move
+            new_board_state = board.move_piece(move, board_state, True)
+            deep_score, deep_branches = self.minimax(board, new_board_state, new_alpha, new_beta, depth - 1, sorted, False)
+            best_score, best_move = self._get_best_score(best_score, best_move, deep_score, move, board_state.whites_turn)
+            new_alpha, new_beta, prune = self._prune_score_function(best_score, board_state.whites_turn, new_alpha, new_beta)
+            if prune:
+                break
+            branches += deep_branches
+            
         if track_move:
-            return best_score, best_move
-        return best_score
+            return best_score, best_move, branches
+        return best_score, branches

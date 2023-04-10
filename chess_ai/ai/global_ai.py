@@ -15,11 +15,7 @@ class GlobalAI:
           white_player_str: str = "PLAYER",
           black_player_str: str = "PLAYER",
           paused: bool = False,  
-          minimax: Minimax = None,
     *args, **kwargs) -> None:
-        self.minimax = minimax
-        if minimax is None:
-            self.minimax = MinimaxAlphaBeta(None)
         self.custom_depth = custom_depth
         self.white_player_str = white_player_str
         self.black_player_str = black_player_str
@@ -31,16 +27,16 @@ class GlobalAI:
         if player_str == "PLAYER":
             return None
         elif player_str == "CUSTOM":
-            return CustomAI(score, self.minimax, self.custom_depth)
+            return CustomAI(score, MinimaxAlphaBeta(None), self.custom_depth)
         elif player_str == "STOCKFISH":
             return StockFishAI(score, 0.1)
         elif player_str == "RANDOM":
             return RandomAI(score)
         elif player_str == "POLICY":
             if flag == 1:
-                return PolicyAI(score, self.minimax, './chess_ai/ai/policy_network/models/policy_network.model', self.custom_depth)
+                return PolicyAI(score, MinimaxAlphaBeta(None), './chess_ai/ai/policy_network/models/policy_network.model', 0)
             elif flag == 2:
-                return PolicyAI(score, self.minimax, './chess_ai/ai/policy_network/models/policy_network2.model', self.custom_depth)
+                return PolicyAI(score, MinimaxAlphaBeta(None), './chess_ai/ai/policy_network/models/policy_network2.model', 0)
 
     def set_players(self, score: ChessScore):
         self.white_player = self.get_player_from_str(self.white_player_str, score, 1)

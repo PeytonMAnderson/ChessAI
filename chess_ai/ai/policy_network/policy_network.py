@@ -28,7 +28,7 @@ class PolicyAI(BaseAI):
             board_arrays_array.append(calc_board_arrays(board, new_board_state))
         return np.array(board_arrays_array)
 
-    def _predict_best_move(self, board: ChessBoard, board_state: ChessBoardState, sorted: bool = True) -> tuple[float, ChessMove]:
+    def _predict_best_move(self, board: ChessBoard, board_state: ChessBoardState, sorted: bool = True, alpha: float = None, beta: float = None) -> tuple[float, ChessMove]:
         move_list = board_state.white_moves if board_state.whites_turn else board_state.black_moves
         x_predict = self._get_boards_arrays(board, board_state, move_list)
         if len(move_list) <= 0:
@@ -48,12 +48,12 @@ class PolicyAI(BaseAI):
                     best_score = de_score
                     best_move = move_list[count]
             count += 1
-        return best_score, best_move
+        return best_score, best_move, count
 
     def get_move(self, board: ChessBoard, board_state: ChessBoardState) -> ChessMove | None:
-        best_score, best_move = self.minimax.minimax(board, board_state, depth=self.depth, sorted=True, track_move=True)
+        best_score, best_move, branches = self.minimax.minimax(board, board_state, depth=self.depth, sorted=True, track_move=True)
         if best_move is not None:
-            #print(f"Got Best Move: {best_move.piece.position} => {best_move.new_position} with score of {best_score}")
+            print(f"Predicted Best Move: {best_move.piece.position} => {best_move.new_position} with {branches} branches.")
             return best_move
         return None
         

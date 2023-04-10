@@ -23,10 +23,9 @@ class CustomAI(BaseAI):
         self.random_chance = 0.2
 
     def get_move(self, board: ChessBoard, board_state: ChessBoardState) -> ChessMove | None:
-        best_score, best_move = self.minimax.minimax(board, board_state, depth=self.depth, sorted=True, track_move=True)
-        print(best_score, best_move)
+        _, best_move, branches = self.minimax.minimax(board, board_state, depth=self.depth, sorted=True, track_move=True)
         if best_move is not None:
-            #print(f"Got Best Move: {best_move.piece.position} => {best_move.new_position} with score of {best_score}")
+            print(f"Got Best Move: {best_move.piece.position} => {best_move.new_position} in {branches} branches.")
             return best_move
         return None
         
