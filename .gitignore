@@ -163,3 +163,5 @@ chess_ai/ai/rl_network/models
 chess_ai/ai/policy_network/models
 chess_ai/ai/policy_network/train_data
 chess_ai/ai/policy_network/test_data
+
+chess_server/node_modules
