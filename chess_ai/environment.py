@@ -7,6 +7,7 @@ from .chess_logic.global_chess import GlobalChess
 from .io.global_io import GlobalIO
 from .visuals.global_visual import GlobalVisual
 from .sounds.global_sound import GlobalSound
+from .network.global_network import GlobalNetwork
 
 
 class Environment:
@@ -24,12 +25,14 @@ class Environment:
             self.ai = GlobalAI().set_from_yaml(config_dir)
             self.sound = GlobalSound().set_from_yaml(config_dir)
             self.visual = GlobalVisual().set_from_yaml(config_dir, self)
+            self.network = GlobalNetwork().set_from_yaml(config_dir)
         else:
             self.io = GlobalIO()
             self.visual = GlobalVisual()
             self.chess = GlobalChess()
             self.ai = GlobalAI()
             self.sound = GlobalSound()
+            self.network = GlobalNetwork()
 
         #Load Piece Images
         if pieces_dir is not None:
@@ -43,6 +46,9 @@ class Environment:
         if sounds_dir is not None:
             self.game_sounds = self._load_sounds(sounds_dir)
             self.sound.set_volumes(self)
+        
+        #Start at Main Menu
+        self.gamestate = 0
 
     def _load_images(self, dir: str) -> "Environment":
         """Loads the image into the Environment.
@@ -90,5 +96,17 @@ class Environment:
         """
         if self.chess.game_ended is False:
             self.ai.execute_turn(self.chess.board, self)
+    
+    def update(self, screen) -> "Environment":
+        """Executes the next update of the game.
+
+        Returns:
+            Environment: The current Game Enviornment to update
+        """
+        self.visual.shapes.draw_all_shapes(screen, self)
+        self.visual.text.draw_all_text(screen, self)
+
+        if self.gamestate == 1:
+            self.execute_next_turn()
     
 

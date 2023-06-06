@@ -23,6 +23,7 @@ class VisualText:
         """Draws Text on the screen.
         """
         self.texts = []
+        self.main_texts = []
         self.game_stats = {}
         self.score = None
 
@@ -103,6 +104,18 @@ class VisualText:
         self.game_stats['HALF_MOVES'].text = "HALF MOVES: " + str(env.chess.board.state.half_move) + "/" + str(env.chess.max_half_moves)
         self.game_stats['FULL_MOVES'].text = "FULL MOVES: " + str(env.chess.board.state.full_move)
 
+    def draw_main_menu(self, surface: Surface, env) -> "VisualText":
+        self.main_texts = []
+        self.main_texts.append(TextObject("Peyton's Chess", 0, 0, 48, (255, 255, 255), "midtop"))       
+        self.main_texts.append(TextObject("Singleplayer", 0, surface.get_rect().h/2, 48, (255, 255, 255), "midtop"))   
+        self.main_texts.append(TextObject("Multiplayer", 0, surface.get_rect().h/2 + 100, 48, (255, 255, 255), "midtop"))          
+
+        text: TextObject
+        for text in self.main_texts:
+            text.x = surface.get_rect().w / 2
+            text.draw(surface)
+        return self
+
     def draw_all_text(self, surface: Surface, env) -> "VisualText":
         """Draws all text on the screen.
 
@@ -113,7 +126,10 @@ class VisualText:
         Returns:
             VisualText: Self for chaining.
         """
-        # self._draw_ranks_files(surface, env)._draw_game_stats(surface, env)
+        if env.gamestate == 0:
+            self.draw_main_menu(surface, env)
+            return self
+
         self.update_game_stats(env)
         text: TextObject
         for text in self.texts:

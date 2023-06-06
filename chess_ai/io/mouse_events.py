@@ -69,6 +69,18 @@ class MouseEvents:
             event (_type_): The event object.
             env (Environment): The environment.
         """
+        if env.gamestate == 0:
+            if len(env.visual.shapes.main_menu) > 0:
+                single: pygame.Rect = env.visual.shapes.main_menu[0]
+                multi: pygame.Rect = env.visual.shapes.main_menu[1]
+                if single.collidepoint(env.io.input_position) and mouse_down:
+                    print("Single")
+                    env.gamestate = 1
+                if multi.collidepoint(env.io.input_position) and mouse_down:
+                    print("Multi")
+                    env.gamestate = 2
+            return
+
         if event.button == 1 and mouse_down:
             self._mouse_left_click_events(event, env)
         if mouse_down:

@@ -86,6 +86,7 @@ class VisualShapes:
         self.width = 80
         self.tree = []
         self.board = []
+        self.main_menu = []
         self.score_bar = None
         self.icons = None
 
@@ -363,6 +364,18 @@ class VisualShapes:
                 turn_text = rf_font.render(text1, False, env.visual.colors["BLUE"])
                 surface.blit(turn_text, (xt, yt))
 
+    def draw_main_menu(self, surface: Surface, env) -> "VisualShapes":
+        if len(self.main_menu) == 0:
+            rect = surface.get_rect()
+            self.main_menu.append(Rect(rect.w/2 - 250, rect.h/2, 500, 50))
+            self.main_menu.append(Rect(rect.w/2 - 250, rect.h/2 + 100, 500, 50))
+        
+        s_color = (100, 225, 100) if self.main_menu[0].collidepoint(env.io.input_position[0], env.io.input_position[1]) else (50, 200, 50)
+        m_color = (100, 225, 100) if self.main_menu[1].collidepoint(env.io.input_position[0], env.io.input_position[1]) else (50, 200, 50)
+        
+        draw.rect(surface, s_color, self.main_menu[0])
+        draw.rect(surface, m_color, self.main_menu[1])
+
     def draw_all_shapes(self, surface: Surface, env) -> "VisualShapes":
         """Draws All shapes on the screen.
 
@@ -373,6 +386,10 @@ class VisualShapes:
         Returns:
             VisualShapes: Self for chaining.
         """
+        if env.gamestate == 0:
+            self.draw_main_menu(surface, env)
+            return
+
         #Draw Background
         self._draw_background(surface, env)
 
